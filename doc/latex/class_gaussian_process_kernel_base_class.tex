@@ -1,0 +1,28 @@
+\hypertarget{class_gaussian_process_kernel_base_class}{}\section{Gaussian\+Process\+Kernel\+Base\+Class Class Reference}
+\label{class_gaussian_process_kernel_base_class}\index{Gaussian\+Process\+Kernel\+Base\+Class@{Gaussian\+Process\+Kernel\+Base\+Class}}
+
+
+Interface for Gaussian kernel defintion.  
+
+
+
+
+{\ttfamily \#include $<$Gaussian\+Process\+Kernel\+Base\+Class.\+hpp$>$}
+
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+virtual void \hyperlink{class_gaussian_process_kernel_base_class_a8b5f3bc6aa6cb037adc6f2de0bb3a729}{estimate\+\_\+hyper\+\_\+parameters} (std\+::vector$<$ std\+::vector$<$ double $>$ $>$ const \&, Eigen\+::\+Vector\+Xd const \&, Eigen\+::\+Vector\+Xd const \&)=0\hypertarget{class_gaussian_process_kernel_base_class_a8b5f3bc6aa6cb037adc6f2de0bb3a729}{}\label{class_gaussian_process_kernel_base_class_a8b5f3bc6aa6cb037adc6f2de0bb3a729}
+
+\begin{DoxyCompactList}\small\item\em Virtual member function for the estimation of hyper parameters of the kernel. \end{DoxyCompactList}\item 
+virtual double \hyperlink{class_gaussian_process_kernel_base_class_abcac50e030c8f07517011a8164b3d681}{evaluate\+\_\+kernel} (std\+::vector$<$ double $>$ const \&, std\+::vector$<$ double $>$ const \&)=0\hypertarget{class_gaussian_process_kernel_base_class_abcac50e030c8f07517011a8164b3d681}{}\label{class_gaussian_process_kernel_base_class_abcac50e030c8f07517011a8164b3d681}
+
+\begin{DoxyCompactList}\small\item\em Virtual membber function for the evaluation of the kernel. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Interface for Gaussian kernel defintion. 
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/\+Users/\+Florian/home/sandbox/surrogate\+\_\+models\+\_\+cpp/include/Gaussian\+Process\+Kernel\+Base\+Class.\+hpp\end{DoxyCompactItemize}

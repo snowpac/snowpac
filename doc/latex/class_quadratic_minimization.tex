@@ -1,0 +1,76 @@
+\hypertarget{class_quadratic_minimization}{}\section{Quadratic\+Minimization Class Reference}
+\label{class_quadratic_minimization}\index{Quadratic\+Minimization@{Quadratic\+Minimization}}
+
+
+Quadratic minimization in unit ball.  
+
+
+
+
+{\ttfamily \#include $<$Quadratic\+Minimization.\+hpp$>$}
+
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{class_quadratic_minimization_ae2f47a7103f9ca70837916a35bebdbd6}{Quadratic\+Minimization} (int)
+\begin{DoxyCompactList}\small\item\em Constructor. \end{DoxyCompactList}\item 
+\hyperlink{class_quadratic_minimization_a3b70ac4af49f9a0fc144caaa7346e17b}{$\sim$\+Quadratic\+Minimization} ()\hypertarget{class_quadratic_minimization_a3b70ac4af49f9a0fc144caaa7346e17b}{}\label{class_quadratic_minimization_a3b70ac4af49f9a0fc144caaa7346e17b}
+
+\begin{DoxyCompactList}\small\item\em Destructor. \end{DoxyCompactList}\item 
+void \hyperlink{class_quadratic_minimization_a476344b803ff755606dc091b9256ab3b}{minimize} (Eigen\+::\+Vector\+Xd \&, Eigen\+::\+Vector\+Xd const \&, Eigen\+::\+Matrix\+Xd const \&)
+\begin{DoxyCompactList}\small\item\em Solve quadratic minimization in unit ball. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Additional Inherited Members}
+
+
+\subsection{Detailed Description}
+Quadratic minimization in unit ball. 
+
+\subsection{Constructor \& Destructor Documentation}
+\index{Quadratic\+Minimization@{Quadratic\+Minimization}!Quadratic\+Minimization@{Quadratic\+Minimization}}
+\index{Quadratic\+Minimization@{Quadratic\+Minimization}!Quadratic\+Minimization@{Quadratic\+Minimization}}
+\subsubsection[{\texorpdfstring{Quadratic\+Minimization(int)}{QuadraticMinimization(int)}}]{\setlength{\rightskip}{0pt plus 5cm}Quadratic\+Minimization\+::\+Quadratic\+Minimization (
+\begin{DoxyParamCaption}
+\item[{int}]{n}
+\end{DoxyParamCaption}
+)}\hypertarget{class_quadratic_minimization_ae2f47a7103f9ca70837916a35bebdbd6}{}\label{class_quadratic_minimization_ae2f47a7103f9ca70837916a35bebdbd6}
+
+
+Constructor. 
+
+Contructor to set dimension of quadratic optimizatin problem 
+\begin{DoxyParams}{Parameters}
+{\em n} & dimension of quadratic optimization problem \\
+\hline
+\end{DoxyParams}
+
+
+\subsection{Member Function Documentation}
+\index{Quadratic\+Minimization@{Quadratic\+Minimization}!minimize@{minimize}}
+\index{minimize@{minimize}!Quadratic\+Minimization@{Quadratic\+Minimization}}
+\subsubsection[{\texorpdfstring{minimize(\+Eigen\+::\+Vector\+Xd \&, Eigen\+::\+Vector\+Xd const \&, Eigen\+::\+Matrix\+Xd const \&)}{minimize(Eigen::VectorXd &, Eigen::VectorXd const &, Eigen::MatrixXd const &)}}]{\setlength{\rightskip}{0pt plus 5cm}void Quadratic\+Minimization\+::minimize (
+\begin{DoxyParamCaption}
+\item[{Eigen\+::\+Vector\+Xd \&}]{y, }
+\item[{Eigen\+::\+Vector\+Xd const \&}]{g, }
+\item[{Eigen\+::\+Matrix\+Xd const \&}]{H}
+\end{DoxyParamCaption}
+)}\hypertarget{class_quadratic_minimization_a476344b803ff755606dc091b9256ab3b}{}\label{class_quadratic_minimization_a476344b803ff755606dc091b9256ab3b}
+
+
+Solve quadratic minimization in unit ball. 
+
+Solves the quadratic minimization y = argmin g\textquotesingle{}x + 0.\+5x\textquotesingle{}Hx subject to $\vert$$\vert$x$\vert$$\vert$ $<$= 1.~\newline
+Implementation of algorithm from More/\+Sorensen, Computing a trust region step (1983). 
+\begin{DoxyParams}{Parameters}
+{\em y} & solution of quadratic optimization problem \\
+\hline
+{\em g} & gradient of quadratic opjective function \\
+\hline
+{\em H} & hessian of quadratic objective function \\
+\hline
+\end{DoxyParams}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+/\+Users/\+Florian/home/sandbox/surrogate\+\_\+models\+\_\+cpp/include/Quadratic\+Minimization.\+hpp\item 
+/\+Users/\+Florian/home/sandbox/surrogate\+\_\+models\+\_\+cpp/src/Quadratic\+Minimization.\+cpp\end{DoxyCompactItemize}

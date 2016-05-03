@@ -1,0 +1,87 @@
+\hypertarget{class_basis_for_surrogate_model_base_class}{}\section{Basis\+For\+Surrogate\+Model\+Base\+Class Class Reference}
+\label{class_basis_for_surrogate_model_base_class}\index{Basis\+For\+Surrogate\+Model\+Base\+Class@{Basis\+For\+Surrogate\+Model\+Base\+Class}}
+
+
+Base class for definiton of surrogate model.  
+
+
+
+
+{\ttfamily \#include $<$Basis\+For\+Surrogate\+Model\+Base\+Class.\+hpp$>$}
+
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{class_basis_for_surrogate_model_base_class_a2ef11bfe07d66270c6581929494689e4}{Basis\+For\+Surrogate\+Model\+Base\+Class} (int n)
+\begin{DoxyCompactList}\small\item\em Constructor. \end{DoxyCompactList}\item 
+\hyperlink{class_basis_for_surrogate_model_base_class_a651355e510770fbbd616300d3afd112b}{$\sim$\+Basis\+For\+Surrogate\+Model\+Base\+Class} ()\hypertarget{class_basis_for_surrogate_model_base_class_a651355e510770fbbd616300d3afd112b}{}\label{class_basis_for_surrogate_model_base_class_a651355e510770fbbd616300d3afd112b}
+
+\begin{DoxyCompactList}\small\item\em Destructor. \end{DoxyCompactList}\item 
+virtual void {\bfseries get\+\_\+mat\+\_\+vec\+\_\+representation} (int, Eigen\+::\+Vector\+Xd \&, Eigen\+::\+Matrix\+Xd \&)=0\hypertarget{class_basis_for_surrogate_model_base_class_afe1de780d32c6a861e1828fed97a8111}{}\label{class_basis_for_surrogate_model_base_class_afe1de780d32c6a861e1828fed97a8111}
+
+\item 
+virtual void {\bfseries compute\+\_\+basis\+\_\+coefficients} (\hyperlink{struct_blackbox_data}{Blackbox\+Data} const \&)=0\hypertarget{class_basis_for_surrogate_model_base_class_ade23ce61f959503ded709f96e589b7f9}{}\label{class_basis_for_surrogate_model_base_class_ade23ce61f959503ded709f96e589b7f9}
+
+\item 
+virtual std\+::vector$<$ double $>$ \& {\bfseries evaluate} (std\+::vector$<$ double $>$ const \&)=0\hypertarget{class_basis_for_surrogate_model_base_class_a257bfa780f2cfd4924aac5b44a195d5e}{}\label{class_basis_for_surrogate_model_base_class_a257bfa780f2cfd4924aac5b44a195d5e}
+
+\item 
+virtual std\+::vector$<$ double $>$ \& {\bfseries gradient} (std\+::vector$<$ double $>$ const \&, int)=0\hypertarget{class_basis_for_surrogate_model_base_class_ad1815a37a4d54f87c750aa3df39b06ca}{}\label{class_basis_for_surrogate_model_base_class_ad1815a37a4d54f87c750aa3df39b06ca}
+
+\item 
+virtual double {\bfseries evaluate} (std\+::vector$<$ double $>$ const \&, int)=0\hypertarget{class_basis_for_surrogate_model_base_class_a3a92947afbb7018c4e69aebb7a31aad9}{}\label{class_basis_for_surrogate_model_base_class_a3a92947afbb7018c4e69aebb7a31aad9}
+
+\item 
+int {\bfseries dimension} ()\hypertarget{class_basis_for_surrogate_model_base_class_afd4fa7760519cec7f784568911c8c07f}{}\label{class_basis_for_surrogate_model_base_class_afd4fa7760519cec7f784568911c8c07f}
+
+\end{DoxyCompactItemize}
+\subsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+int \hyperlink{class_basis_for_surrogate_model_base_class_a9dd09707324ce387de41e9b53be7e2a4}{dim}\hypertarget{class_basis_for_surrogate_model_base_class_a9dd09707324ce387de41e9b53be7e2a4}{}\label{class_basis_for_surrogate_model_base_class_a9dd09707324ce387de41e9b53be7e2a4}
+
+\begin{DoxyCompactList}\small\item\em Number of arguments of surrogate model. \end{DoxyCompactList}\item 
+int \hyperlink{class_basis_for_surrogate_model_base_class_a358550a9b97fbe227f57245a77ebd686}{nb\+\_\+basis\+\_\+functions}
+\begin{DoxyCompactList}\small\item\em Number of basic basis functions. \end{DoxyCompactList}\item 
+std\+::vector$<$ Eigen\+::\+Vector\+Xd $>$ \hyperlink{class_basis_for_surrogate_model_base_class_a283b40834f051a9ee4896206cbaf9f1f}{basis\+\_\+coefficients}\hypertarget{class_basis_for_surrogate_model_base_class_a283b40834f051a9ee4896206cbaf9f1f}{}\label{class_basis_for_surrogate_model_base_class_a283b40834f051a9ee4896206cbaf9f1f}
+
+\begin{DoxyCompactList}\small\item\em Coefficients of surrogate basis functions in terms of basic basis function. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Base class for definiton of surrogate model. 
+
+Defines the required structure of surrogate models to work with \hyperlink{class_n_o_w_p_a_c}{N\+O\+W\+P\+AC} 
+
+\subsection{Constructor \& Destructor Documentation}
+\index{Basis\+For\+Surrogate\+Model\+Base\+Class@{Basis\+For\+Surrogate\+Model\+Base\+Class}!Basis\+For\+Surrogate\+Model\+Base\+Class@{Basis\+For\+Surrogate\+Model\+Base\+Class}}
+\index{Basis\+For\+Surrogate\+Model\+Base\+Class@{Basis\+For\+Surrogate\+Model\+Base\+Class}!Basis\+For\+Surrogate\+Model\+Base\+Class@{Basis\+For\+Surrogate\+Model\+Base\+Class}}
+\subsubsection[{\texorpdfstring{Basis\+For\+Surrogate\+Model\+Base\+Class(int n)}{BasisForSurrogateModelBaseClass(int n)}}]{\setlength{\rightskip}{0pt plus 5cm}Basis\+For\+Surrogate\+Model\+Base\+Class\+::\+Basis\+For\+Surrogate\+Model\+Base\+Class (
+\begin{DoxyParamCaption}
+\item[{int}]{n}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\hypertarget{class_basis_for_surrogate_model_base_class_a2ef11bfe07d66270c6581929494689e4}{}\label{class_basis_for_surrogate_model_base_class_a2ef11bfe07d66270c6581929494689e4}
+
+
+Constructor. 
+
+Constructor to set number of arguments (dimension) of the basis 
+\begin{DoxyParams}{Parameters}
+{\em dim\+\_\+input} & Number of arguments (dimension) \\
+\hline
+\end{DoxyParams}
+
+
+\subsection{Member Data Documentation}
+\index{Basis\+For\+Surrogate\+Model\+Base\+Class@{Basis\+For\+Surrogate\+Model\+Base\+Class}!nb\+\_\+basis\+\_\+functions@{nb\+\_\+basis\+\_\+functions}}
+\index{nb\+\_\+basis\+\_\+functions@{nb\+\_\+basis\+\_\+functions}!Basis\+For\+Surrogate\+Model\+Base\+Class@{Basis\+For\+Surrogate\+Model\+Base\+Class}}
+\subsubsection[{\texorpdfstring{nb\+\_\+basis\+\_\+functions}{nb_basis_functions}}]{\setlength{\rightskip}{0pt plus 5cm}int Basis\+For\+Surrogate\+Model\+Base\+Class\+::nb\+\_\+basis\+\_\+functions\hspace{0.3cm}{\ttfamily [protected]}}\hypertarget{class_basis_for_surrogate_model_base_class_a358550a9b97fbe227f57245a77ebd686}{}\label{class_basis_for_surrogate_model_base_class_a358550a9b97fbe227f57245a77ebd686}
+
+
+Number of basic basis functions. 
+
+Number of basis function, for example quadratic monomials, for surrogate basis functions 
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/\+Users/\+Florian/home/sandbox/surrogate\+\_\+models\+\_\+cpp/include/Basis\+For\+Surrogate\+Model\+Base\+Class.\+hpp\end{DoxyCompactItemize}

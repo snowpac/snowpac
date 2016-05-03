@@ -1,0 +1,57 @@
+\hypertarget{class_cholesky_factorization}{}\section{Cholesky\+Factorization Class Reference}
+\label{class_cholesky_factorization}\index{Cholesky\+Factorization@{Cholesky\+Factorization}}
+
+
+Cholesky factorization.  
+
+
+
+
+{\ttfamily \#include $<$Cholesky\+Factorization.\+hpp$>$}
+
+\subsection*{Protected Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \hyperlink{class_cholesky_factorization_a5b851a6c66fa2e815ed13c69e37560d8}{compute} (Eigen\+::\+Matrix\+Xd \&, int \&, double \&, int)
+\begin{DoxyCompactList}\small\item\em Computes Cholesky factorization. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Cholesky factorization. 
+
+Computes the Cholesky factorization of a matrix M if M is positive definite, i.\+e. M = LL\textquotesingle{} with a lower triangular matrix L. If M is positive defineite the matrix M is over-\/written by L and p and offset are set to zero.~\newline
+If M is not positive definite with a zero eigenvalue, a partial Cholesky decomposition in the upper left (p-\/1)x(p-\/1) block of M is returned.~\newline
+ Additionally, p and offset are set such that M + rho ep ep\textquotesingle{} (with the p-\/th canonical unit vector ep) has a zero eigenvalue. 
+
+\subsection{Member Function Documentation}
+\index{Cholesky\+Factorization@{Cholesky\+Factorization}!compute@{compute}}
+\index{compute@{compute}!Cholesky\+Factorization@{Cholesky\+Factorization}}
+\subsubsection[{\texorpdfstring{compute(\+Eigen\+::\+Matrix\+Xd \&, int \&, double \&, int)}{compute(Eigen::MatrixXd &, int &, double &, int)}}]{\setlength{\rightskip}{0pt plus 5cm}void Cholesky\+Factorization\+::compute (
+\begin{DoxyParamCaption}
+\item[{Eigen\+::\+Matrix\+Xd \&}]{L, }
+\item[{int \&}]{p, }
+\item[{double \&}]{offset, }
+\item[{int}]{n}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [protected]}}\hypertarget{class_cholesky_factorization_a5b851a6c66fa2e815ed13c69e37560d8}{}\label{class_cholesky_factorization_a5b851a6c66fa2e815ed13c69e37560d8}
+
+
+Computes Cholesky factorization. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em L} & matrix M to be factorizized on input and the factorized matrix L on output \\
+\hline
+{\em p} & index of the diagonal element such that M+offset ep ep$^\wedge$T has a zero eigenvalue \\
+\hline
+{\em offset} & offset to shift non-\/positive eigenvalue of M to zero. \\
+\hline
+{\em n} & dimension of the matrix L \\
+\hline
+\end{DoxyParams}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+/\+Users/\+Florian/home/sandbox/surrogate\+\_\+models\+\_\+cpp/include/Cholesky\+Factorization.\+hpp\item 
+/\+Users/\+Florian/home/sandbox/surrogate\+\_\+models\+\_\+cpp/src/Cholesky\+Factorization.\+cpp\end{DoxyCompactItemize}
