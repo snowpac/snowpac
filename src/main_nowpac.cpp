@@ -28,10 +28,10 @@ int main () {
   opt.set_blackbox( mybb, 4 );  
   opt.set_option( "eta_0" , 1e-3 );
   opt.set_option( "eta_1" , 1e-1 );
-  opt.set_option( "eps_c"                         , 1e-3 );
+  opt.set_option( "eps_c"                         , 1e-5 );
   opt.set_option( "mu"                            , 1e0  );
-  opt.set_option( "poisedness_threshold"          , 5e2  );
-  opt.set_option( "inner_boundary_path_constants" , 1e-1 );
+  opt.set_option( "poisedness_threshold"          , 1e2  );
+  opt.set_option( "inner_boundary_path_constants" , 1e-2 );
   opt.set_option( "verbose"                       , 3    );
   opt.set_option( "stochastic_optimization"       , false );
   opt.set_option( "update_at_evaluations"         , uae  );

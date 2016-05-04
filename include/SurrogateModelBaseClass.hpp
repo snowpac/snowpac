@@ -17,6 +17,7 @@ class SurrogateModelBaseClass {
                                        std::vector<double> const&,
                                        std::vector<int> const& ) = 0;
     int dimension ( ) { return basis->dimension( ); }
+    BasisForSurrogateModelBaseClass *get_basis() { return basis; }
 };
 
 #endif

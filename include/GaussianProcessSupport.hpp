@@ -20,8 +20,8 @@ class GaussianProcessSupport : protected VectorOperations {
     double delta_tmp;
     double variance, mean; 
     double weight;
-    Eigen::VectorXd gaussian_process_values;
-    Eigen::VectorXd gaussian_process_noise;
+    std::vector<double> gaussian_process_values;
+    std::vector<double> gaussian_process_noise;
     std::vector< std::vector<double> > gaussian_process_nodes;
     std::vector<int> gaussian_process_active_index; 
     std::vector< std::vector<double> > values;

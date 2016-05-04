@@ -81,13 +81,16 @@ void GaussianProcessSupport::update_gaussian_processes ( BlackboxData &evaluatio
     std::cout << "number nodes = " << evaluations.nodes.size() << std::endl;
 */
 
-    gaussian_process_values.resize( gaussian_process_active_index.size( ) );
-    gaussian_process_noise.resize( gaussian_process_active_index.size( ) );
+//    gaussian_process_values.resize( gaussian_process_active_index.size( ) );
+//    gaussian_process_noise.resize( gaussian_process_active_index.size( ) );
+//    gaussian_process_values.clear();
+    gaussian_process_values.resize(gaussian_process_active_index.size());
+    gaussian_process_noise.resize(gaussian_process_active_index.size());
 
     for ( int j = 0; j < number_processes; j++ ) {
       for ( size_t i = 0; i < gaussian_process_active_index.size(); ++i ) {
-        gaussian_process_values( i ) = values[ j ].at( gaussian_process_active_index[i] );
-        gaussian_process_noise( i )  = noise[ j ].at( gaussian_process_active_index[i] );
+        gaussian_process_values.at(i) = values[ j ].at( gaussian_process_active_index[i] );
+        gaussian_process_noise.at(i) = noise[ j ].at( gaussian_process_active_index[i] );
       }
       gaussian_processes[j].estimate_hyper_parameters( gaussian_process_nodes,
                                                        gaussian_process_values,

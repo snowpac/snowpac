@@ -69,20 +69,20 @@ double GaussianProcess::d_evaluate_kernel ( std::vector<double> const &x,
 
 //--------------------------------------------------------------------------------
 void GaussianProcess::build ( std::vector< std::vector<double> > const &nodes,
-                              Eigen::VectorXd const &values,
-                              Eigen::VectorXd const &noise ) 
+                              std::vector<double> const &values,
+                              std::vector<double> const &noise ) 
 {
     nb_gp_nodes = nodes.size();
     gp_nodes.clear();
-    for ( int i = 0; i < nb_gp_nodes; ++i )
+    for ( int i = 0; i < nb_gp_nodes; ++i ) {
       gp_nodes.push_back ( nodes.at(i) );
-    gp_noise = noise;
-    gp_function_values = values;
+    }
 
-    auto minmax = std::minmax_element(values.data(), values.data()+nb_gp_nodes-1);
+//    auto minmax = std::minmax_element(values.begin(), values.end());
+//    min_function_value = values.at((minmax.first - values.begin()));
+//    max_function_value = values.at((minmax.second - values.begin()));
 
-    min_function_value = values((minmax.first - values.data()));
-    max_function_value = values((minmax.second - values.data()));
+//    std::cout << "[ " << min_function_value << ", " << max_function_value << " ]" << std::endl;
 
     L.clear();
     L.resize( nb_gp_nodes );
@@ -90,7 +90,7 @@ void GaussianProcess::build ( std::vector< std::vector<double> > const &nodes,
     for (int i = 0; i < nb_gp_nodes; i++) {
       for (int j = 0; j <= i; j++)
         L.at(i).push_back (evaluate_kernel( gp_nodes[i], gp_nodes[j] ) );
-      L.at(i).at(i) += pow( gp_noise(i) / 2e0, 2e0 );
+      L.at(i).at(i) += pow( noise.at(i) / 2e0, 2e0 );
     }
   
     CholeskyFactorization::compute( L, pos, rho, nb_gp_nodes );
@@ -98,9 +98,10 @@ void GaussianProcess::build ( std::vector< std::vector<double> > const &nodes,
     
     scaled_function_values.resize(nb_gp_nodes);
     for (int i = 0; i < nb_gp_nodes; i++) {
-      scaled_function_values.at(i) = values(i) - min_function_value;
-      scaled_function_values.at(i) /= 5e-1*( max_function_value-min_function_value );
-      scaled_function_values.at(i) -= 1e0;
+      scaled_function_values.at(i) = values.at(i);
+//      scaled_function_values.at(i) = values.at(i) - min_function_value;
+//      scaled_function_values.at(i) /= 5e-1*( max_function_value-min_function_value );
+//      scaled_function_values.at(i) -= 1e0;
     }
 
     alpha = scaled_function_values;
@@ -118,13 +119,10 @@ void GaussianProcess::update ( std::vector<double> const &x,
 {
   K0.resize( nb_gp_nodes );
   nb_gp_nodes += 1;
-  gp_function_values.conservativeResize( nb_gp_nodes );
-  gp_noise.conservativeResize( nb_gp_nodes );
   gp_nodes.push_back( x );
-  gp_function_values( nb_gp_nodes-1 ) = value;
-  scaled_function_values.push_back ( ( value -  min_function_value ) / 
-                                     ( 5e-1*( max_function_value-min_function_value ) ) - 1e0 );
-  gp_noise( nb_gp_nodes-1 ) = noise;
+  scaled_function_values.push_back ( value );
+//  scaled_function_values.push_back ( ( value -  min_function_value ) / 
+//                                     ( 5e-1*( max_function_value-min_function_value ) ) - 1e0 );
 
    
   for (int i = 0; i < nb_gp_nodes-1; i++) 
@@ -134,7 +132,7 @@ void GaussianProcess::update ( std::vector<double> const &x,
 
   L.push_back ( K0 );
   L.at(L.size()-1).push_back(
-    sqrt( evaluate_kernel( x, x ) + pow( gp_noise(nb_gp_nodes-1) / 2e0, 2e0 ) - 
+    sqrt( evaluate_kernel( x, x ) + pow( noise / 2e0, 2e0 ) - 
           VectorOperations::dot_product(K0, K0) ) );
         
   alpha = scaled_function_values;
@@ -155,15 +153,11 @@ void GaussianProcess::evaluate ( std::vector<double> const &x,
   for (int i = 0; i < nb_gp_nodes; i++)
     K0.at(i) = evaluate_kernel( gp_nodes[i], x );
 
-  mean = VectorOperations::dot_product(K0, alpha) + 1e0;
-  mean *= 5e-1*( max_function_value-min_function_value );
-  mean += min_function_value;
+  mean = VectorOperations::dot_product(K0, alpha);
+//  mean = VectorOperations::dot_product(K0, alpha) + 1e0;
+//  mean *= 5e-1*( max_function_value-min_function_value );
+//  mean += min_function_value;
 
-/*
-  mean = K0.dot(alpha) + 1e0;
-  mean *= 5e-1*( max_function_value-min_function_value );
-  mean += min_function_value;
-*/        
   forward_substitution( L, K0 );
   
   variance = evaluate_kernel( x, x ) - VectorOperations::dot_product(K0, K0);
@@ -175,23 +169,22 @@ void GaussianProcess::evaluate ( std::vector<double> const &x,
 
 //--------------------------------------------------------------------------------
 void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<double> > const &nodes,
-                                                  Eigen::VectorXd const &values,
-                                                  Eigen::VectorXd const &noise ) 
+                                                  std::vector<double> const &values,
+                                                  std::vector<double> const &noise ) 
 {
   nb_gp_nodes = nodes.size();
   gp_nodes.clear();
-  for ( int i = 0; i < nb_gp_nodes; ++i )
+  gp_noise.clear();
+  for ( int i = 0; i < nb_gp_nodes; ++i ) {
     gp_nodes.push_back ( nodes.at(i) );
-  gp_noise = noise;
-  gp_function_values = values;
+    gp_noise.push_back ( noise.at(i) );
+  }
 
-//  dK.resize( nb_gp_nodes, nb_gp_nodes);
   gp_pointer = this;
 
-  auto minmax = std::minmax_element(values.data(), values.data()+nb_gp_nodes-1);
- // auto minmax = std::minmax_element(values.begin(), values.end());
-  min_function_value = values((minmax.first - values.data()));
-  max_function_value = values((minmax.second - values.data()));
+//  auto minmax = std::minmax_element(values.begin(), values.end());
+//  min_function_value = values.at((minmax.first - values.begin()));
+//  max_function_value = values.at((minmax.second - values.begin()));
 
   L.clear();
   L.resize( nb_gp_nodes );
@@ -200,19 +193,20 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
  
   scaled_function_values.resize(nb_gp_nodes);
   for (int i = 0; i < nb_gp_nodes; i++) {
-    scaled_function_values.at(i) = values(i) - min_function_value;
-    scaled_function_values.at(i) /= 5e-1*( max_function_value-min_function_value );
-    scaled_function_values.at(i) -= 1e0;
+    scaled_function_values.at(i) = values.at(i);
+//    scaled_function_values.at(i) = values.at(i) - min_function_value;
+//    scaled_function_values.at(i) /= 5e-1*( max_function_value-min_function_value );
+//    scaled_function_values.at(i) -= 1e0;
   }
 
   double optval;    
   //adjust those settings to optimize GP approximation
   //--------------------------------------------------
-  double max_noise = 0e0;
-  for (int i = 0; i < nb_gp_nodes; i++) {
-    if (gp_noise( i ) > max_noise)
-      max_noise = gp_noise( i );
-  }
+//  double max_noise = 0e0;
+//  for (int i = 0; i < nb_gp_nodes; i++) {
+//    if (gp_noise.at( i ) > max_noise)
+//      max_noise = gp_noise.at( i );
+//  }
   lb[0] = 1e-1; // * pow(1000e0 * max_noise / 2e0, 2e0);
   ub[0] = 1e1;// * pow(1000e0 * max_noise / 2e0, 2e0);
   for (int i = 0; i < dim; i++) {
@@ -235,8 +229,8 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
 
   //initialize optimizer from NLopt library
 //  nlopt::opt opt(nlopt::LD_CCSAQ, dim+1);
-  nlopt::opt opt(nlopt::LN_BOBYQA, dim+1);
-//  nlopt::opt opt(nlopt::GN_DIRECT, dim+1);
+//  nlopt::opt opt(nlopt::LN_BOBYQA, dim+1);
+  nlopt::opt opt(nlopt::GN_DIRECT, dim+1);
 
   //opt = nlopt_create(NLOPT_LN_COBYLA, dim+1);
   opt.set_lower_bounds( lb );
@@ -247,7 +241,7 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
   opt.set_xtol_abs(1e-6);
   opt.set_xtol_rel(1e-6);
 //set timeout to NLOPT_TIMEOUT seconds
-  opt.set_maxtime(0.5);
+  opt.set_maxtime(2.5);
   //perform optimization to get correction factors
   int exitflag = opt.optimize(gp_parameters, optval);
 
@@ -276,7 +270,7 @@ double GaussianProcess::parameter_estimation_objective(std::vector<double> const
   for (int i = 0; i < d->nb_gp_nodes; i++) {
     for (int j = 0; j <= i; j++)
       d->L.at(i).at(j) = d->evaluate_kernel( d->gp_nodes[i], d->gp_nodes[j], x );
-    d->L.at(i).at(i) += pow( d->gp_noise(i) / 2e0 + noise_regularization, 2e0 );
+    d->L.at(i).at(i) += pow( d->gp_noise.at(i) / 2e0 + noise_regularization, 2e0 );
   }
 
 

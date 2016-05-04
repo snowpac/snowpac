@@ -6,6 +6,16 @@ RegularizedMinimumFrobeniusNormModel::RegularizedMinimumFrobeniusNormModel (
                            BasisForMinimumFrobeniusNormModel &basis_input) :
                            SurrogateModelBaseClass ( basis_input )
 {
+  rd.dim = basis_input.dimension();
+  rd.g.resize(rd.dim);
+  rd.H.resize(rd.dim);
+  rd.H_total.resize(rd.dim);
+  for ( unsigned int j = 0; j < rd.dim; ++j ) {
+    rd.H[j].resize(j+1);
+    rd.H_total[j].resize(j+1);
+  }
+  rd.basis = &basis_input;
+  rd.vo = &vo;
   model_gradient.resize( basis_input.dimension ( ) );
 }
 //--------------------------------------------------------------------------------
@@ -38,7 +48,7 @@ void RegularizedMinimumFrobeniusNormModel::set_function_values(
   size = surrogate_nodes_index.size();
   function_values.resize( size );
   noise_values.resize( size );
-  for (int i = 0; i < size; ++i) {
+  for (unsigned int i = 0; i < size; ++i) {
     function_values.at(i) = values.at( surrogate_nodes_index[i] );
     noise_values.at(i) = noise.at( surrogate_nodes_index[i] );
   }
@@ -50,28 +60,28 @@ void RegularizedMinimumFrobeniusNormModel::set_function_values(
 //--------------------------------------------------------------------------------
 void RegularizedMinimumFrobeniusNormModel::regularize_coefficients( ) 
 {
-
   lb.clear();
   ub.clear();
-  parameters.clear();
-  for ( size_t i = 0; i < function_values.size( ); i++ ) {
+  //parameters.clear();
+  for ( unsigned int i = 0; i < function_values.size( ); ++i ) {
     lb.push_back( function_values.at(i) - 5e-1*noise_values.at( i ) );
     ub.push_back( function_values.at(i) + 5e-1*noise_values.at( i ) );
-    parameters.push_back( function_values.at( i ) );
+//    parameters.push_back( function_values.at( i ) );
   }
 
   nlopt::opt opt(nlopt::LN_BOBYQA, function_values.size( ) );
   opt.set_lower_bounds ( lb );
   opt.set_upper_bounds ( ub );
-  opt.set_min_objective( regularization_objective, basis );
+//  opt.set_min_objective( regularization_objective, basis );
+  opt.set_min_objective( regularization_objective, &rd );
   opt.set_xtol_abs ( 1e-6 );
   opt.set_xtol_rel ( 1e-6 );
 //  opt.set_maxtime( 1.5);
-  try {
-    opt.optimize ( parameters, res );
-    for ( size_t i = 0; i < function_values.size( ); i++ )
-      function_values.at( i ) = parameters [ i ];
-  } catch(...) {}
+//  try {
+    opt.optimize ( function_values, res );
+//    for ( unsigned int i = 0; i < function_values.size( ); ++i )
+//      function_values.at( i ) = parameters [ i ];
+//  } catch(...) {}
   return;
 }
 //--------------------------------------------------------------------------------
@@ -81,24 +91,32 @@ double RegularizedMinimumFrobeniusNormModel::regularization_objective(
   std::vector<double> const &x, std::vector<double> &grad, void *data)
 {
 
-  BasisForMinimumFrobeniusNormModel *d = 
-    reinterpret_cast<BasisForMinimumFrobeniusNormModel*>(data); 
 
-  Eigen::VectorXd g( d->dimension() );
-  Eigen::MatrixXd H( d->dimension(), d->dimension() );
-  Eigen::MatrixXd H_total (d->dimension(), d->dimension());
-  H_total = Eigen::MatrixXd::Zero( d->dimension(), d->dimension() );
+//  BasisForMinimumFrobeniusNormModel *d = 
+//    reinterpret_cast<BasisForMinimumFrobeniusNormModel*>(data); 
+
+  RegularizationData *d = reinterpret_cast<RegularizationData*>(data); 
+
+  int size = x.size();
+
   double objective = 0e0;
 
-  for ( size_t i = 0; i < x.size(); i++ ) {
-    d->get_mat_vec_representation( i, g, H );
-    H_total += x[i] * H; 
+  for ( unsigned int i = 0; i < size; ++i ) {
+    d->basis->get_mat_vec_representation( i, d->g, d->H );
+    if ( i == 0 ) {
+      for ( unsigned int j = 0; j < d->dim; ++j ) 
+        d->vo->scale( x[i], d->H[j], d->H_total[j] ); 
+    } else {
+      for ( unsigned int j = 0; j < d->dim; ++j ) 
+        d->vo->add( x[i], d->H[j], d->H_total[j] ); 
+    }
   }
 
-  for ( int i = 0; i < d->dimension(); i++ ) {
-    for ( int j = 0; j < d->dimension(); j++ ) {
-      objective += pow( H_total(i, j), 2e0);
+  for ( unsigned int i = 0; i < d->dim; ++i ) {
+    for ( unsigned int j = 0; j < i; ++j ) {
+      objective += 2e0*pow( d->H_total.at(i).at(j), 2e0);
     }
+    objective += pow( d->H_total.at(i).at(i), 2e0);
   }  
 
   return objective;

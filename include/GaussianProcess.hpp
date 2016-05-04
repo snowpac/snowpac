@@ -30,15 +30,15 @@ class GaussianProcess : public GaussianProcessBaseClass,
     std::vector<double> lb, ub;
     //general/shared auxiliary variables
     std::vector< std::vector<double> > L;
-    std::vector<double>  alpha;    
+    std::vector<double> alpha;    
 
     GaussianProcess *gp_pointer;
     std::vector< std::vector<double> > gp_nodes;
-    Eigen::VectorXd gp_function_values;
+   // Eigen::VectorXd gp_function_values;
     std::vector<double> scaled_function_values;
-    double min_function_value, max_function_value;
-    Eigen::VectorXd gp_noise;
-    int dim,  nb_gp_nodes;
+   // double min_function_value, max_function_value;
+    std::vector<double> gp_noise;
+    int dim, nb_gp_nodes;
 
     //for gradient based estimation
 //    Eigen::MatrixXd dK;
@@ -76,8 +76,8 @@ class GaussianProcess : public GaussianProcessBaseClass,
      \param noise in function values
     */
     void estimate_hyper_parameters ( std::vector< std::vector<double> > const&,
-                                     Eigen::VectorXd const&, 
-                                     Eigen::VectorXd const&);
+                                     std::vector<double> const&, 
+                                     std::vector<double> const&);
     //! Build the Gaussian process
     /*!
      Computes the Gaussian process\n
@@ -88,7 +88,7 @@ class GaussianProcess : public GaussianProcessBaseClass,
      \see estimate_hyper_parameters
     */
     void build ( std::vector< std::vector<double> > const&,
-                 Eigen::VectorXd const&, Eigen::VectorXd const&);
+                 std::vector<double> const&, std::vector<double> const&);
     //! Update the Gaussian process
     /*!
      Includees a new point into the Gaussian process

@@ -9,16 +9,27 @@
 #include <vector>
 #include "nlopt.hpp"
 
+struct RegularizationData {
+    unsigned int dim;
+    BasisForSurrogateModelBaseClass *basis;
+    VectorOperations *vo;
+    std::vector<double> g;
+    std::vector< std::vector<double> > H;
+    std::vector< std::vector<double> > H_total;
+};
+
 class RegularizedMinimumFrobeniusNormModel : public SurrogateModelBaseClass,
                                              public VectorOperations {
   private:
     Eigen::MatrixXd M;
     std::vector<double> noise_values;
     void regularize_coefficients ( );
-    std::vector<double> parameters;
+//    std::vector<double> parameters;
     std::vector<double> lb, ub;
     double res;
     int size;
+    RegularizationData rd;
+    VectorOperations vo;
   public:
     RegularizedMinimumFrobeniusNormModel ( BasisForMinimumFrobeniusNormModel& );
     double evaluate ( std::vector<double> const& );
@@ -26,7 +37,7 @@ class RegularizedMinimumFrobeniusNormModel : public SurrogateModelBaseClass,
     void set_function_values ( std::vector<double> const&, std::vector<double> const&,
                                std::vector<int> const& );
     static double regularization_objective(std::vector<double> const&,
-                                            std::vector<double>&, void*);
+                                           std::vector<double>&, void*);
 };
 
 #endif

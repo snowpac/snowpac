@@ -18,8 +18,8 @@ class GaussianProcessBaseClass : GaussianProcessKernelBaseClass {
     ~GaussianProcessBaseClass ( ) { }
     //! Build the Gaussian process
     virtual void build ( std::vector< std::vector<double> > const&,
-                         Eigen::VectorXd const&,
-                         Eigen::VectorXd const& ) = 0;
+                         std::vector<double> const&,
+                         std::vector<double> const& ) = 0;
     //! Update the Gaussian process
     virtual void update ( std::vector<double> const&,
                           double&, double& ) = 0;
