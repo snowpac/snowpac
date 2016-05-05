@@ -64,10 +64,11 @@ void RegularizedMinimumFrobeniusNormModel::regularize_coefficients( )
   ub.clear();
   //parameters.clear();
   for ( unsigned int i = 0; i < function_values.size( ); ++i ) {
-    lb.push_back( function_values.at(i) - 5e-1*noise_values.at( i ) );
-    ub.push_back( function_values.at(i) + 5e-1*noise_values.at( i ) );
+    lb.push_back( function_values.at(i) - 1e0*noise_values.at( i ) );
+    ub.push_back( function_values.at(i) + 1e0*noise_values.at( i ) );
 //    parameters.push_back( function_values.at( i ) );
   }
+
 
   nlopt::opt opt(nlopt::LN_BOBYQA, function_values.size( ) );
   opt.set_lower_bounds ( lb );
@@ -77,11 +78,11 @@ void RegularizedMinimumFrobeniusNormModel::regularize_coefficients( )
   opt.set_xtol_abs ( 1e-6 );
   opt.set_xtol_rel ( 1e-6 );
 //  opt.set_maxtime( 1.5);
-//  try {
+  try {
     opt.optimize ( function_values, res );
 //    for ( unsigned int i = 0; i < function_values.size( ); ++i )
 //      function_values.at( i ) = parameters [ i ];
-//  } catch(...) {}
+  } catch(...) {}
   return;
 }
 //--------------------------------------------------------------------------------
@@ -118,6 +119,8 @@ double RegularizedMinimumFrobeniusNormModel::regularization_objective(
     }
     objective += pow( d->H_total.at(i).at(i), 2e0);
   }  
+
+
 
   return objective;
 }

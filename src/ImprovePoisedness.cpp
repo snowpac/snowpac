@@ -119,8 +119,10 @@ void ImprovePoisedness::improve_poisedness ( int reference_node,
   index_of_changed_nodes.clear( );
 
 //  if ( print_output && poisedness_constant > threshold_for_poisedness_constant )
-  if ( print_output )
+  if ( print_output ) {
     std::cout << " Improving model ........ ";// << std::endl;
+    fflush( stdout );
+  }
 //    std::cout << " Performing model improvement ... ";// << std::endl;
 
   compute_poisedness_constant ( reference_node, new_node, evaluations );
@@ -141,16 +143,17 @@ void ImprovePoisedness::improve_poisedness ( int reference_node,
     counter_max_improvement_steps++;
         
 //    if ( print_output )
-//      std::cout << "   Current poisedness value: " << poisedness_constant << std::endl; 
+      std::cout << "   Current poisedness value: " << poisedness_constant << std::endl; 
 
   //  intdelete = evaluations.surrogate_nodes_index[ change_index ];
   //  tmpdelete = poisedness_constant;
 
     evaluations.nodes.push_back ( new_node );
-    if ( evaluations.surrogate_nodes_index.size( ) >= max_nb_nodes ) {//|| model_has_been_improved ) {
+    if ( evaluations.surrogate_nodes_index.size( ) >= max_nb_nodes || 
+         poisedness_constant > 1e2 * threshold_for_poisedness_constant ) {
       evaluations.surrogate_nodes_index.erase( 
         evaluations.surrogate_nodes_index.begin() + change_index );
- //    std::cout << "------------" << std::endl;
+      std::cout << "------------" << std::endl;
    }
     evaluations.surrogate_nodes_index.push_back( evaluations.nodes.size()-1 );
     model_has_been_improved = true;
@@ -232,7 +235,7 @@ void ImprovePoisedness::compute_poisedness_constant ( int reference_node,
     for ( int k = 0; k < dim; ++k )
       q1.at(k) = q1.at(k)*(*delta) + evaluations.nodes[ evaluations.best_index ].at(k);
     poisedness_constant_tmp1 = fabs ( basis->evaluate ( q1, i ) );
-    poisedness_constant_tmp1 += 1e0/poisedness_constant_tmp1;
+  //  poisedness_constant_tmp1 += 1e0/poisedness_constant_tmp1;
     poisedness_constant_tmp1 *= node_norm_scaling;
 			
     //compute candidate for argmax l_i(x)
@@ -246,7 +249,7 @@ void ImprovePoisedness::compute_poisedness_constant ( int reference_node,
     for ( int k = 0; k < dim; ++k)
       q2.at(k) = q2.at(k)*(*delta) + evaluations.nodes[ evaluations.best_index ].at(k);
     poisedness_constant_tmp2 = fabs ( basis->evaluate ( q2, i ) );
-    poisedness_constant_tmp2 += 1e0/poisedness_constant_tmp2 ;
+ //   poisedness_constant_tmp2 += 1e0/poisedness_constant_tmp2 ;
     poisedness_constant_tmp2 *= node_norm_scaling;
 
 /*

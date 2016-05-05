@@ -506,10 +506,13 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::update_trustregion (
 template<class TSurrogateModel, class TBasisForSurrogateModel>
 void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::add_trial_node ( ) 
 {
-  if ( evaluations.surrogate_nodes_index.size( ) < evaluations.max_nb_nodes )
-    evaluations.surrogate_nodes_index.push_back ( evaluations.nodes.size()-1 );
-  else
-    evaluations.surrogate_nodes_index[ replace_node_index ] = evaluations.nodes.size()-1;
+  if ( diff_norm ( evaluations.nodes.at( evaluations.best_index), 
+                   evaluations.nodes.at( evaluations.nodes.size()-1 ) ) > 1e-2 * delta ) {
+    if ( evaluations.surrogate_nodes_index.size( ) < evaluations.max_nb_nodes )
+      evaluations.surrogate_nodes_index.push_back ( evaluations.nodes.size()-1 );
+    else
+      evaluations.surrogate_nodes_index[ replace_node_index ] = evaluations.nodes.size()-1;
+  }
   if ( stochastic_optimization )
     gaussian_processes.smooth_data ( evaluations );
   return;
