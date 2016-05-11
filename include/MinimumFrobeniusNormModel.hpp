@@ -18,7 +18,7 @@ class MinimumFrobeniusNormModel : public SurrogateModelBaseClass,
     std::vector<double> &gradient ( std::vector<double> const& );
     void set_function_values ( std::vector<double> const&, 
                                std::vector<double> const&,
-                               std::vector<int> const& );
+                               std::vector<int> const&, int );
 };
 
 #endif

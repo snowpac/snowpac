@@ -15,7 +15,7 @@ class SurrogateModelBaseClass {
     virtual std::vector<double> &gradient ( std::vector<double> const& ) = 0;
     virtual void set_function_values ( std::vector<double> const&,
                                        std::vector<double> const&,
-                                       std::vector<int> const& ) = 0;
+                                       std::vector<int> const&, int ) = 0;
     int dimension ( ) { return basis->dimension( ); }
     BasisForSurrogateModelBaseClass *get_basis() { return basis; }
 };

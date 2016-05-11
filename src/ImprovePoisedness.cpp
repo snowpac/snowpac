@@ -42,13 +42,13 @@ int ImprovePoisedness::replace_node ( int reference_node,
   maxvalue = -1e0;  
   basis_values = basis->evaluate ( new_node );
 
-  for (int i = 0; i < nb_nodes; i++) {
-    if ( diff_norm( evaluations.nodes[ evaluations.surrogate_nodes_index[i]], 
-                    new_node) / (*delta) < 1e-6 ) {
-      change_index = i;
-      return change_index;
-    }
+  for (unsigned int i = 0; i < nb_nodes; ++i) {
     if ( evaluations.surrogate_nodes_index[ i ] != reference_node ) {
+      if ( diff_norm( evaluations.nodes[ evaluations.surrogate_nodes_index[i]], 
+                      new_node) / (*delta) < 1e-6 ) {
+        change_index = i;
+        return change_index;
+      }
       LK = fabs( basis_values.at(i) );
       norm = diff_norm( evaluations.nodes[ evaluations.surrogate_nodes_index[i]],
                evaluations.nodes[ evaluations.best_index ] ) / (*delta);
@@ -65,6 +65,8 @@ int ImprovePoisedness::replace_node ( int reference_node,
       }
     }
   }
+
+//  assert ( change_index != evaluations.best_index);
 
   return change_index;
 }
@@ -143,7 +145,7 @@ void ImprovePoisedness::improve_poisedness ( int reference_node,
     counter_max_improvement_steps++;
         
 //    if ( print_output )
-      std::cout << "   Current poisedness value: " << poisedness_constant << std::endl; 
+ //     std::cout << "   Current poisedness value: " << poisedness_constant << std::endl; 
 
   //  intdelete = evaluations.surrogate_nodes_index[ change_index ];
   //  tmpdelete = poisedness_constant;
@@ -151,10 +153,11 @@ void ImprovePoisedness::improve_poisedness ( int reference_node,
     evaluations.nodes.push_back ( new_node );
     if ( evaluations.surrogate_nodes_index.size( ) >= max_nb_nodes || 
          poisedness_constant > 1e2 * threshold_for_poisedness_constant ) {
+      assert ( evaluations.surrogate_nodes_index.at(change_index) != evaluations.best_index );
       evaluations.surrogate_nodes_index.erase( 
         evaluations.surrogate_nodes_index.begin() + change_index );
-      std::cout << "------------" << std::endl;
-   }
+  //    std::cout << "------------" << std::endl;
+    }
     evaluations.surrogate_nodes_index.push_back( evaluations.nodes.size()-1 );
     model_has_been_improved = true;
 		

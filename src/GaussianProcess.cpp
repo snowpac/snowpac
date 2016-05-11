@@ -4,7 +4,7 @@
 #include <cassert>
 
 //--------------------------------------------------------------------------------
-GaussianProcess::GaussianProcess ( int n ) : 
+GaussianProcess::GaussianProcess ( int n, double &delta_input ) : 
   TriangularMatrixOperations ( n ),
   dim( n )
 {
@@ -18,19 +18,24 @@ GaussianProcess::GaussianProcess ( int n ) :
   }
   nb_gp_nodes = 0;
   gp_pointer = NULL;
+  delta = &delta_input;
 } 
 //--------------------------------------------------------------------------------
+
 
 //--------------------------------------------------------------------------------
 double GaussianProcess::evaluate_kernel ( std::vector<double> const &x, 
                                           std::vector<double> const &y )
 {
+  return evaluate_kernel ( x, y, gp_parameters );
+/*
   dist = 0e0;
   for ( int i = 0; i < dim; ++i )
     dist += pow( (x.at(i) - y.at(i)), 2e0) /  gp_parameters.at( i+1 );
   kernel_evaluation = exp(-dist / 2e0 );
   
   return kernel_evaluation * gp_parameters.at( 0 ) ;
+*/
 }
 //--------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------
@@ -39,7 +44,7 @@ double GaussianProcess::evaluate_kernel ( std::vector<double> const &x,
                                           std::vector<double> const &p )
 {
   dist = 0e0;
-  for ( int i = 0; i < dim; ++i )
+  for ( unsigned int i = 0; i < dim; ++i )
     dist += pow( (x.at(i) - y.at(i)), 2e0) /  p.at( i+1 );
   kernel_evaluation = exp(-dist / 2e0 );
   
@@ -209,15 +214,17 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
 //  }
   lb[0] = 1e-1; // * pow(1000e0 * max_noise / 2e0, 2e0);
   ub[0] = 1e1;// * pow(1000e0 * max_noise / 2e0, 2e0);
+  double delta_threshold = *delta;
+  if (delta_threshold < 1e-2) delta_threshold = 1e-2;
   for (int i = 0; i < dim; i++) {
-    lb[i+1] = 1e-2;// * delta;
-    ub[i+1] = 1e2;// * delta;   
+    lb[i+1] = 1e-2;// * delta_threshold;
+    ub[i+1] = 5e-1;// * delta_threshold;   
   }
 
   if (gp_parameters[0] < 0e0) {
-    gp_parameters[0] = 2e0;//(lb[0]*5e-1 + 5e-1*ub[0]);
+    gp_parameters[0] = 1e0;//(lb[0]*5e-1 + 5e-1*ub[0]);
     for (int i = 1; i < dim+1; i++) {
-      gp_parameters[i] = 4e0;//(lb[i]*5e-1 + 5e-1*ub[i]);
+      gp_parameters[i] = (lb[i]*5e-1 + 5e-1*ub[i]);
     }
   } else {
     for (int i = 0; i < dim+1; i++) {
@@ -229,8 +236,8 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
 
   //initialize optimizer from NLopt library
 //  nlopt::opt opt(nlopt::LD_CCSAQ, dim+1);
-//  nlopt::opt opt(nlopt::LN_BOBYQA, dim+1);
-  nlopt::opt opt(nlopt::GN_DIRECT, dim+1);
+  nlopt::opt opt(nlopt::LN_BOBYQA, dim+1);
+//  nlopt::opt opt(nlopt::GN_DIRECT, dim+1);
 
   //opt = nlopt_create(NLOPT_LN_COBYLA, dim+1);
   opt.set_lower_bounds( lb );
@@ -241,7 +248,7 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
   opt.set_xtol_abs(1e-6);
   opt.set_xtol_rel(1e-6);
 //set timeout to NLOPT_TIMEOUT seconds
-  opt.set_maxtime(2.5);
+  opt.set_maxtime(1.0);
   //perform optimization to get correction factors
   int exitflag = opt.optimize(gp_parameters, optval);
 

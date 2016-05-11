@@ -13,6 +13,7 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <fstream>
 #include <random>
 #include <iomanip>
 #include <fstream>
@@ -38,6 +39,10 @@ class NOWPAC : protected VectorOperations {
     bool last_point_is_feasible ( );
     void add_trial_node( );
     double compute_acceptance_ratio ( );
+    void write_to_file( );
+    const char *double_format = "  %.16e  ";
+    const char *int_format    = "  %d  ";
+    FILE *output_file;
     void *user_data = NULL;
     BlackboxData evaluations;
     std::vector<double> x_trial;
@@ -51,6 +56,7 @@ class NOWPAC : protected VectorOperations {
     double criticality_value;
     double trial_model_value;
     double tmp_dbl;
+    double max_noise;
     int verbose;
     double acceptance_ratio;
     int replace_node_index;
@@ -102,8 +108,10 @@ NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::NOWPAC ( int dim_input ) :
   eps_c = 1e-3;
   mu = 1e0;
   nb_constraints = -1;
-  evaluations.max_nb_nodes = (dim*dim + 3*dim + 2)/2;
-//  evaluations.max_nb_nodes = 2*dim+1;
+  max_noise = -1e0;
+//  evaluations.max_nb_nodes = (dim*dim + 3*dim + 2)/2;
+//  evaluations.max_nb_nodes = dim +1;
+  evaluations.max_nb_nodes = 2*dim+1;
   max_number_blackbox_evaluations = (int) HUGE_VAL;
   verbose = 3;
   NOEXIT = 100;
@@ -133,9 +141,9 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_option (
     { eps_c = option_value; return; }
   if ( option_name.compare( "mu" ) == 0 ) 
     { mu = option_value; return; }
-  if ( option_name.compare( "poisedness_threshold" ) == 0 ) 
+  if ( option_name.compare( "geometry_threshold" ) == 0 ) 
     { threshold_for_poisedness_constant = option_value; return; }
-  if ( option_name.compare( "inner_boundary_path_constants" ) == 0 ) { 
+  if ( option_name.compare( "eps_b" ) == 0 ) { 
     if ( nb_constraints == 0 ) {
       std::cout << "Unable to set inner boundary path constants" << std::endl;
       std::cout << "Reason: no constraints specified" << std::endl;
@@ -179,7 +187,7 @@ template<class TSurrogateModel, class TBasisForSurrogateModel>
 void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_option ( 
   std::string const &option_name, std::vector<double> const &option_value )
 {
-  if ( option_name.compare( "inner_boundary_path_constants" ) == 0 ) { 
+  if ( option_name.compare( "eps_b" ) == 0 ) { 
     if ( nb_constraints == 0 ) {
       std::cout << "Unable to set inner boundary path constants" << std::endl;
       std::cout << "Reason: no constraints specified" << std::endl;
@@ -325,8 +333,8 @@ template<class TSurrogateModel, class TBasisForSurrogateModel>
 double NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::compute_acceptance_ratio ( )
 {
   if ( stochastic_optimization ) {
-//    update_surrogate_models( );
-//    trial_model_value = surrogate_models[0].evaluate( x_trial );    
+    update_surrogate_models( );
+    trial_model_value = surrogate_models[0].evaluate( x_trial );    
   }
   return ( evaluations.values[0].at( evaluations.best_index ) - 
            evaluations.values[0].back() ) /
@@ -390,6 +398,8 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::blackbox_evaluator (
   if ( stochastic_optimization && evaluations.nodes.size() > dim ) 
     gaussian_processes.smooth_data ( evaluations );
 
+  write_to_file();
+
   return;
 }  
 //--------------------------------------------------------------------------------
@@ -436,6 +446,8 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::blackbox_evaluator ( )
   if ( stochastic_optimization ) 
     gaussian_processes.smooth_data ( evaluations );
 
+  write_to_file();
+
   return;
 }  
 //--------------------------------------------------------------------------------
@@ -461,7 +473,12 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::update_surrogate_models (
   for ( int i = 0; i < nb_constraints+1; i++ )
     surrogate_models[ i ].set_function_values ( evaluations.values[i],
                                                 evaluations.noise[i],
-                                                evaluations.surrogate_nodes_index );
+                                                evaluations.surrogate_nodes_index, 
+                                                evaluations.best_index );
+//    surrogate_models[ i ].set_function_values ( evaluations.values[i],
+//                                                evaluations.noise[i],
+//                                                evaluations.surrogate_nodes_index );
+
   return;
 }
 //--------------------------------------------------------------------------------
@@ -471,30 +488,39 @@ template<class TSurrogateModel, class TBasisForSurrogateModel>
 void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::update_trustregion ( 
   double scaling_factor )
 {
-  tmp_dbl = 0e0;
+  tmp_dbl = max_noise;
+  max_noise = 0e0;
   if ( stochastic_optimization ) {
-    for ( int i = 0; i < evaluations.surrogate_nodes_index.size(); i++ ) {
-      for ( int j = 0; j < nb_constraints+1; j++) {
-        if ( evaluations.noise[ j ].at( evaluations.surrogate_nodes_index[i] ) > tmp_dbl ) {
+    for ( unsigned int i = 0; i < evaluations.surrogate_nodes_index.size(); ++i ) {
+      if ( evaluations.surrogate_nodes_index[i] != evaluations.best_index ) continue;
+      for ( unsigned int j = 0; j < nb_constraints+1; ++j ) {
+        if ( evaluations.noise[ j ].at( evaluations.surrogate_nodes_index[i] ) > max_noise ) {
           if ( diff_norm( 
                  evaluations.nodes[ evaluations.surrogate_nodes_index[i] ], 
                  evaluations.nodes[ evaluations.best_index ] ) <= delta )
-            tmp_dbl = evaluations.noise[ j ].at( evaluations.surrogate_nodes_index[i] );
+            max_noise = evaluations.noise[ j ].at( evaluations.surrogate_nodes_index[i] );
         }
       }
     }
   }
+
+ if ( tmp_dbl >= 0e0 ) {
+   if ( max_noise > 2e0*tmp_dbl ) max_noise = 2e0*tmp_dbl;
+ } 
+ // max_noise = pow(sqrt(1e3)*max_noise/2e0, 2e0);
+
+
   delta *= scaling_factor;
 //  std::cout << std::endl << "------------------------- " << std::endl;
-//  std::cout << "MAXNOISE " << tmp_dbl << " sqrt = " << sqrt( tmp_dbl ) << std::endl;
+//  std::cout << "MAXNOISE " << max_noise << " sqrt = " << sqrt( max_noise ) << std::endl;
 //  std::cout <<  "------------------------- " << std::endl;
   if ( stochastic_optimization ) {
-    int ar_tmp = fabs(acceptance_ratio);
+    double ar_tmp = fabs(acceptance_ratio);
     if (ar_tmp < 1e0) ar_tmp = 1e0;
-    if (ar_tmp > 2e1) ar_tmp = 2e1;
-    ar_tmp = 1e0;
-    if ( delta < sqrt(1e0*tmp_dbl)*1e0*ar_tmp  ) 
-      delta = sqrt(1e0*tmp_dbl) * 1e0 * ar_tmp; 
+    if (ar_tmp > 2e0) ar_tmp = 2e0;
+    ar_tmp = 1e-1;
+    if ( delta < sqrt(1e0*max_noise)*1e0*ar_tmp  ) 
+      delta = sqrt(1e0*max_noise) * 1e0 * ar_tmp; 
   }
   if ( delta > delta_max ) delta = delta_max;
   if ( delta < delta_min ) EXIT_FLAG = 0;
@@ -506,18 +532,45 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::update_trustregion (
 template<class TSurrogateModel, class TBasisForSurrogateModel>
 void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::add_trial_node ( ) 
 {
-  if ( diff_norm ( evaluations.nodes.at( evaluations.best_index), 
-                   evaluations.nodes.at( evaluations.nodes.size()-1 ) ) > 1e-2 * delta ) {
-    if ( evaluations.surrogate_nodes_index.size( ) < evaluations.max_nb_nodes )
-      evaluations.surrogate_nodes_index.push_back ( evaluations.nodes.size()-1 );
-    else
-      evaluations.surrogate_nodes_index[ replace_node_index ] = evaluations.nodes.size()-1;
-  }
+  if ( evaluations.surrogate_nodes_index.size( ) < evaluations.max_nb_nodes )
+    evaluations.surrogate_nodes_index.push_back ( evaluations.nodes.size()-1 );
+  else
+    evaluations.surrogate_nodes_index[ replace_node_index ] = evaluations.nodes.size()-1;
+  
   if ( stochastic_optimization )
     gaussian_processes.smooth_data ( evaluations );
   return;
 }
 //--------------------------------------------------------------------------------
+
+
+
+//--------------------------------------------------------------------------------
+template<class TSurrogateModel, class TBasisForSurrogateModel>
+void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::write_to_file ( ) 
+{
+    // ouptut current number of black box evaluations
+    fprintf(output_file, int_format, evaluations.nodes.size());
+    // output the current design
+    for(unsigned int i = 0; i < dim; ++i) {
+        fprintf(output_file, double_format, evaluations.nodes.at(evaluations.best_index).at(i));
+    }
+    // output the current best value of the objective
+    fprintf(output_file, double_format, evaluations.values.at(0).at(evaluations.best_index));
+    // output the current trust region radius
+    fprintf(output_file, double_format, delta);
+    // output the current values of the constraints
+    for(unsigned int i = 0; i < nb_constraints; ++i) {
+        fprintf(output_file, double_format, evaluations.values.at(i+1).at(evaluations.best_index));
+    }
+    fprintf(output_file, "\n");
+    fflush(output_file);
+
+}
+//--------------------------------------------------------------------------------
+
+
+
 
 //--------------------------------------------------------------------------------
 template<class TSurrogateModel, class TBasisForSurrogateModel>
@@ -536,6 +589,8 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
   if ( EXIT_FLAG != NOEXIT ) return EXIT_FLAG;
   std::cout.setf( std::ios::fixed, std:: ios::floatfield );
   std::cout << std::setprecision(8);
+
+  output_file = fopen("results.dat", "w");
 
 
   TSurrogateModel surrogate_model_prototype( surrogate_basis );
@@ -559,6 +614,7 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
   int random_seed = 25041981;//rand_dev();
   std::mt19937 rand_generator(random_seed);
   std::normal_distribution<double> norm_dis(0e0,3e-1);
+//  std::uniform_real_distribution<double> norm_dis(-2e0,2e0);
 
   if ( verbose >= 2 ) { std::cout << "Initial evaluation of black box functions" << std::endl; }
   // initial evaluations 
@@ -626,7 +682,7 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
         }
         surrogate_nodes.improve_poisedness ( evaluations.best_index, evaluations );
         if ( stochastic_optimization ) {
-          for ( int i = 0; i < dim; i++ )
+          for ( unsigned int i = 0; i < dim; ++i )
             x_trial.at(i) = evaluations.nodes[ evaluations.best_index].at( i ) +
                          delta * norm_dis( rand_generator ) * 1e0;
           evaluations.nodes.push_back( x_trial );
@@ -670,8 +726,8 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
         if ( EXIT_FLAG != NOEXIT ) break;
         surrogate_nodes.improve_poisedness (evaluations.best_index, evaluations );
         if ( stochastic_optimization ) {
-          for ( int i = 0; i < dim; i++ )
-            x_trial.at(i) = evaluations.nodes[ evaluations.best_index].at( i ) +
+          for ( unsigned int i = 0; i < dim; ++i )
+            x_trial.at(i) = evaluations.nodes[ evaluations.best_index ].at( i ) +
                             delta * norm_dis( rand_generator ) * 1e0;
           evaluations.nodes.push_back( x_trial );
         }
@@ -695,26 +751,33 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
       if ( verbose >= 2 ) { 
         std::cout << "*****************************************" << std::endl; 
       }
+      fflush(stdout);
       if ( acceptance_ratio >= eta_1 && acceptance_ratio < 2e0 ) {
         if ( verbose >= 2 ) { std::cout << " Step successful" << std::endl; }
         update_trustregion( gamma_inc );
       } 
+      fflush(stdout);
       if ( (acceptance_ratio >= eta_0 && acceptance_ratio < eta_1) || acceptance_ratio >= 2e0 ) {
         if ( verbose >= 2 ) { std::cout << " Step acceptable" << std::endl; }
       }
+      fflush(stdout);
       if ( acceptance_ratio >= eta_0 ) {
         replace_node_index = surrogate_nodes.replace_node( evaluations.best_index, 
                                                            evaluations, x_trial );
         add_trial_node( );
         update_surrogate_models( );
+        
         evaluations.best_index = evaluations.nodes.size()-1;
       }
       if ( acceptance_ratio < eta_0 ) {
         if ( verbose >= 2 ) { std::cout << " Step rejected" << std::endl; }
-        replace_node_index = surrogate_nodes.replace_node( evaluations.best_index, 
-                                                           evaluations, x_trial );
-        add_trial_node( );
-        update_surrogate_models( );
+        if ( diff_norm ( evaluations.nodes.at( evaluations.best_index), 
+                         evaluations.nodes.at( evaluations.nodes.size()-1 ) ) > 1e-2 * delta ) {
+          replace_node_index = surrogate_nodes.replace_node( evaluations.best_index, 
+                                                             evaluations, x_trial );
+          add_trial_node( );
+          update_surrogate_models( );
+        }
         if ( stochastic_optimization ) {
           for ( int i = 0; i < dim; i++ )
             x_trial.at(i) = evaluations.nodes[ evaluations.best_index].at( i ) +
@@ -817,7 +880,7 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
 */
 
   
-
+  fclose( output_file );
   return 1;
 }
 //--------------------------------------------------------------------------------

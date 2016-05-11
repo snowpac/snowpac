@@ -36,9 +36,10 @@ class GaussianProcess : public GaussianProcessBaseClass,
     std::vector< std::vector<double> > gp_nodes;
    // Eigen::VectorXd gp_function_values;
     std::vector<double> scaled_function_values;
-   // double min_function_value, max_function_value;
+    double min_function_value, max_function_value;
     std::vector<double> gp_noise;
     int dim, nb_gp_nodes;
+    double *delta;
 
     //for gradient based estimation
 //    Eigen::MatrixXd dK;
@@ -64,7 +65,7 @@ class GaussianProcess : public GaussianProcessBaseClass,
      Class constructor.
      \param n dimension of the Gaussian process.
     */
-    GaussianProcess( int );
+    GaussianProcess( int, double& );
     //! Destructor
     ~GaussianProcess() { }
     //! Estimation of hyper parameters

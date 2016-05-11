@@ -14,7 +14,6 @@ MinimumFrobeniusNormModel::MinimumFrobeniusNormModel (
 std::vector<double> &MinimumFrobeniusNormModel::gradient (
   std::vector<double> const &x ) 
 {
- // basis->compute_basis_gradients ( x );
   scale( function_values.at(0), basis->gradient(x,0), model_gradient );
   for (int i = 1; i < size; i++)
     add( function_values.at(i), basis->gradient(x,i), model_gradient );
@@ -33,7 +32,7 @@ double MinimumFrobeniusNormModel::evaluate (
 //--------------------------------------------------------------------------------
 void MinimumFrobeniusNormModel::set_function_values( 
   std::vector<double> const &values, std::vector<double> const &noise,
-  std::vector<int> const &surrogate_nodes_index )
+  std::vector<int> const &surrogate_nodes_index, int best_index )
 { 
   size = surrogate_nodes_index.size();
   function_values.resize( size );
