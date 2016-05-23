@@ -1,7 +1,7 @@
 //#ifndef HNOWPAC
 //#define HNOWPAC
 
-#include "BlackboxData.hpp"
+#include "BlackBoxData.hpp"
 #include "BasisForMinimumFrobeniusNormModel.hpp"
 #include "SubproblemOptimization.hpp"
 #include "MinimumFrobeniusNormModel.hpp"
@@ -42,9 +42,10 @@ class NOWPAC : protected VectorOperations {
     void write_to_file( );
     const char *double_format = "  %.16e  ";
     const char *int_format    = "  %d  ";
-    FILE *output_file;
+    const char* output_filename = NULL;
+    std::FILE *output_file;
     void *user_data = NULL;
-    BlackboxData evaluations;
+    BlackBoxData evaluations;
     std::vector<double> x_trial;
     double delta, delta_min, delta_max;
     double omega, theta, gamma, gamma_inc, mu;
@@ -66,7 +67,9 @@ class NOWPAC : protected VectorOperations {
     int EXIT_FLAG;
     int NOEXIT;
   public:
+    ~NOWPAC ( ); 
     NOWPAC ( int ); 
+    NOWPAC ( int, const char* ); 
     void set_blackbox ( BlackBoxBaseClass&, int );
     void set_blackbox ( BlackBoxBaseClass& );
     int optimize ( std::vector<double>&, double& );
@@ -85,6 +88,23 @@ class NOWPAC : protected VectorOperations {
 };
 
 //#endif
+
+//--------------------------------------------------------------------------------    
+template<class TSurrogateModel, class TBasisForSurrogateModel>
+NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::NOWPAC ( 
+  int dim_input, const char *output_filename_input ) : NOWPAC ( dim_input ) {
+  output_filename = output_filename_input;
+  output_file = fopen(output_filename, "w");
+}
+//--------------------------------------------------------------------------------
+
+//--------------------------------------------------------------------------------    
+template<class TSurrogateModel, class TBasisForSurrogateModel>
+NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::~NOWPAC ( ) {
+  if ( output_filename != NULL ) fclose( output_file );
+}
+//--------------------------------------------------------------------------------
+
 
 
 //--------------------------------------------------------------------------------    
@@ -109,9 +129,9 @@ NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::NOWPAC ( int dim_input ) :
   mu = 1e0;
   nb_constraints = -1;
   max_noise = -1e0;
-//  evaluations.max_nb_nodes = (dim*dim + 3*dim + 2)/2;
+  evaluations.max_nb_nodes = (dim*dim + 3*dim + 2)/2;
 //  evaluations.max_nb_nodes = dim +1;
-  evaluations.max_nb_nodes = 2*dim+1;
+//  evaluations.max_nb_nodes = 2*dim+1;
   max_number_blackbox_evaluations = (int) HUGE_VAL;
   verbose = 3;
   NOEXIT = 100;
@@ -333,8 +353,8 @@ template<class TSurrogateModel, class TBasisForSurrogateModel>
 double NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::compute_acceptance_ratio ( )
 {
   if ( stochastic_optimization ) {
-    update_surrogate_models( );
-    trial_model_value = surrogate_models[0].evaluate( x_trial );    
+    //update_surrogate_models( );
+    //trial_model_value = surrogate_models[0].evaluate( x_trial );
   }
   return ( evaluations.values[0].at( evaluations.best_index ) - 
            evaluations.values[0].back() ) /
@@ -383,14 +403,6 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::blackbox_evaluator (
       evaluations.noise[i].push_back( blackbox_noise.at(i) );
     evaluations.values[i].push_back( blackbox_values.at(i) );
   }  
-
-
-
-
-
-
-
-
 
   if ( set_node_active )
     evaluations.surrogate_nodes_index.push_back( (evaluations.nodes).size()-1 );    
@@ -518,7 +530,7 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::update_trustregion (
     double ar_tmp = fabs(acceptance_ratio);
     if (ar_tmp < 1e0) ar_tmp = 1e0;
     if (ar_tmp > 2e0) ar_tmp = 2e0;
-    ar_tmp = 1e-1;
+      ar_tmp = 1e0;//sqrt(2.0);
     if ( delta < sqrt(1e0*max_noise)*1e0*ar_tmp  ) 
       delta = sqrt(1e0*max_noise) * 1e0 * ar_tmp; 
   }
@@ -590,8 +602,6 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
   std::cout.setf( std::ios::fixed, std:: ios::floatfield );
   std::cout << std::setprecision(8);
 
-  output_file = fopen("results.dat", "w");
-
 
   TSurrogateModel surrogate_model_prototype( surrogate_basis );
   for ( int i = 0; i < nb_constraints+1; i++ )
@@ -613,8 +623,8 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
 //  std::random_device rand_dev;
   int random_seed = 25041981;//rand_dev();
   std::mt19937 rand_generator(random_seed);
-  std::normal_distribution<double> norm_dis(0e0,3e-1);
-//  std::uniform_real_distribution<double> norm_dis(-2e0,2e0);
+  std::normal_distribution<double> norm_dis(0e0,2e-1);
+  //std::uniform_real_distribution<double> norm_dis(-2e0,2e0);
 
   if ( verbose >= 2 ) { std::cout << "Initial evaluation of black box functions" << std::endl; }
   // initial evaluations 
@@ -779,8 +789,8 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
           update_surrogate_models( );
         }
         if ( stochastic_optimization ) {
-          for ( int i = 0; i < dim; i++ )
-            x_trial.at(i) = evaluations.nodes[ evaluations.best_index].at( i ) +
+          for ( unsigned int i = 0; i < dim; ++i )
+            x_trial.at(i) = evaluations.nodes[ evaluations.best_index ].at( i ) +
                             delta * norm_dis( rand_generator ) * 1e0;
           evaluations.nodes.push_back( x_trial );
         }
@@ -880,7 +890,6 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
 */
 
   
-  fclose( output_file );
   return 1;
 }
 //--------------------------------------------------------------------------------

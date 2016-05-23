@@ -95,7 +95,7 @@ void GaussianProcess::build ( std::vector< std::vector<double> > const &nodes,
     for (int i = 0; i < nb_gp_nodes; i++) {
       for (int j = 0; j <= i; j++)
         L.at(i).push_back (evaluate_kernel( gp_nodes[i], gp_nodes[j] ) );
-      L.at(i).at(i) += pow( noise.at(i) / 2e0, 2e0 );
+      L.at(i).at(i) += pow( noise.at(i) / 2e0 + noise_regularization, 2e0 );
     }
   
     CholeskyFactorization::compute( L, pos, rho, nb_gp_nodes );
@@ -137,7 +137,7 @@ void GaussianProcess::update ( std::vector<double> const &x,
 
   L.push_back ( K0 );
   L.at(L.size()-1).push_back(
-    sqrt( evaluate_kernel( x, x ) + pow( noise / 2e0, 2e0 ) - 
+    sqrt( evaluate_kernel( x, x ) + pow( noise / 2e0 + noise_regularization, 2e0 ) - 
           VectorOperations::dot_product(K0, K0) ) );
         
   alpha = scaled_function_values;
@@ -193,11 +193,11 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
 
   L.clear();
   L.resize( nb_gp_nodes );
-  for (int i = 0; i < nb_gp_nodes; i++) 
+  for (unsigned int i = 0; i < nb_gp_nodes; ++i)
     L.at(i).resize( i+1 ); 
  
   scaled_function_values.resize(nb_gp_nodes);
-  for (int i = 0; i < nb_gp_nodes; i++) {
+  for (unsigned int i = 0; i < nb_gp_nodes; ++i) {
     scaled_function_values.at(i) = values.at(i);
 //    scaled_function_values.at(i) = values.at(i) - min_function_value;
 //    scaled_function_values.at(i) /= 5e-1*( max_function_value-min_function_value );
@@ -212,23 +212,23 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
 //    if (gp_noise.at( i ) > max_noise)
 //      max_noise = gp_noise.at( i );
 //  }
-  lb[0] = 1e-1; // * pow(1000e0 * max_noise / 2e0, 2e0);
+  lb[0] = 5e-1; // * pow(1000e0 * max_noise / 2e0, 2e0);
   ub[0] = 1e1;// * pow(1000e0 * max_noise / 2e0, 2e0);
   double delta_threshold = *delta;
   if (delta_threshold < 1e-2) delta_threshold = 1e-2;
-  for (int i = 0; i < dim; i++) {
-    lb[i+1] = 1e-2;// * delta_threshold;
-    ub[i+1] = 5e-1;// * delta_threshold;   
+  for (unsigned int i = 0; i < dim; ++i) {
+      lb[i+1] = 1e-1;// * delta_threshold;
+      ub[i+1] = 1e2;// * delta_threshold;
   }
 
   if (gp_parameters[0] < 0e0) {
-    gp_parameters[0] = 1e0;//(lb[0]*5e-1 + 5e-1*ub[0]);
-    for (int i = 1; i < dim+1; i++) {
+    gp_parameters[0] = lb[0]*5e-1 + 5e-1*ub[0];
+    for (unsigned int i = 1; i < dim+1; ++i) {
       gp_parameters[i] = (lb[i]*5e-1 + 5e-1*ub[i]);
     }
   } else {
-    for (int i = 0; i < dim+1; i++) {
-      if ( gp_parameters[i] <= lb[i] ) gp_parameters[i] = 1e0;//1.1 * lb[i];
+    for (unsigned int i = 0; i < dim+1; ++i) {
+      if ( gp_parameters[i] <= lb[i] ) gp_parameters[i] = 1.1 * lb[i];
       if ( gp_parameters[i] >= ub[i] ) gp_parameters[i] = 0.9 * ub[i];
     }
   }
@@ -236,8 +236,9 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
 
   //initialize optimizer from NLopt library
 //  nlopt::opt opt(nlopt::LD_CCSAQ, dim+1);
-  nlopt::opt opt(nlopt::LN_BOBYQA, dim+1);
-//  nlopt::opt opt(nlopt::GN_DIRECT, dim+1);
+//  nlopt::opt opt(nlopt::LN_BOBYQA, dim+1);
+    int dimp1 = dim+1;
+  nlopt::opt opt(nlopt::GN_DIRECT, dimp1);
 
   //opt = nlopt_create(NLOPT_LN_COBYLA, dim+1);
   opt.set_lower_bounds( lb );
@@ -245,18 +246,27 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
     
   opt.set_max_objective( parameter_estimation_objective, gp_pointer);
 
-  opt.set_xtol_abs(1e-6);
-  opt.set_xtol_rel(1e-6);
+ // opt.set_xtol_abs(1e-2);
+//  opt.set_xtol_rel(1e-2);
 //set timeout to NLOPT_TIMEOUT seconds
   opt.set_maxtime(1.0);
   //perform optimization to get correction factors
-  int exitflag = opt.optimize(gp_parameters, optval);
+  
+//  try {
+    int exitflag = opt.optimize(gp_parameters, optval);
+    
+//  } catch (...) {
+//    gp_parameters[0] = lb[0]*5e-1 + 5e-1*ub[0];
+//    for (unsigned int i = 1; i < dim+1; ++i) {
+//      gp_parameters[i] = (lb[i]*5e-1 + 5e-1*ub[i]);
+//    }
+//  }
 
   //std::cout << "exitflag = "<< exitflag<<std::endl;
-  std::cout << "OPTVAL .... " << optval << std::endl;
-  for ( int i = 0; i < gp_parameters.size(); ++i )
-    std::cout << "gp_param = " << gp_parameters[i] << std::endl;
-  std::cout << std::endl;
+  //std::cout << "OPTVAL .... " << optval << std::endl;
+  //for ( int i = 0; i < gp_parameters.size(); ++i )
+  //  std::cout << "gp_param = " << gp_parameters[i] << std::endl;
+  //std::cout << std::endl;
  
       
   return;
@@ -272,12 +282,12 @@ double GaussianProcess::parameter_estimation_objective(std::vector<double> const
 
   GaussianProcess *d = reinterpret_cast<GaussianProcess*>(data);
 
-  double noise_regularization = 0e-2;
 
-  for (int i = 0; i < d->nb_gp_nodes; i++) {
-    for (int j = 0; j <= i; j++)
+
+  for (unsigned int i = 0; i < d->nb_gp_nodes; ++i) {
+    for (unsigned int j = 0; j <= i; ++j)
       d->L.at(i).at(j) = d->evaluate_kernel( d->gp_nodes[i], d->gp_nodes[j], x );
-    d->L.at(i).at(i) += pow( d->gp_noise.at(i) / 2e0 + noise_regularization, 2e0 );
+    d->L.at(i).at(i) += pow( d->gp_noise.at(i) / 2e0 + d->noise_regularization, 2e0 );
   }
 
 
@@ -288,8 +298,10 @@ double GaussianProcess::parameter_estimation_objective(std::vector<double> const
   d->backward_substitution( d->L, d->alpha );
   double result = -0.5*d->VectorOperations::dot_product(d->scaled_function_values, d->alpha) + 
                   -0.5*((double)d->nb_gp_nodes)*log(6.28);
-  for (int i = 0; i < d->nb_gp_nodes; ++i)
-    result -= 0.5*log(d->L.at(i).at(i)); 
+  for (unsigned int i = 0; i < d->nb_gp_nodes; ++i)
+    result -= 0.5*log(d->L.at(i).at(i));
+    
+  // std::cout << result << std::endl;
 
 
 /*

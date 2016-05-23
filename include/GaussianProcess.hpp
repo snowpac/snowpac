@@ -40,6 +40,7 @@ class GaussianProcess : public GaussianProcessBaseClass,
     std::vector<double> gp_noise;
     int dim, nb_gp_nodes;
     double *delta;
+    double noise_regularization = 1e-6;
 
     //for gradient based estimation
 //    Eigen::MatrixXd dK;

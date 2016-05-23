@@ -35,7 +35,7 @@ ImprovePoisedness::ImprovePoisedness ( BasisForSurrogateModelBaseClass &B,
 
 //--------------------------------------------------------------------------------
 int ImprovePoisedness::replace_node ( int reference_node, 
-                                      BlackboxData const &evaluations,
+                                      BlackBoxData const &evaluations,
                                       std::vector<double> const &new_node ) 
 {
   nb_nodes = evaluations.surrogate_nodes_index.size( );
@@ -74,7 +74,7 @@ int ImprovePoisedness::replace_node ( int reference_node,
 
 /*
 //--------------------------------------------------------------------------------
-void ImprovePoisedness::replace_node ( BlackboxData const &evaluations ) 
+void ImprovePoisedness::replace_node ( BlackBoxData const &evaluations )
 {
   nb_nodes = evaluations.surrogate_nodes_index.size( );
   maxvalue = -1e0;  
@@ -107,7 +107,7 @@ void ImprovePoisedness::replace_node ( BlackboxData const &evaluations )
 
 //--------------------------------------------------------------------------------
 void ImprovePoisedness::improve_poisedness ( int reference_node, 
-                                             BlackboxData &evaluations ) 
+                                             BlackBoxData &evaluations )
 {
   
   nb_nodes = evaluations.surrogate_nodes_index.size( );
@@ -207,7 +207,7 @@ void ImprovePoisedness::improve_poisedness ( int reference_node,
 
 //--------------------------------------------------------------------------------
 void ImprovePoisedness::compute_poisedness_constant ( int reference_node,
-  std::vector<double> &new_node, BlackboxData &evaluations ) 
+  std::vector<double> &new_node, BlackBoxData &evaluations )
 {
   //initialize geometry value
   poisedness_constant     = -1e0;

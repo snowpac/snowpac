@@ -28,13 +28,13 @@ class GaussianProcessSupport : protected VectorOperations {
     std::vector< std::vector<double> > noise;
     std::vector<GaussianProcess> gaussian_processes;
     std::vector<double> rescaled_node;
-    void update_data ( BlackboxData& );
-    void update_gaussian_processes ( BlackboxData& );
+    void update_data ( BlackBoxData& );
+    void update_gaussian_processes ( BlackBoxData& );
   public:
     void initialize ( const int, const int, double&,
                       std::vector<double> const&, int );
-    void smooth_data ( BlackboxData& );    
-    double evaluate_objective ( BlackboxData const& );    
+    void smooth_data ( BlackBoxData& );
+    double evaluate_objective ( BlackBoxData const& );
 };
 
 #endif

@@ -27,7 +27,7 @@ void GaussianProcessSupport::initialize ( const int dim, const int number_proces
 //--------------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------------
-void GaussianProcessSupport::update_data ( BlackboxData &evaluations ) 
+void GaussianProcessSupport::update_data ( BlackBoxData &evaluations )
 {
   for (unsigned int j = 0; j < number_processes; ++j) {
     for (unsigned int i = nb_values; i < evaluations.values[j].size(); ++i) {
@@ -47,7 +47,7 @@ void GaussianProcessSupport::update_data ( BlackboxData &evaluations )
 
 
 //--------------------------------------------------------------------------------
-void GaussianProcessSupport::update_gaussian_processes ( BlackboxData &evaluations ) 
+void GaussianProcessSupport::update_gaussian_processes ( BlackBoxData &evaluations )
 {
   if ( nb_values >= next_update && update_interval_length > 0 ) {
     do_parameter_estimation = true;
@@ -68,7 +68,7 @@ void GaussianProcessSupport::update_gaussian_processes ( BlackboxData &evaluatio
     best_index = evaluations.best_index;
     for ( unsigned int i = 0; i < nb_values; ++i ) {
       if ( diff_norm ( evaluations.nodes[ i ],
-                       evaluations.nodes[ best_index ] ) <= 3e0 * (delta_tmp) ) {
+                       evaluations.nodes[ best_index ] ) <= 2e0 * (delta_tmp) ) {
         gaussian_process_active_index.push_back ( i );
         rescale ( 1e0/(delta_tmp), evaluations.nodes[i], evaluations.nodes[best_index],
                   rescaled_node);
@@ -87,8 +87,10 @@ void GaussianProcessSupport::update_gaussian_processes ( BlackboxData &evaluatio
     gaussian_process_values.resize(gaussian_process_active_index.size());
     gaussian_process_noise.resize(gaussian_process_active_index.size());
 
-    for ( int j = 0; j < number_processes; j++ ) {
-      for ( size_t i = 0; i < gaussian_process_active_index.size(); ++i ) {
+      
+      
+    for ( unsigned int j = 0; j < number_processes; ++j ) {
+      for ( unsigned int i = 0; i < gaussian_process_active_index.size(); ++i ) {
         gaussian_process_values.at(i) = values[ j ].at( gaussian_process_active_index[i] );
         gaussian_process_noise.at(i) = noise[ j ].at( gaussian_process_active_index[i] );
       }
@@ -99,12 +101,46 @@ void GaussianProcessSupport::update_gaussian_processes ( BlackboxData &evaluatio
                                    gaussian_process_values,
                                    gaussian_process_noise );
     }
+/*
+      std::vector<double> x_loc(2);
+      std::vector<double> x_loc_rescale(2);
+      std::vector<double> fvals(3);
+      std::ofstream outputfile ( "gp_data.dat" );
+      if ( outputfile.is_open( ) ) {
+          for (double igp = 0.5; igp <= 1.5; igp+=0.01) {
+              x_loc.at(0) = igp;
+              for (double jgp = 0.5; jgp <= 1.5; jgp+=0.01) {
+                  x_loc.at(1) = jgp;
+                  rescale ( 1e0/(delta_tmp), x_loc,
+                           evaluations.nodes[best_index], x_loc_rescale );
+                  gaussian_processes[0].evaluate( x_loc_rescale, fvals.at(0), variance );
+                  gaussian_processes[1].evaluate( x_loc_rescale, fvals.at(1), variance );
+                  gaussian_processes[2].evaluate( x_loc_rescale, fvals.at(2), variance );
+                  outputfile << x_loc.at(0) << "; " << x_loc.at(1) << "; " << fvals.at(0)<< "; " <<
+                  fvals.at(1)<< "; " << fvals.at(2) << std::endl;
+              }
+          }
+          outputfile.close( );
+      } else std::cout << "Unable to open file." << std::endl;
+
+      outputfile.open ( "gp_nodes.dat" );
+      if ( outputfile.is_open( ) ) {
+          for (int igp = 0; igp < gaussian_process_nodes.size(); ++igp) {
+              
+              outputfile << evaluations.nodes[gaussian_process_active_index[igp]].at(0) << "; " <<
+              evaluations.nodes[gaussian_process_active_index[igp]].at(1) << std::endl;
+          }
+          outputfile.close( );
+      } else std::cout << "Unable to open file." << std::endl;
+*/
+
+      
   } else {
-    for ( size_t i = last_included; i < values[0].size(); ++i ) {
+    for ( unsigned int i = last_included; i < values[0].size(); ++i ) {
       gaussian_process_active_index.push_back ( i );
       rescale ( 1e0/(delta_tmp), evaluations.nodes[i], evaluations.nodes[best_index],
                 rescaled_node);
-      for ( int j = 0; j < number_processes; ++j ) {
+      for ( unsigned int j = 0; j < number_processes; ++j ) {
 //        gaussian_processes[j].update( evaluations.nodes[ i ],
         gaussian_processes[j].update( rescaled_node,
                                       values[ j ].at( i ),
@@ -113,6 +149,10 @@ void GaussianProcessSupport::update_gaussian_processes ( BlackboxData &evaluatio
     }
 
   }
+    
+    
+   
+    
 
   last_included = evaluations.nodes.size();
   return;
@@ -121,7 +161,7 @@ void GaussianProcessSupport::update_gaussian_processes ( BlackboxData &evaluatio
 
 
 //--------------------------------------------------------------------------------
-void GaussianProcessSupport::smooth_data ( BlackboxData &evaluations ) 
+void GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
 {  
 
 
@@ -140,7 +180,7 @@ void GaussianProcessSupport::smooth_data ( BlackboxData &evaluations )
 //      std::cout << i << ", "<< j <<" -- variance " << variance << std::endl;
       assert ( variance >= 0e0 );
 
-      weight = exp( - 1e0*sqrt(variance) );
+      weight = exp( - 2e0*sqrt(variance) );
 /*      
       tmpdbl = 2e0*sqrt(variance);
       if (tmpdbl  >noise[j].at(evaluations.surrogate_nodes_index[i])) weight = 1e0;
@@ -176,7 +216,7 @@ void GaussianProcessSupport::smooth_data ( BlackboxData &evaluations )
 
 
 //--------------------------------------------------------------------------------
-double GaussianProcessSupport::evaluate_objective ( BlackboxData const &evaluations) 
+double GaussianProcessSupport::evaluate_objective ( BlackBoxData const &evaluations)
 {
   rescale ( 1e0/(delta_tmp), evaluations.nodes[evaluations.best_index], 
             evaluations.nodes[best_index], rescaled_node );

@@ -1,10 +1,10 @@
-#ifndef HBlackboxData
-#define HBlackboxData
+#ifndef HBlackBoxData
+#define HBlackBoxData
 
 #include <Eigen/Core>
 #include <vector>
 
-struct BlackboxData {
+struct BlackBoxData {
   int max_nb_nodes;
   int best_index;
   std::vector< std::vector<double> > nodes;

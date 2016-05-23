@@ -76,7 +76,7 @@ void BasisForMinimumFrobeniusNormModel::set_nb_nodes( int nb_nodes_input ) {
 
 //--------------------------------------------------------------------------------
 void BasisForMinimumFrobeniusNormModel::compute_basis_coefficients ( 
-  BlackboxData const &evaluations ) 
+  BlackBoxData const &evaluations )
 {
   set_nb_nodes ( evaluations.surrogate_nodes_index.size( ) );
 

@@ -1,7 +1,7 @@
 #ifndef HBasisForMinimumFrobeniusNormModel
 #define HBasisForMinimumFrobeniusNormModel
 
-#include "BlackboxData.hpp"
+#include "BlackBoxData.hpp"
 #include "BasisForSurrogateModelBaseClass.hpp"
 #include "QuadraticMonomial.hpp"
 #include "VectorOperations.hpp"
@@ -46,7 +46,7 @@ class BasisForMinimumFrobeniusNormModel : public BasisForSurrogateModelBaseClass
     double evaluate ( std::vector<double> const&, int);
     std::vector<double> &gradient ( std::vector<double> const&, int );
 
-    void compute_basis_coefficients ( BlackboxData const& );
+    void compute_basis_coefficients ( BlackBoxData const& );
     void get_mat_vec_representation ( int, std::vector<double>&,
                                       std::vector< std::vector<double> >&);
     void compute_mat_vec_representation ( int );

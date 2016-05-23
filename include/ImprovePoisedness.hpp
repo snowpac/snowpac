@@ -2,7 +2,7 @@
 #define HImprovePoisedness
 
 #include "ImprovePoisednessBaseClass.hpp"
-#include "BlackboxData.hpp"
+#include "BlackBoxData.hpp"
 #include "CholeskyFactorization.hpp"
 #include "VectorOperations.hpp"
 #include "QuadraticMinimization.hpp"
@@ -34,7 +34,7 @@ class ImprovePoisedness : public ImprovePoisednessBaseClass,
     bool print_output;
     int change_index;    
     bool model_has_been_improved;
-    void compute_poisedness_constant ( int, std::vector<double>&, BlackboxData& );
+    void compute_poisedness_constant ( int, std::vector<double>&, BlackBoxData& );
   public:
     //! Constructor
     /*!
@@ -44,7 +44,7 @@ class ImprovePoisedness : public ImprovePoisednessBaseClass,
      \param m maximal number of interpolation nodes
      \param rad radius arround current best point of ball that contains well poised points
      \param verbose switch output on (verbose = 3) or off (verbose = 0)
-     \see BlackboxData
+     \see BlackBoxData
     */
     ImprovePoisedness ( BasisForSurrogateModelBaseClass&, double, int, double&, int );
     //! Destructor
@@ -53,20 +53,20 @@ class ImprovePoisedness : public ImprovePoisednessBaseClass,
     /*!
      Finds a node to replace another interpolation node to improve poisedness
      \param reference_node index of node that is not replaced
-     \param evaluations interpolation nodes, \see BlackboxData
+     \param evaluations interpolation nodes, \see BlackBoxData
      \param new_node new node to replace an existing interpolation node
     */
-    int replace_node ( int, BlackboxData const&, std::vector<double> const& );
+    int replace_node ( int, BlackBoxData const&, std::vector<double> const& );
     //! Improves poisedness of interpolation nodes
     /*!
      Improves poisedness of interpolation nodes by maximizing the absolute value of basis functions.\n
      Nodes to replace existing interpolation nodes are computed and appended to the list of nodes, 
-     \see BlackboxData \n
-     The index of nodes to reduce the poisedness value are indicated in evaluations \see BlackboxData \n
+     \see BlackBoxData \n
+     The index of nodes to reduce the poisedness value are indicated in evaluations \see BlackBoxData \n
      \param reference_node index of node that is not replaced
-     \param evaluations structure containing interpolation nodes, \see BlackboxData
+     \param evaluations structure containing interpolation nodes, \see BlackBoxData
     */
-    void improve_poisedness ( int, BlackboxData& );
+    void improve_poisedness ( int, BlackBoxData& );
 };
 
 #endif
