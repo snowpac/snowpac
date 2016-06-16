@@ -212,13 +212,13 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
 //    if (gp_noise.at( i ) > max_noise)
 //      max_noise = gp_noise.at( i );
 //  }
-  lb[0] = 5e-1; // * pow(1000e0 * max_noise / 2e0, 2e0);
+  lb[0] = 1e-1; // * pow(1000e0 * max_noise / 2e0, 2e0);
   ub[0] = 1e1;// * pow(1000e0 * max_noise / 2e0, 2e0);
   double delta_threshold = *delta;
   if (delta_threshold < 1e-2) delta_threshold = 1e-2;
   for (unsigned int i = 0; i < dim; ++i) {
-      lb[i+1] = 1e-1;// * delta_threshold;
-      ub[i+1] = 1e2;// * delta_threshold;
+      lb[i+1] = 1e1 * delta_threshold;
+      ub[i+1] = 1e2 * delta_threshold;
   }
 
   if (gp_parameters[0] < 0e0) {
@@ -235,9 +235,10 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
   //--------------------------------------------------
 
   //initialize optimizer from NLopt library
-//  nlopt::opt opt(nlopt::LD_CCSAQ, dim+1);
-//  nlopt::opt opt(nlopt::LN_BOBYQA, dim+1);
-    int dimp1 = dim+1;
+  int dimp1 = dim+1;
+//  nlopt::opt opt(nlopt::LD_CCSAQ, dimp1);
+//  nlopt::opt opt(nlopt::LN_BOBYQA, dimp1);
+//
   nlopt::opt opt(nlopt::GN_DIRECT, dimp1);
 
   //opt = nlopt_create(NLOPT_LN_COBYLA, dim+1);
@@ -252,21 +253,21 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
   opt.set_maxtime(1.0);
   //perform optimization to get correction factors
   
-//  try {
+  try {
     int exitflag = opt.optimize(gp_parameters, optval);
     
-//  } catch (...) {
-//    gp_parameters[0] = lb[0]*5e-1 + 5e-1*ub[0];
-//    for (unsigned int i = 1; i < dim+1; ++i) {
-//      gp_parameters[i] = (lb[i]*5e-1 + 5e-1*ub[i]);
-//    }
-//  }
+  } catch (...) {
+    gp_parameters[0] = lb[0]*5e-1 + 5e-1*ub[0];
+    for (unsigned int i = 1; i < dim+1; ++i) {
+      gp_parameters[i] = (lb[i]*5e-1 + 5e-1*ub[i]);
+    }
+  }
 
   //std::cout << "exitflag = "<< exitflag<<std::endl;
-  //std::cout << "OPTVAL .... " << optval << std::endl;
-  //for ( int i = 0; i < gp_parameters.size(); ++i )
-  //  std::cout << "gp_param = " << gp_parameters[i] << std::endl;
-  //std::cout << std::endl;
+  std::cout << "OPTVAL .... " << optval << std::endl;
+  for ( int i = 0; i < gp_parameters.size(); ++i )
+    std::cout << "gp_param = " << gp_parameters[i] << std::endl;
+  std::cout << std::endl;
  
       
   return;

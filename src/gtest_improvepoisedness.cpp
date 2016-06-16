@@ -16,7 +16,7 @@ class Wrapper_ImprovePoisedness : public ImprovePoisedness {
 
     int improvepoisedness_test1 ( ) {
 
-      BlackboxData data;
+      BlackBoxData data;
       std::vector<double> node(2);
       node.at(0) = 0.0; node.at(1) = 0e0;
       data.nodes.push_back( node );
@@ -55,7 +55,7 @@ class Wrapper_ImprovePoisedness : public ImprovePoisedness {
 
     int improvepoisedness_test2 ( ) {
 
-      BlackboxData data;
+      BlackBoxData data;
       std::vector<double> node(2);
       node.at(0) = 0.0; node.at(1) = 0e0;
       data.nodes.push_back( node );
@@ -96,7 +96,7 @@ class Wrapper_ImprovePoisedness : public ImprovePoisedness {
 
     int improvepoisedness_test3 ( ) {
 
-      BlackboxData data;
+      BlackBoxData data;
       std::vector<double> node(2);
       node.at(0) = 0.0; node.at(1) = 0e0;
       data.nodes.push_back( node );

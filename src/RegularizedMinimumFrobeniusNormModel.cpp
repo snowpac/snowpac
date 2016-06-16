@@ -27,7 +27,7 @@ std::vector<double> &RegularizedMinimumFrobeniusNormModel::gradient (
 {
  // basis->compute_basis_gradients ( x );
   scale( function_values.at(0), basis->gradient(x,0), model_gradient );
-  for (int i = 1; i < size; i++)
+  for (unsigned int i = 1; i < size; ++i)
     add( function_values.at(i), basis->gradient(x,i), model_gradient );
   return model_gradient;
 }

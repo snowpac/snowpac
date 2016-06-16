@@ -1,6 +1,6 @@
 #include "BasisForMinimumFrobeniusNormModel.hpp"
 #include "MinimumFrobeniusNormModel.hpp"
-#include "BlackboxData.hpp"
+#include "BlackBoxData.hpp"
 
 #include <Eigen/Core>
 #include <vector>
@@ -33,7 +33,7 @@ double evaluate_mfnmodel_test1 ( std::vector<double> x, double delta, int nb_nod
 
   int dim = x.size();
 
-  BlackboxData data;
+  BlackBoxData data;
   double delta_i = delta;
   BasisForMinimumFrobeniusNormModel basis ( dim, delta_i );
   MinimumFrobeniusNormModel mfn_model ( basis );
@@ -83,7 +83,7 @@ double evaluate_mfnmodel_test1 ( std::vector<double> x, double delta, int nb_nod
   basis.compute_basis_coefficients ( data );
 
   mfn_model.set_function_values ( data.values[0], data.noise[0], 
-                                  data.surrogate_nodes_index );
+                                  data.surrogate_nodes_index, 0 );
 
 
   return mfn_model.evaluate ( x );

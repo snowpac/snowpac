@@ -1,7 +1,6 @@
 #ifndef HBlackBoxData
 #define HBlackBoxData
 
-#include <Eigen/Core>
 #include <vector>
 
 struct BlackBoxData {

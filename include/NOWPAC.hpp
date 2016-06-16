@@ -239,6 +239,8 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_option (
 //--------------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------------
+// sets options for integer values
+//--------------------------------------------------------------------------------
 template<class TSurrogateModel, class TBasisForSurrogateModel>
 void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_option ( 
   std::string const &option_name, int const &option_value )
@@ -267,6 +269,8 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_lower_bounds (
 //--------------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------------
+// sets lower bound constraints for optimization
+//--------------------------------------------------------------------------------
 template<class TSurrogateModel, class TBasisForSurrogateModel>
 void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_upper_bounds ( 
   std::vector<double> const& bounds )
@@ -277,6 +281,8 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_upper_bounds (
 //--------------------------------------------------------------------------------
 
 
+//--------------------------------------------------------------------------------
+// sets initial and minimal trust region radius
 //--------------------------------------------------------------------------------
 template<class TSurrogateModel, class TBasisForSurrogateModel>
 void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_trustregion ( 
@@ -289,6 +295,9 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_trustregion (
 //--------------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------------
+// sets initial trust region radius,
+// minimal trust region radius is not used as stopping criterion
+//--------------------------------------------------------------------------------
 template<class TSurrogateModel, class TBasisForSurrogateModel>
 void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_trustregion ( 
   double const &delta_init_input )
@@ -298,6 +307,8 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_trustregion (
 }
 //--------------------------------------------------------------------------------
 
+//--------------------------------------------------------------------------------
+// sets maximal trust region radius
 //--------------------------------------------------------------------------------
 template<class TSurrogateModel, class TBasisForSurrogateModel>
 void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_max_trustregion ( 
@@ -309,6 +320,8 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_max_trustregion (
 //--------------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------------
+// sets maximal number of black box evaluations before termination
+//--------------------------------------------------------------------------------
 template<class TSurrogateModel, class TBasisForSurrogateModel>
 void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_max_number_evaluations ( 
   int const &max_number_blackbox_evaluations_input )
@@ -318,6 +331,8 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_max_number_evaluation
 }
 //--------------------------------------------------------------------------------
 
+//--------------------------------------------------------------------------------
+// sets the black box with constraints
 //--------------------------------------------------------------------------------
 template<class TSurrogateModel, class TBasisForSurrogateModel>
 void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_blackbox ( 
@@ -338,6 +353,8 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_blackbox (
 }
 //--------------------------------------------------------------------------------
 
+//--------------------------------------------------------------------------------
+// sets the black box without constraints
 //--------------------------------------------------------------------------------
 template<class TSurrogateModel, class TBasisForSurrogateModel>
 void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_blackbox ( 
@@ -363,7 +380,8 @@ double NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::compute_acceptance_rati
 }
 //--------------------------------------------------------------------------------
 
-
+//--------------------------------------------------------------------------------
+// sets user data that is passed through (S)NOWPAC to the black box function
 //--------------------------------------------------------------------------------
 template<class TSurrogateModel, class TBasisForSurrogateModel>
 void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::void_user_data ( void *user_data_input ) 
@@ -398,7 +416,7 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::blackbox_evaluator (
   
   // add evaluations to blackbox data
   evaluations.nodes.push_back( x );
-  for ( int i = 0; i < nb_constraints+1; i++) {  
+  for ( unsigned int i = 0; i < nb_constraints+1; ++i) {  
     if ( stochastic_optimization ) 
       evaluations.noise[i].push_back( blackbox_noise.at(i) );
     evaluations.values[i].push_back( blackbox_values.at(i) );
@@ -468,7 +486,7 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::blackbox_evaluator ( )
 template<class TSurrogateModel, class TBasisForSurrogateModel>
 bool NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::last_point_is_feasible ( ) 
 {
-  for ( int i = 0; i < nb_constraints; i++ ) {
+  for ( unsigned int i = 0; i < nb_constraints; ++i ) {
     tmp_dbl = evaluations.values[i+1].at( evaluations.best_index );
     if ( tmp_dbl < 0e0 ) tmp_dbl = 0e0;
     if ( evaluations.values[i+1].back() > tmp_dbl ) return false;
@@ -561,6 +579,8 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::add_trial_node ( )
 template<class TSurrogateModel, class TBasisForSurrogateModel>
 void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::write_to_file ( ) 
 {
+    return;
+
     // ouptut current number of black box evaluations
     fprintf(output_file, int_format, evaluations.nodes.size());
     // output the current design

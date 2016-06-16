@@ -127,6 +127,7 @@ double SubproblemDefinitions<TSurrogateModel, TSubproblemOptimization>::constrai
   d->vo->minus ( x, d->me->best_point, d->vector );
   tmpdbl = d->vo->dot_product( d->vector, d->vector );
 
+/*
   result += d->me->inner_boundary_constant->at( d->constraint_number ) * tmpdbl / 
             pow(*(d->me->delta), 2e0) -
             d->me->feasibility_thresholds( d->constraint_number );
@@ -136,7 +137,16 @@ double SubproblemDefinitions<TSurrogateModel, TSubproblemOptimization>::constrai
     for ( int j = 0; j < x.size(); j++) 
       grad[j] += tmpdbl * d->vector.at(j);
   }
- 
+*/
+  result += d->me->inner_boundary_constant->at( d->constraint_number ) * tmpdbl - 
+            d->me->feasibility_thresholds( d->constraint_number );
+  if (!grad.empty()) {
+    tmpdbl = d->me->inner_boundary_constant->at( d->constraint_number ) * 2e0;
+    for ( int j = 0; j < x.size(); j++) 
+      grad[j] += tmpdbl * d->vector.at(j);
+  }
+
+
    return result;
 }
 //--------------------------------------------------------------------------------

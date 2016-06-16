@@ -14,7 +14,7 @@ PATH_LIB_GTEST  = /Users/Florian/home/libraries/googletest-master/install/lib
 CFLAGS = -Wno-deprecated
 
 # CHOOSE COMPILER
-CC = /usr/local/Cellar/gcc/5.2.0/bin/g++-5
+CC = /usr/local/Cellar/gcc/5.3.0/bin/g++-5
 
 # ASSEMBLE LIB PATH
 LIB_PATHS = -L$(PATH_LIB_NLOPT)

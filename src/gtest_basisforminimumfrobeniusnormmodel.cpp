@@ -11,7 +11,7 @@ class Wrapper_BasisForMinimumFrobeniusNormModel {
       double delta = 0.5;
       int dim = 2;
       BasisForMinimumFrobeniusNormModel basis( dim, delta );
-      BlackboxData data;
+      BlackBoxData data;
       std::vector<double> node(2);
       node.at(0) = 0.0; node.at(1) = 0e0;
       data.nodes.push_back( node );
