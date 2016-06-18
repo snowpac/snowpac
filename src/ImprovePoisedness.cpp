@@ -1,5 +1,6 @@
 #include "ImprovePoisedness.hpp"
 #include <fstream>
+#include <iostream>
 
 //--------------------------------------------------------------------------------
 ImprovePoisedness::ImprovePoisedness ( BasisForSurrogateModelBaseClass &B,
@@ -145,7 +146,7 @@ void ImprovePoisedness::improve_poisedness ( int reference_node,
     counter_max_improvement_steps++;
         
 //    if ( print_output )
- //     std::cout << "   Current poisedness value: " << poisedness_constant << std::endl; 
+//     std::cout << "   Current poisedness value: " << poisedness_constant << std::endl; 
 
   //  intdelete = evaluations.surrogate_nodes_index[ change_index ];
   //  tmpdelete = poisedness_constant;
@@ -156,7 +157,7 @@ void ImprovePoisedness::improve_poisedness ( int reference_node,
       assert ( evaluations.surrogate_nodes_index.at(change_index) != evaluations.best_index );
       evaluations.surrogate_nodes_index.erase( 
         evaluations.surrogate_nodes_index.begin() + change_index );
-  //    std::cout << "------------" << std::endl;
+//      std::cout << "------------" << std::endl;
     }
     evaluations.surrogate_nodes_index.push_back( evaluations.nodes.size()-1 );
     model_has_been_improved = true;
@@ -214,7 +215,7 @@ void ImprovePoisedness::compute_poisedness_constant ( int reference_node,
 
   nb_nodes = evaluations.surrogate_nodes_index.size ( );
 
-  for (int i = 0; i < nb_nodes; i++) {		
+  for ( unsigned int i = 0; i < nb_nodes; ++i ) {		
     if ( evaluations.surrogate_nodes_index[ i ] == reference_node ) continue; 
     //compute norm-scaling of node i
     node_norm_scaling = 
@@ -231,11 +232,27 @@ void ImprovePoisedness::compute_poisedness_constant ( int reference_node,
     //compute gradient and hessian of the i-th basis function
     basis->get_mat_vec_representation( i, basis_gradient, basis_hessian );
 
-    assert( VectorOperations::norm( basis_gradient ) > 1e-12 );
+    if ( VectorOperations::norm( basis_gradient ) <= 1e-12 ) {
+      std::cout << " STOP " << std::endl << std::endl;;
+      for ( unsigned int kk = 0; kk < dim; ++kk) 
+        std::cout << basis_gradient[kk] << std::endl;
+      std::cout << "======" << std::endl;
+      std::cout << " number of nodes = " << evaluations.nodes.size() << std::endl; 
+      std::cout << "======" << std::endl;
+      for (unsigned int k = 0; k < nb_nodes; ++k)  {
+        for ( unsigned int kk = 0; kk < dim; ++kk) {
+          std::cout << evaluations.surrogate_nodes_index[k] << std::endl;
+          std::cout << evaluations.nodes [ evaluations.surrogate_nodes_index[k] ][ kk] << std::endl;
+        }
+        std::cout << "------" << std::endl;
+      }
+    }
+
+    assert ( VectorOperations::norm( basis_gradient ) > 1e-12 ); 
 
     //compute candidate for argmax -l_i(x)
     QuadraticMinimization::minimize( q1, basis_gradient, basis_hessian );
-    for ( int k = 0; k < dim; ++k )
+    for ( unsigned int k = 0; k < dim; ++k )
       q1.at(k) = q1.at(k)*(*delta) + evaluations.nodes[ evaluations.best_index ].at(k);
     poisedness_constant_tmp1 = fabs ( basis->evaluate ( q1, i ) );
   //  poisedness_constant_tmp1 += 1e0/poisedness_constant_tmp1;
@@ -243,13 +260,13 @@ void ImprovePoisedness::compute_poisedness_constant ( int reference_node,
 			
     //compute candidate for argmax l_i(x)
     VectorOperations::scale ( -1e0, basis_gradient, basis_gradient );
-    for ( int k = 0; k < dim; ++k )
+    for ( unsigned int k = 0; k < dim; ++k )
       VectorOperations::scale ( -1e0, basis_hessian[k], basis_hessian[k] );
 //    basis_gradient = -basis_gradient;
 //    basis_hessian  = -basis_hessian;
     QuadraticMinimization::minimize ( q2, basis_gradient, basis_hessian ); 
 
-    for ( int k = 0; k < dim; ++k)
+    for ( unsigned int k = 0; k < dim; ++k)
       q2.at(k) = q2.at(k)*(*delta) + evaluations.nodes[ evaluations.best_index ].at(k);
     poisedness_constant_tmp2 = fabs ( basis->evaluate ( q2, i ) );
  //   poisedness_constant_tmp2 += 1e0/poisedness_constant_tmp2 ;

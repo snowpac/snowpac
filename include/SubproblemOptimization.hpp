@@ -7,6 +7,10 @@
 #include <vector>
 #include <nlopt.hpp>
 
+#define NLOPT_ALG LD_CCSAQ
+//#define NLOPT_ALG LD_SLSQP
+
+
 template <class TSurrogateModel>
 class SubproblemOptimization : public VectorOperations {
   private:
@@ -18,6 +22,7 @@ class SubproblemOptimization : public VectorOperations {
     std::vector<double> lb, ub;
     double constraint_tolerance;
     std::vector<double> abs_tol;
+    double rel_tol;
     std::vector<double> x;
     double optimization_result;
     SubproblemOptimization *me;
@@ -46,7 +51,7 @@ class SubproblemOptimization : public VectorOperations {
 
 
 //--------------------------------------------------------------------------------
-//LD_CCSAQ
+//LD_CCSAQ 
 template<class TSurrogateModel>
 SubproblemOptimization<TSurrogateModel>::SubproblemOptimization ( 
                              std::vector<TSurrogateModel> &surrogate_models_input,
@@ -54,11 +59,11 @@ SubproblemOptimization<TSurrogateModel>::SubproblemOptimization (
                              delta ( &delta_input ),
                              inner_boundary_constant ( &inner_boundary_path_input ),
                              surrogate_models ( &surrogate_models_input ),
-                             opt_criticality_measure (nlopt::LD_CCSAQ, 
+                             opt_criticality_measure (nlopt::NLOPT_ALG, 
                                surrogate_models_input[0].dimension( ) ),
-                             opt_trial_point (nlopt::LD_CCSAQ, 
+                             opt_trial_point (nlopt::NLOPT_ALG, 
                                surrogate_models_input[0].dimension( ) ),
-                             opt_restore_feasibility (nlopt::LD_CCSAQ, 
+                             opt_restore_feasibility (nlopt::NLOPT_ALG, 
                                surrogate_models_input[0].dimension( ) )
 {
   me = this;
@@ -71,8 +76,9 @@ SubproblemOptimization<TSurrogateModel>::SubproblemOptimization (
 
   constraint_tolerance = 1e-12;
 
-  for (int i = 0; i < dim; i++) {
-    abs_tol.push_back( 1e-5 );
+  rel_tol = 1e-11; //1e-11
+  for (unsigned int i = 0; i < dim; ++i) {
+    abs_tol.push_back( 1e-7 ); //1e-5
     x.push_back ( 0e0 );    
   }
 
@@ -83,30 +89,30 @@ SubproblemOptimization<TSurrogateModel>::SubproblemOptimization (
   SpD_prototype.vector.resize( dim );
   SpD_prototype.constraint_number = 0;
   SpD.push_back( SpD_prototype );
-  for ( int i = 1; i < number_constraints; i++ ) {
+  for ( unsigned int i = 1; i < number_constraints; ++i ) {
     SpD_prototype.constraint_number = i;
     SpD.push_back( SpD_prototype );
   }
 
   opt_criticality_measure.set_xtol_abs( abs_tol );
-  opt_criticality_measure.set_xtol_rel( 1e-11 );
-  opt_criticality_measure.set_maxtime( 1e1 );
+  opt_criticality_measure.set_xtol_rel( rel_tol );
+  opt_criticality_measure.set_maxtime( 1e0 );
   opt_criticality_measure.set_min_objective ( subproblems.opt_criticality_measure_obj, &SpD[0] );
   opt_criticality_measure.add_inequality_constraint( 
     subproblems.trustregion_constraint, &SpD[0], constraint_tolerance );
-  for (int i = 0; i < number_constraints; i++)
+  for (unsigned int i = 0; i < number_constraints; ++i)
     opt_criticality_measure.add_inequality_constraint( 
       subproblems.constraints_for_subproblems, &SpD[i], constraint_tolerance );
  // opt_criticality_measure.add_inequality_mconstraint( 
  //   subproblems.constraints_for_subproblems<1>, me, constraint_tolerance );
 
   opt_trial_point.set_xtol_abs( abs_tol );
-  opt_trial_point.set_xtol_rel( 1e-11 );
+  opt_trial_point.set_xtol_rel( rel_tol );
   opt_trial_point.set_maxtime( 1e0 );
   opt_trial_point.set_min_objective ( subproblems.opt_trial_point_obj, me );
   opt_trial_point.add_inequality_constraint( 
     subproblems.trustregion_constraint, &SpD[0], constraint_tolerance );
-  for (int i = 0; i < number_constraints; i++)
+  for (unsigned int i = 0; i < number_constraints; ++i)
     opt_trial_point.add_inequality_constraint( 
       subproblems.constraints_for_subproblems, &SpD[i], constraint_tolerance );
 //  opt_trial_point.add_inequality_mconstraint( 
@@ -114,12 +120,12 @@ SubproblemOptimization<TSurrogateModel>::SubproblemOptimization (
 
 
   opt_restore_feasibility.set_xtol_abs( abs_tol );
-  opt_restore_feasibility.set_xtol_rel( 1e-11 );
+  opt_restore_feasibility.set_xtol_rel( rel_tol );
   opt_restore_feasibility.set_maxtime( 1e0 );  
   opt_restore_feasibility.set_min_objective ( subproblems.opt_restore_feasibility_obj, &SpD[0] );
   opt_restore_feasibility.add_inequality_constraint( 
     subproblems.trustregion_constraint, &SpD[0], constraint_tolerance );
-  for (int i = 0; i < number_constraints; i++)
+  for (unsigned int i = 0; i < number_constraints; ++i)
     opt_restore_feasibility.add_inequality_constraint( 
       subproblems.constraints_for_subproblems, &SpD[i], constraint_tolerance );
 //  opt_restore_feasibility.add_inequality_mconstraint( 
@@ -210,7 +216,7 @@ double SubproblemOptimization<TSurrogateModel>::compute_trial_point (
       opt_trial_point.optimize ( x, optimization_result );
   } else 
     opt_trial_point.optimize ( x, optimization_result );
-  
+
   return optimization_result;
 }
 //--------------------------------------------------------------------------------

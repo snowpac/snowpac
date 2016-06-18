@@ -138,11 +138,12 @@ double SubproblemDefinitions<TSurrogateModel, TSubproblemOptimization>::constrai
       grad[j] += tmpdbl * d->vector.at(j);
   }
 */
+
   result += d->me->inner_boundary_constant->at( d->constraint_number ) * tmpdbl - 
             d->me->feasibility_thresholds( d->constraint_number );
   if (!grad.empty()) {
     tmpdbl = d->me->inner_boundary_constant->at( d->constraint_number ) * 2e0;
-    for ( int j = 0; j < x.size(); j++) 
+    for ( unsigned int j = 0; j < x.size(); ++j ) 
       grad[j] += tmpdbl * d->vector.at(j);
   }
 
@@ -162,12 +163,12 @@ double SubproblemDefinitions<TSurrogateModel, TSubproblemOptimization>::trustreg
     reinterpret_cast<  SubproblemData<TSurrogateModel, TSubproblemOptimization>*>(data);
 
   double result;
-  d->vo->minus ( x, d->me->best_point, grad );
-  result = d->vo->dot_product( grad, grad ) - pow( *(d->me->delta), 2e0 );
+  d->vo->minus ( x, d->me->best_point, d->vector );
+  result = d->vo->dot_product( d->vector, d->vector ) - pow( *(d->me->delta), 2e0 );
 
   if (!grad.empty()) {
-    for (int i = 0; i < x.size(); i++) 
-      grad[i] = 2e0 * grad[i];
+    for (unsigned int i = 0; i < x.size(); ++i) 
+      grad[i] = 2e0 * d->vector[i];
   }
 
   return result;

@@ -264,10 +264,10 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
   }
 
   //std::cout << "exitflag = "<< exitflag<<std::endl;
-  std::cout << "OPTVAL .... " << optval << std::endl;
-  for ( int i = 0; i < gp_parameters.size(); ++i )
-    std::cout << "gp_param = " << gp_parameters[i] << std::endl;
-  std::cout << std::endl;
+//  std::cout << "OPTVAL .... " << optval << std::endl;
+//  for ( int i = 0; i < gp_parameters.size(); ++i )
+//    std::cout << "gp_param = " << gp_parameters[i] << std::endl;
+//  std::cout << std::endl;
  
       
   return;

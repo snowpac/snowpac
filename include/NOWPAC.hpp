@@ -52,6 +52,7 @@ class NOWPAC : protected VectorOperations {
     double eta_0, eta_1, eps_c;
     double threshold_for_poisedness_constant;
     std::vector<double> inner_boundary_path_constants;
+    std::vector<double> max_inner_boundary_path_constants;
     std::vector<double> lower_bound_constraints;
     std::vector<double> upper_bound_constraints;
     double criticality_value;
@@ -171,8 +172,10 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_option (
     } else {
       if ( option_value < 0e0 )
         std::cout << "Inner boundary path constants have to be positive" << std::endl;
-      for ( int i = 0; i < nb_constraints; i++ )
+      for ( int i = 0; i < nb_constraints; i++ ) {
         inner_boundary_path_constants.at( i ) = option_value; 
+        max_inner_boundary_path_constants.at( i ) = option_value; 
+      }
       return;
     } 
   }
@@ -213,8 +216,10 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_option (
       std::cout << "Reason: no constraints specified" << std::endl;
       return;
     } else {
-      for ( int i = 0; i < option_value.size(); ++i )
+      for ( int i = 0; i < option_value.size(); ++i ) {
         inner_boundary_path_constants.push_back( option_value.at(i) ); 
+        max_inner_boundary_path_constants.push_back( option_value.at(i) ); 
+      }
       return; 
     }
   }
@@ -347,8 +352,11 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_blackbox (
     evaluations.noise.resize( nb_constraints + 1);
   }
   inner_boundary_path_constants.resize( nb_constraints );
-  for (int i = 0; i < nb_constraints; i++)
-    inner_boundary_path_constants.at( i ) = 0.1; 
+  max_inner_boundary_path_constants.resize( nb_constraints );
+  for (unsigned int i = 0; i < nb_constraints; ++i) {
+    inner_boundary_path_constants.at( i ) = 1e1; 
+    max_inner_boundary_path_constants.at( i ) = 1e1; 
+  }
   return;
 }
 //--------------------------------------------------------------------------------
@@ -579,7 +587,6 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::add_trial_node ( )
 template<class TSurrogateModel, class TBasisForSurrogateModel>
 void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::write_to_file ( ) 
 {
-    return;
 
     // ouptut current number of black box evaluations
     fprintf(output_file, int_format, evaluations.nodes.size());
@@ -636,7 +643,7 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
   if ( !lower_bound_constraints.empty() ) 
     surrogate_optimization.set_lower_bounds ( lower_bound_constraints );
 
-  if ( stochastic_optimization)
+  if ( stochastic_optimization )
     gaussian_processes.initialize ( dim, nb_constraints + 1, delta,
                                     update_at_evaluations, update_interval_length );
 
@@ -740,6 +747,7 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
       if ( verbose == 3 ) { std::cout << "done" << std::endl; }
       trial_model_value = surrogate_models[0].evaluate( x_trial );
 
+
       /*-------------------------------------------------------------------------*/
       /*- STEP 3 - STEP 3 - STEP 3 - STEP 3 - STEP 3 - STEP 3 - STEP 3 - STEP 3 -*/
       /*-------------------------------------------------------------------------*/
@@ -748,6 +756,11 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
       if ( verbose == 3 ) { std::cout << "done" << std::endl; }
       if ( !last_point_is_feasible( ) ) {
         if ( verbose == 3 ) { std::cout << " Feasibility violated" << std::endl; }
+        for (unsigned int i = 0; i < nb_constraints; ++i) {
+//          inner_boundary_path_constants.at(i) *= 2e0;  
+//          if ( inner_boundary_path_constants.at(i) > max_inner_boundary_path_constants.at(i) )
+            inner_boundary_path_constants.at(i) = max_inner_boundary_path_constants.at(i);
+        }
         replace_node_index = surrogate_nodes.replace_node( evaluations.best_index, 
                                                            evaluations, x_trial );
         add_trial_node( );
@@ -776,6 +789,9 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
     /*- STEP 4 - STEP 4 - STEP 4 - STEP 4 - STEP 4 - STEP 4 - STEP 4 - STEP 4 - STEP 4 -*/
     /*----------------------------------------------------------------------------------*/
     if ( EXIT_FLAG == NOEXIT ) { 
+      tmp_dbl = pow( diff_norm( x_trial, evaluations.nodes[ evaluations.best_index ] ) / delta, 2e0 );
+      for (unsigned int i = 0; i < nb_constraints; ++i) 
+        inner_boundary_path_constants.at(i) = tmp_dbl * max_inner_boundary_path_constants.at(i);
       acceptance_ratio = compute_acceptance_ratio ( );
       if ( verbose == 3 ) { std::cout << std::endl; }
       if ( verbose >= 2 ) { 
@@ -801,8 +817,17 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
       }
       if ( acceptance_ratio < eta_0 ) {
         if ( verbose >= 2 ) { std::cout << " Step rejected" << std::endl; }
-        if ( diff_norm ( evaluations.nodes.at( evaluations.best_index), 
-                         evaluations.nodes.at( evaluations.nodes.size()-1 ) ) > 1e-2 * delta ) {
+        tmp_dbl = 1e0;
+        for ( unsigned int i = 0; i < evaluations.surrogate_nodes_index.size(); ++i ) {
+           if ( diff_norm ( evaluations.nodes.at( evaluations.surrogate_nodes_index.at(i) ),
+                            evaluations.nodes.at( evaluations.nodes.size()-1 ) ) < 1e-2 * delta ) {
+             tmp_dbl = -1e0;
+             break;
+          }
+        } 
+//        if ( diff_norm ( evaluations.nodes.at( evaluations.best_index), 
+//                         evaluations.nodes.at( evaluations.nodes.size()-1 ) ) > 1e-3 * delta ) {
+        if ( tmp_dbl > 0e0 ) {
           replace_node_index = surrogate_nodes.replace_node( evaluations.best_index, 
                                                              evaluations, x_trial );
           add_trial_node( );
