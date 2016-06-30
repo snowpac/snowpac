@@ -164,27 +164,27 @@ void GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
   update_gaussian_processes( evaluations );
 
 
-  evaluations.surrogate_nodes_index.push_back( evaluations.nodes.size()-1 );
-  for ( unsigned int i = 0; i < evaluations.surrogate_nodes_index.size( ); ++i ) {
-//    rescale ( 1e0/(delta_tmp), evaluations.nodes[evaluations.surrogate_nodes_index[i]], 
+  evaluations.active_index.push_back( evaluations.nodes.size()-1 );
+  for ( unsigned int i = 0; i < evaluations.active_index.size( ); ++i ) {
+//    rescale ( 1e0/(delta_tmp), evaluations.nodes[evaluations.active_index[i]], 
 //              evaluations.nodes[best_index], rescaled_node );
     for ( unsigned int j = 0; j < number_processes; ++j ) {
 //      gaussian_processes[j].evaluate( rescaled_node, mean, variance );
-      gaussian_processes[j].evaluate( evaluations.nodes[evaluations.surrogate_nodes_index[i]], mean, variance );
+      gaussian_processes[j].evaluate( evaluations.nodes[evaluations.active_index[i]], mean, variance );
       assert ( variance >= 0e0 );
 
       weight = exp( - 2e0*sqrt(variance) );
 
-      evaluations.values[ j ].at( evaluations.surrogate_nodes_index [ i ] ) = 
+      evaluations.values[ j ].at( evaluations.active_index [ i ] ) = 
         weight * mean  + 
-        (1e0-weight) * ( values[ j ].at( evaluations.surrogate_nodes_index [ i ] ) );
-      evaluations.noise[ j ].at( evaluations.surrogate_nodes_index [ i ] ) = 
+        (1e0-weight) * ( values[ j ].at( evaluations.active_index [ i ] ) );
+      evaluations.noise[ j ].at( evaluations.active_index [ i ] ) = 
         weight * 2e0 * sqrt (variance)  + 
-        (1e0-weight) * ( noise[ j ].at( evaluations.surrogate_nodes_index [ i ] ) );
+        (1e0-weight) * ( noise[ j ].at( evaluations.active_index [ i ] ) );
 
     }
   }
-  evaluations.surrogate_nodes_index.erase( evaluations.surrogate_nodes_index.end()-1 );
+  evaluations.active_index.erase( evaluations.active_index.end()-1 );
 
 /*
   for ( unsigned int i = 0; i < evaluations.nodes.size( ); ++i ) {

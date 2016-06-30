@@ -33,9 +33,10 @@ class BasisForSurrogateModelBaseClass {
     ~BasisForSurrogateModelBaseClass ( ) { };
     virtual void get_mat_vec_representation ( int, std::vector<double>&, 
                                               std::vector< std::vector<double> >& ) = 0;
-    virtual void compute_basis_coefficients ( BlackBoxData const& ) = 0;
+    virtual void compute_basis_coefficients ( std::vector< std::vector<double> > const& ) = 0;
     virtual std::vector<double> &evaluate ( std::vector<double> const& ) = 0;
     virtual std::vector<double> &gradient ( std::vector<double> const&, int ) = 0;
+    virtual std::vector<double> &gradient (  int ) = 0;
     virtual double evaluate ( std::vector<double> const&, int) = 0;
     int dimension ( ) { return dim; }
 };

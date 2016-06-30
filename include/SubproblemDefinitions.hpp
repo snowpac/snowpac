@@ -10,7 +10,7 @@ template<class TSurrogateModel, template<class TSurrogateModel1> class TSubprobl
 struct SubproblemData {
     TSubproblemOptimization<TSurrogateModel> *me;
     VectorOperations *vo;
-    std::vector<double> vector;
+//    std::vector<double> vector;
     int constraint_number;
 };
 
@@ -41,7 +41,13 @@ double SubproblemDefinitions<TSurrogateModel, TSubproblemOptimization>::opt_tria
 
   if (!grad.empty( ))
     grad = (*(d->surrogate_models))[0].gradient( x );
-
+/*
+  std::cout << "--------------" << std::endl;
+  for ( int i = 0; i < x.size(); ++i)
+    std::cout << "x[" << i <<"]="<< x[0] << std::endl;
+  std::cout << (*(d->surrogate_models))[0].evaluate( x ) << std::endl;
+  std::cout << "--------------" << std::endl;
+*/
   return (*(d->surrogate_models))[0].evaluate( x );
 }
 //--------------------------------------------------------------------------------
@@ -56,14 +62,16 @@ double SubproblemDefinitions<TSurrogateModel, TSubproblemOptimization>::opt_crit
   SubproblemData<TSurrogateModel, TSubproblemOptimization> *d =
     reinterpret_cast<  SubproblemData<TSurrogateModel, TSubproblemOptimization>*>(data);
 
-  d->vo->minus( x, d->me->best_point, d->vector );
- 
- if (!grad.empty( )) {
-    for (unsigned int i = 0; i < x.size( ); i++) 
-      grad[i] = d->me->criticality_gradient.at ( i );
+  if (!grad.empty( )) {
+    grad = d->me->criticality_gradient;
+//    for (unsigned int i = 0; i < x.size( ); ++i) {
+//      grad[i] = d->me->criticality_gradient.at ( i );
+//    }
   }  
 
-  return d->vo->dot_product( d->vector, d->me->criticality_gradient );
+//  std::cout << d->vo->dot_product( x, d->me->criticality_gradient ) << std::endl;
+
+  return d->vo->dot_product( x, d->me->criticality_gradient );
 }
 //--------------------------------------------------------------------------------
 
@@ -77,27 +85,27 @@ double SubproblemDefinitions<TSurrogateModel, TSubproblemOptimization>::opt_rest
   SubproblemData<TSurrogateModel, TSubproblemOptimization> *d =
     reinterpret_cast<  SubproblemData<TSurrogateModel, TSubproblemOptimization>*>(data);
 
-  d->vo->minus( x, d->me->best_point, d->vector );
+//  d->vo->minus( x, d->me->best_point, d->vector );
   std::vector<double> gradient (x.size());
   double objective_value = 0e0;
   double tmp[3];
   if (!grad.empty( )) {
-    for (unsigned int j = 0; j < x.size( ); j++)
+    for (int j = 0; j < x.size( ); ++j)
       grad[ j ] = 0e0;
   }
-  tmp[1] = d->vo->dot_product( d->vector, d->vector );
+  tmp[1] = d->vo->dot_product( x, x );
   tmp[2] = pow( *(d->me->delta), 2e0 );
 
-  for ( int i = 0; i < (d->me->surrogate_models)->size()-1; i++ ) {
+  for ( int i = 0; i < (d->me->surrogate_models)->size()-1; ++i ) {
     tmp[0] = (*(d->me->surrogate_models))[i+1].evaluate( x );
     if ( tmp[0] > 0e0 ) {
-      tmp[0] += d->me->inner_boundary_constant->at(i) * tmp[1] / tmp[2];
+      tmp[0] += d->me->inner_boundary_constant->at(i) * tmp[1] * tmp[2];
       gradient = (*(d->me->surrogate_models))[i+1].gradient( x );
       objective_value += pow( tmp[0] , 2e0);
       if (!grad.empty( )) {
-        for (unsigned int j = 0; j < x.size( ); j++) 
+        for (int j = 0; j < x.size( ); j++) 
           grad[j] += 2e0 * tmp[0] * ( gradient.at( j ) + 
-                     d->me->inner_boundary_constant->at(i) * d->vector.at(j) / tmp[2]);
+                     d->me->inner_boundary_constant->at(i) * x.at(j) * tmp[2]);
       }
     }
   }
@@ -122,31 +130,29 @@ double SubproblemDefinitions<TSurrogateModel, TSubproblemOptimization>::constrai
   if (!grad.empty())
     grad = (*(d->me->surrogate_models))[d->constraint_number+1].gradient( x );
 
-
   double tmpdbl;
-  d->vo->minus ( x, d->me->best_point, d->vector );
-  tmpdbl = d->vo->dot_product( d->vector, d->vector );
+  //d->vo->minus ( x, d->me->best_point, d->vector );
+  tmpdbl = d->vo->dot_product( x, x );
+
+  result += d->me->inner_boundary_constant->at( d->constraint_number ) * tmpdbl * 
+            pow(*(d->me->delta), 2e0) -
+            d->me->feasibility_thresholds.at( d->constraint_number );
+  if (!grad.empty()) {
+    tmpdbl = d->me->inner_boundary_constant->at( d->constraint_number ) * 2e0 *
+             pow(*(d->me->delta), 2e0) ;
+    for (int j = 0; j < x.size(); ++j) 
+      grad[j] += tmpdbl * x.at(j);
+  }
 
 /*
-  result += d->me->inner_boundary_constant->at( d->constraint_number ) * tmpdbl / 
-            pow(*(d->me->delta), 2e0) -
-            d->me->feasibility_thresholds( d->constraint_number );
-  if (!grad.empty()) {
-    tmpdbl = d->me->inner_boundary_constant->at( d->constraint_number ) * 2e0 / 
-             pow(*(d->me->delta), 2e0) ;
-    for ( int j = 0; j < x.size(); j++) 
-      grad[j] += tmpdbl * d->vector.at(j);
-  }
-*/
-
   result += d->me->inner_boundary_constant->at( d->constraint_number ) * tmpdbl - 
-            d->me->feasibility_thresholds( d->constraint_number );
+            d->me->feasibility_thresholds.at( d->constraint_number );
   if (!grad.empty()) {
     tmpdbl = d->me->inner_boundary_constant->at( d->constraint_number ) * 2e0;
-    for ( unsigned int j = 0; j < x.size(); ++j ) 
-      grad[j] += tmpdbl * d->vector.at(j);
+    for (int j = 0; j < x.size(); ++j ) 
+      grad[j] += tmpdbl * x.at(j);
   }
-
+*/
 
    return result;
 }
@@ -163,12 +169,12 @@ double SubproblemDefinitions<TSurrogateModel, TSubproblemOptimization>::trustreg
     reinterpret_cast<  SubproblemData<TSurrogateModel, TSubproblemOptimization>*>(data);
 
   double result;
-  d->vo->minus ( x, d->me->best_point, d->vector );
-  result = d->vo->dot_product( d->vector, d->vector ) - pow( *(d->me->delta), 2e0 );
+//  d->vo->minus ( x, d->me->best_point, d->vector );
+  result = d->vo->dot_product( x, x ) - 1e0;//pow( *(d->me->delta), 2e0 );
 
   if (!grad.empty()) {
-    for (unsigned int i = 0; i < x.size(); ++i) 
-      grad[i] = 2e0 * d->vector[i];
+    for (int i = 0; i < x.size(); ++i) 
+      grad.at(i) = 2e0 * x[i];
   }
 
   return result;

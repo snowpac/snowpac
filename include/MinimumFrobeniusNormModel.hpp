@@ -16,9 +16,8 @@ class MinimumFrobeniusNormModel : public SurrogateModelBaseClass,
     MinimumFrobeniusNormModel ( BasisForMinimumFrobeniusNormModel& );
     double evaluate ( std::vector<double> const& );
     std::vector<double> &gradient ( std::vector<double> const& );
-    void set_function_values ( std::vector<double> const&, 
-                               std::vector<double> const&,
-                               std::vector<int> const&, int );
+    std::vector<double> &gradient ( );
+    void set_function_values ( std::vector<double> const& );
 };
 
 #endif

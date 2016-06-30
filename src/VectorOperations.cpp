@@ -17,7 +17,7 @@ void VectorOperations::set_zero( std::vector<double> &v )
 void VectorOperations::scale(double s, std::vector<double> const& v, 
                              std::vector<double> &w ) 
 {
-  // computes w = s*v1;
+  // computes w = s*v;
   size = w.size();
   for ( unsigned int i = 0; i < size; ++i )
     w[i] = s * v[i];
@@ -29,7 +29,7 @@ void VectorOperations::scale(double s, std::vector<double> const& v,
 void VectorOperations::add( double s, std::vector<double> const &v,
                             std::vector<double> &w)
 {
-  // computes w += s*v
+  // computes w = w + s*v
   size = w.size();
   for ( unsigned int i = 0; i < size; i++)
     w[i] += s * v[i];
@@ -70,7 +70,7 @@ double VectorOperations::diff_norm( std::vector<double> const &v1,
   // computes ||v1-v2||
   dbl = 0e0;
   size = v1.size();
-  for ( unsigned int i = 0; i < size; i++ )
+  for ( unsigned int i = 0; i < size; ++i )
     dbl += pow( v1[i] - v2[i], 2e0 );
   return sqrt(dbl);
 }

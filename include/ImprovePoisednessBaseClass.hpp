@@ -18,7 +18,7 @@ class ImprovePoisednessBaseClass {
                                  threshold_for_poisedness_constant( 
                                    threshold_for_poisedness_constant_input ),
                                  poisedness_constant ( 0e0 ) { basis = &basis_input; }
-    virtual int replace_node ( int, BlackBoxData const&, std::vector<double> const& ) = 0;
+    virtual int replace_node ( int, BlackBoxData&, std::vector<double> const& ) = 0;
     virtual void improve_poisedness ( int, BlackBoxData& ) = 0;
 };
 

@@ -20,7 +20,7 @@ class ImprovePoisedness : public ImprovePoisednessBaseClass,
     double *delta;
 
     //declare auxiliary variables for replace_node
-    double maxvalue, LK, norm;
+    double maxvalue, LK, norm_dbl;
     //declare auxiliary variables for compute_poisedness_constant
     double poisedness_constant_tmp1, poisedness_constant_tmp2;
     double node_norm_scaling;
@@ -56,7 +56,7 @@ class ImprovePoisedness : public ImprovePoisednessBaseClass,
      \param evaluations interpolation nodes, \see BlackBoxData
      \param new_node new node to replace an existing interpolation node
     */
-    int replace_node ( int, BlackBoxData const&, std::vector<double> const& );
+    int replace_node ( int, BlackBoxData&, std::vector<double> const& );
     //! Improves poisedness of interpolation nodes
     /*!
      Improves poisedness of interpolation nodes by maximizing the absolute value of basis functions.\n

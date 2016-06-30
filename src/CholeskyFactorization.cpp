@@ -15,16 +15,16 @@ void CholeskyFactorization::compute(
   p      = 0;
   offset = 0e0;
 	
-  for (int i = 0; i < n; i++) {
+  for (int i = 0; i < n; ++i) {
     //check for special case
     if (L.at(i).at(i) == 0e0) {
       p      = i+1;
       offset = 0e0;		
       return;
     }
-    for (int j = 0; j <= i; j++) {
+    for (int j = 0; j <= i; ++j) {
       s = L.at(i).at(j);
-      for (int k = 0; k <= j-1; k++)
+      for (int k = 0; k <= j-1; ++k) 
         s = s - L.at(i).at(k)*L.at(j).at(k);
       if (i > j) {
         L.at(i).at(j) = s / L.at(j).at(j);

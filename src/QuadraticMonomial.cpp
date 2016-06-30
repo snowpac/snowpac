@@ -20,7 +20,7 @@ double QuadraticMonomial::evaluate_monomial(
     return pow( x.at( basis_number-dim-1 ), 2e0 ) / 2e0;
   else {
     basis_number -= 2*dim;
-    for ( int j = 1; j <= dim-1; j++ ) {
+    for ( int j = 1; j <= dim-1; ++j ) {
       if ( basis_number <= dim-j ) 
         return x.at( j-1 ) * x.at( basis_number-1+j );
       basis_number -= dim-j;

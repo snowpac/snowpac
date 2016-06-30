@@ -112,7 +112,7 @@ NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::~NOWPAC ( ) {
 template<class TSurrogateModel, class TBasisForSurrogateModel>
 NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::NOWPAC ( int dim_input ) :
   dim ( dim_input ),
-  surrogate_basis ( dim_input, delta )
+  surrogate_basis ( dim_input )
 { 
   stochastic_optimization = false;
   x_trial.resize( dim );
@@ -193,10 +193,7 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_option (
     stochastic_optimization  = option_value; 
     if ( stochastic_optimization && evaluations.values.size() > 0 ) {
       blackbox_noise.resize( nb_constraints + 1);
-      evaluations.noise.resize( nb_constraints + 1);
-      //for (int i = evaluations.noise.size(); 
-       //    i < evaluations.values.size(); i++)
-       // evaluations.noise[i].resize(0);
+      //evaluations.noise.resize( nb_constraints + 1);
     }
     return; 
   }
@@ -346,14 +343,15 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_blackbox (
   blackbox = &blackbox_input;
   nb_constraints = nb_constraints_input;
   blackbox_values.resize( (nb_constraints+1) );
-  evaluations.values.resize( nb_constraints + 1);
+  evaluations.initialize ( nb_constraints+1, dim );
+//  evaluations.values.resize( nb_constraints + 1);
   if ( stochastic_optimization ) {
     blackbox_noise.resize( nb_constraints + 1);
-    evaluations.noise.resize( nb_constraints + 1);
+//    evaluations.noise.resize( nb_constraints + 1);
   }
   inner_boundary_path_constants.resize( nb_constraints );
   max_inner_boundary_path_constants.resize( nb_constraints );
-  for (unsigned int i = 0; i < nb_constraints; ++i) {
+  for (int i = 0; i < nb_constraints; ++i) {
     inner_boundary_path_constants.at( i ) = 1e1; 
     max_inner_boundary_path_constants.at( i ) = 1e1; 
   }
@@ -379,7 +377,7 @@ double NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::compute_acceptance_rati
 {
   if ( stochastic_optimization ) {
     //update_surrogate_models( );
-    //trial_model_value = surrogate_models[0].evaluate( x_trial );
+    //trial_model_value = surrogate_models[0].evaluate( evaluations.transform(x_trial) );
   }
   return ( evaluations.values[0].at( evaluations.best_index ) - 
            evaluations.values[0].back() ) /
@@ -424,14 +422,14 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::blackbox_evaluator (
   
   // add evaluations to blackbox data
   evaluations.nodes.push_back( x );
-  for ( unsigned int i = 0; i < nb_constraints+1; ++i) {  
+  for (int i = 0; i < nb_constraints+1; ++i) {  
     if ( stochastic_optimization ) 
       evaluations.noise[i].push_back( blackbox_noise.at(i) );
     evaluations.values[i].push_back( blackbox_values.at(i) );
   }  
 
   if ( set_node_active )
-    evaluations.surrogate_nodes_index.push_back( (evaluations.nodes).size()-1 );    
+    evaluations.active_index.push_back( (evaluations.nodes).size()-1 );    
 
   if ( stochastic_optimization && evaluations.nodes.size() > dim ) 
     gaussian_processes.smooth_data ( evaluations );
@@ -455,7 +453,7 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::blackbox_evaluator ( )
     return;
   }
 
-  for ( int i = nb_vals_tmp; i < nb_nodes_tmp; i++ ) {
+  for ( int i = nb_vals_tmp; i < nb_nodes_tmp; ++i ) {
     // evaluate blackbox
     if ( stochastic_optimization )
       blackbox->evaluate( evaluations.nodes[ i ], blackbox_values, 
@@ -464,15 +462,8 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::blackbox_evaluator ( )
       blackbox->evaluate( evaluations.nodes[ i ], blackbox_values, 
                           user_data ); 
 
-  //  std::cout << std::setprecision(26) << (blackbox_values.at(0) ) << std::endl;
-  //  std::cout << std::setprecision(26) << (blackbox_values.at(1) ) << std::endl;
-  //  std::cout << std::setprecision(26) << (blackbox_values.at(2) ) << std::endl;
-  //  std::cout << std::setprecision(26) << (blackbox_values.at(3) ) << std::endl;
-  //  std::cout << std::setprecision(26) << (blackbox_values.at(4) ) << std::endl;
-
-
     // add evaluations to blackbox data
-    for ( int j = 0; j < nb_constraints+1; j++) {
+    for (int j = 0; j < nb_constraints+1; ++j) {
       if ( stochastic_optimization )
         evaluations.noise[j].push_back( blackbox_noise.at(j) );
       evaluations.values[j].push_back( blackbox_values.at(j) );
@@ -494,12 +485,27 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::blackbox_evaluator ( )
 template<class TSurrogateModel, class TBasisForSurrogateModel>
 bool NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::last_point_is_feasible ( ) 
 {
-  for ( unsigned int i = 0; i < nb_constraints; ++i ) {
+  bool point_is_feasible = true;
+  for (int i = 0; i < nb_constraints; ++i ) {
     tmp_dbl = evaluations.values[i+1].at( evaluations.best_index );
     if ( tmp_dbl < 0e0 ) tmp_dbl = 0e0;
-    if ( evaluations.values[i+1].back() > tmp_dbl ) return false;
+    if ( evaluations.values[i+1].back() > tmp_dbl ) {
+      point_is_feasible = false;
+      inner_boundary_path_constants.at(i) = (evaluations.values[i+1].back()/
+       pow(diff_norm(x_trial, evaluations.nodes[evaluations.best_index]),2e0))*2e0;//1e0 + inner_boundary_path_constants.at(i);
+      //break;
+    } //else
+
+//     inner_boundary_path_constants.at(i) = max_inner_boundary_path_constants.at(i);
   }
-  return true;
+
+  if ( !point_is_feasible ) {
+    for ( int i = 0; i < nb_constraints; ++i )
+      std::cout << inner_boundary_path_constants[i] << ", ";
+    std::cout << std::endl;
+  }
+
+  return point_is_feasible;
 }
 //--------------------------------------------------------------------------------
 
@@ -507,16 +513,22 @@ bool NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::last_point_is_feasible ( 
 template<class TSurrogateModel, class TBasisForSurrogateModel>
 void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::update_surrogate_models ( )
 {
-  surrogate_basis.compute_basis_coefficients ( evaluations );
-  for ( int i = 0; i < nb_constraints+1; i++ )
-    surrogate_models[ i ].set_function_values ( evaluations.values[i],
-                                                evaluations.noise[i],
-                                                evaluations.surrogate_nodes_index, 
-                                                evaluations.best_index );
-//    surrogate_models[ i ].set_function_values ( evaluations.values[i],
-//                                                evaluations.noise[i],
-//                                                evaluations.surrogate_nodes_index );
+  bool best_index_okay = false;
+  for (int i = 0; i < evaluations.active_index.size(); ++i) {
+    if ( evaluations.active_index[i] == evaluations.best_index) {
+      best_index_okay = true;
+      break;
+    }    
+  }
 
+  assert( best_index_okay );
+
+  surrogate_basis.compute_basis_coefficients ( evaluations.get_scaled_active_nodes( 
+    evaluations.nodes[ evaluations.best_index ], delta) );
+
+  for (int i = 0; i < nb_constraints+1; ++i ) {
+    surrogate_models[ i ].set_function_values ( evaluations.get_active_values(i) );
+  }
   return;
 }
 //--------------------------------------------------------------------------------
@@ -529,14 +541,14 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::update_trustregion (
   tmp_dbl = max_noise;
   max_noise = 0e0;
   if ( stochastic_optimization ) {
-    for ( unsigned int i = 0; i < evaluations.surrogate_nodes_index.size(); ++i ) {
-      if ( evaluations.surrogate_nodes_index[i] != evaluations.best_index ) continue;
-      for ( unsigned int j = 0; j < nb_constraints+1; ++j ) {
-        if ( evaluations.noise[ j ].at( evaluations.surrogate_nodes_index[i] ) > max_noise ) {
+    for ( int i = 0; i < evaluations.active_index.size(); ++i ) {
+      if ( evaluations.active_index[ i ] != evaluations.best_index ) continue;
+      for ( int j = 0; j < nb_constraints+1; ++j ) {
+        if ( evaluations.noise[ j ].at( evaluations.active_index[ i ] ) > max_noise ) {
           if ( diff_norm( 
-                 evaluations.nodes[ evaluations.surrogate_nodes_index[i] ], 
+                 evaluations.nodes[ evaluations.active_index[ i ] ], 
                  evaluations.nodes[ evaluations.best_index ] ) <= delta )
-            max_noise = evaluations.noise[ j ].at( evaluations.surrogate_nodes_index[i] );
+            max_noise = evaluations.noise[ j ].at( evaluations.active_index[ i ] );
         }
       }
     }
@@ -553,7 +565,8 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::update_trustregion (
 //  std::cout << "MAXNOISE " << max_noise << " sqrt = " << sqrt( max_noise ) << std::endl;
 //  std::cout <<  "------------------------- " << std::endl;
   if ( stochastic_optimization ) {
-    double ar_tmp = fabs(acceptance_ratio);
+    double ar_tmp = acceptance_ratio;
+    if ( ar_tmp < 0e0 ) ar_tmp = -ar_tmp;
     if (ar_tmp < 1e0) ar_tmp = 1e0;
     if (ar_tmp > 2e0) ar_tmp = 2e0;
       ar_tmp = 1e0;//sqrt(2.0);
@@ -570,10 +583,10 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::update_trustregion (
 template<class TSurrogateModel, class TBasisForSurrogateModel>
 void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::add_trial_node ( ) 
 {
-  if ( evaluations.surrogate_nodes_index.size( ) < evaluations.max_nb_nodes )
-    evaluations.surrogate_nodes_index.push_back ( evaluations.nodes.size()-1 );
+  if ( evaluations.active_index.size( ) < evaluations.max_nb_nodes )
+    evaluations.active_index.push_back ( evaluations.nodes.size()-1 );
   else
-    evaluations.surrogate_nodes_index[ replace_node_index ] = evaluations.nodes.size()-1;
+    evaluations.active_index[ replace_node_index ] = evaluations.nodes.size()-1;
   
   if ( stochastic_optimization )
     gaussian_processes.smooth_data ( evaluations );
@@ -591,7 +604,7 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::write_to_file ( )
     // ouptut current number of black box evaluations
     fprintf(output_file, int_format, evaluations.nodes.size());
     // output the current design
-    for(unsigned int i = 0; i < dim; ++i) {
+    for(int i = 0; i < dim; ++i) {
         fprintf(output_file, double_format, evaluations.nodes.at(evaluations.best_index).at(i));
     }
     // output the current best value of the objective
@@ -599,7 +612,7 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::write_to_file ( )
     // output the current trust region radius
     fprintf(output_file, double_format, delta);
     // output the current values of the constraints
-    for(unsigned int i = 0; i < nb_constraints; ++i) {
+    for(int i = 0; i < nb_constraints; ++i) {
         fprintf(output_file, double_format, evaluations.values.at(i+1).at(evaluations.best_index));
     }
     fprintf(output_file, "\n");
@@ -631,7 +644,7 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
 
 
   TSurrogateModel surrogate_model_prototype( surrogate_basis );
-  for ( int i = 0; i < nb_constraints+1; i++ )
+  for (int i = 0; i < nb_constraints+1; ++i )
     surrogate_models.push_back ( surrogate_model_prototype );
 
   ImprovePoisedness surrogate_nodes ( surrogate_basis, threshold_for_poisedness_constant,
@@ -663,15 +676,14 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
 //    EXIT_FLAG = -3;
 //    return EXIT_FLAG;
   }
-  for ( int i = 0; i < dim; i++ ) {
+  for (int i = 0; i < dim; ++i ) {
     x_trial = x;
     x_trial.at(i) += delta;
     blackbox_evaluator( x_trial, true );
   }
   if ( verbose == 3 ) { std::cout << "Building initial models ... "; }
-  update_surrogate_models();
+  update_surrogate_models( );
   if ( verbose == 3 ) { std::cout << "done" << std::endl; }
-
 
 
 /*
@@ -683,9 +695,9 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
       x_loc.at(0) = i;
       for (double j = -1.0; j < 2.0; j+=0.1) {
         x_loc.at(1) = j;
-        fvals.at(0) = surrogate_models[0].evaluate( x_loc );
-        fvals.at(1) = surrogate_models[1].evaluate( x_loc );
-        fvals.at(2) = surrogate_models[2].evaluate( x_loc );
+        fvals.at(0) = surrogate_models[0].evaluate( evaluations.transform(x_loc) );
+        fvals.at(1) = surrogate_models[1].evaluate( evaluations.transform(x_loc) );
+        fvals.at(2) = surrogate_models[2].evaluate( evaluations.transform(x_loc) );
         outputfile << x_loc.at(0) << "; " << x_loc.at(1) << "; " << fvals.at(0)<< "; " << 
                      fvals.at(1)<< "; " << fvals.at(2) << std::endl;
       }
@@ -713,13 +725,14 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
       }
       while ( delta > mu * criticality_value ) {
         update_trustregion( omega );
+        update_surrogate_models( ); //xxx
         if ( EXIT_FLAG != NOEXIT ) break;
         if (verbose == 3) {
           std::cout << " Adjusting trust-region radius to " << delta << std::endl;
         }
         surrogate_nodes.improve_poisedness ( evaluations.best_index, evaluations );
         if ( stochastic_optimization ) {
-          for ( unsigned int i = 0; i < dim; ++i )
+          for (int i = 0; i < dim; ++i )
             x_trial.at(i) = evaluations.nodes[ evaluations.best_index].at( i ) +
                          delta * norm_dis( rand_generator ) * 1e0;
           evaluations.nodes.push_back( x_trial );
@@ -731,7 +744,7 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
         criticality_value = surrogate_optimization.compute_criticality_measure( x_trial );
         if (verbose == 3) {
           std::cout << " Value of criticality measure is " << criticality_value << std::endl;
-          std::cout << " -----------------------------------" << std::endl;
+          std::cout << " -----------------------------------" << std::endl << std::flush;
         }
       }
     }
@@ -741,44 +754,57 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
     while (EXIT_FLAG == NOEXIT)  {
       if ( verbose == 3 ) { 
         std::cout << "Computing trial point ... ";
+        std::cout << std::flush;
       }
       x_trial = evaluations.nodes[ evaluations.best_index ];
       trial_model_value = surrogate_optimization.compute_trial_point ( x_trial );
-      if ( verbose == 3 ) { std::cout << "done" << std::endl; }
-      trial_model_value = surrogate_models[0].evaluate( x_trial );
+      
+      if ( verbose == 3 ) { std::cout << "done" << std::endl << std::flush; }
+      trial_model_value = surrogate_models[0].evaluate( evaluations.transform(x_trial) );
 
 
       /*-------------------------------------------------------------------------*/
       /*- STEP 3 - STEP 3 - STEP 3 - STEP 3 - STEP 3 - STEP 3 - STEP 3 - STEP 3 -*/
       /*-------------------------------------------------------------------------*/
-      if ( verbose == 3 ) { std::cout << "Checking feasibility .... "; }
+      if ( verbose == 3 ) { std::cout << "Checking feasibility .... " << std::flush; }
       blackbox_evaluator( x_trial, false );   
       if ( verbose == 3 ) { std::cout << "done" << std::endl; }
       if ( !last_point_is_feasible( ) ) {
-        if ( verbose == 3 ) { std::cout << " Feasibility violated" << std::endl; }
-        for (unsigned int i = 0; i < nb_constraints; ++i) {
+        if ( verbose == 3 ) { std::cout << " Feasibility violated" << std::endl << std::flush; }
+//        for (int i = 0; i < nb_constraints; ++i) {
 //          inner_boundary_path_constants.at(i) *= 2e0;  
-//          if ( inner_boundary_path_constants.at(i) > max_inner_boundary_path_constants.at(i) )
-            inner_boundary_path_constants.at(i) = max_inner_boundary_path_constants.at(i);
+ //         if ( inner_boundary_path_constants.at(i) > max_inner_boundary_path_constants.at(i) )
+//            inner_boundary_path_constants.at(i) = 1e1* inner_boundary_path_constants.at(i);
+//        }
+        tmp_dbl = 1e0;
+        for ( int i = 0; i < evaluations.active_index.size(); ++i ) {
+           if ( diff_norm ( evaluations.nodes.at( evaluations.active_index.at(i) ),
+                            x_trial ) < 1e-2 * delta ) {
+             tmp_dbl = -1e0;
+             break;
+           }
         }
-        replace_node_index = surrogate_nodes.replace_node( evaluations.best_index, 
-                                                           evaluations, x_trial );
-        add_trial_node( );
-        update_surrogate_models( );
+        if ( tmp_dbl > 0e0 ) {
+          replace_node_index = surrogate_nodes.replace_node( evaluations.best_index, 
+                                                             evaluations, x_trial );
+          add_trial_node( );
+        }
         update_trustregion( theta );
+        update_surrogate_models( );
         if ( EXIT_FLAG != NOEXIT ) break;
         surrogate_nodes.improve_poisedness (evaluations.best_index, evaluations );
         if ( stochastic_optimization ) {
-          for ( unsigned int i = 0; i < dim; ++i )
+          for (int i = 0; i < dim; ++i )
             x_trial.at(i) = evaluations.nodes[ evaluations.best_index ].at( i ) +
-                            delta * norm_dis( rand_generator ) * 1e0;
+                            delta * norm_dis( rand_generator );
           evaluations.nodes.push_back( x_trial );
         }
         blackbox_evaluator( );
         if ( EXIT_FLAG != NOEXIT ) break;
+//        update_trustregion( theta );
         update_surrogate_models( );
       } else {
-        if ( verbose == 3 ) { std::cout << "Found feasible trial step" << std::endl; }
+        if ( verbose == 3 ) { std::cout << "Found feasible trial step" << std::endl << std::flush; }
         break;
       }
     }
@@ -789,52 +815,119 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
     /*- STEP 4 - STEP 4 - STEP 4 - STEP 4 - STEP 4 - STEP 4 - STEP 4 - STEP 4 - STEP 4 -*/
     /*----------------------------------------------------------------------------------*/
     if ( EXIT_FLAG == NOEXIT ) { 
-      tmp_dbl = pow( diff_norm( x_trial, evaluations.nodes[ evaluations.best_index ] ) / delta, 2e0 );
-      for (unsigned int i = 0; i < nb_constraints; ++i) 
-        inner_boundary_path_constants.at(i) = tmp_dbl * max_inner_boundary_path_constants.at(i);
       acceptance_ratio = compute_acceptance_ratio ( );
+
+
+//XXX--------------------------------------------------------------------------------
+  std::vector<double> x_loc(dim);
+  std::vector<double> fvals(nb_constraints+1);
+  std::ofstream outputfile ( "surrogate_data.dat" );
+  int xcoord = 0;
+  int ycoord = 1;
+  if ( outputfile.is_open( ) ) {
+    for ( int i = 0; i < dim; ++i)
+      x_loc.at(i) = 0e0;
+    for (double i = -1.0; i <= 1.0; i+=0.01) {
+      x_loc.at(xcoord) = i;
+      for (double j = -1.0; j < 1.0; j+=0.01) {
+        x_loc.at(ycoord) = j;
+        fvals.at(0) = surrogate_models[0].evaluate( x_loc );
+        outputfile << x_loc.at(xcoord) << "; " << x_loc.at(ycoord) << "; " << fvals.at(0)<<"; ";
+//        std::cout << " nb_constraints = " << nb_constraints << std::endl;
+        for ( int k = 0; k < nb_constraints; ++k) {
+          fvals.at(k+1) = surrogate_models[k+1].evaluate( x_loc );
+          outputfile << fvals.at(k+1) << "; ";
+        }
+        outputfile << std::endl;
+      }
+    }
+    outputfile.close( );
+  } else std::cout << "Unable to open file." << std::endl;
+  outputfile.open ( "data.dat" );
+  if ( outputfile.is_open( ) ) {
+    std::vector< std::vector<double> > outputnodes;
+    outputfile << delta << "; " << evaluations.active_index.size() << "; ";
+    for ( int i = 0; i < dim-2; ++i)     
+      outputfile << "0 ;";
+    outputfile << std::endl;
+    outputnodes = evaluations.get_scaled_active_nodes( evaluations.nodes.at(evaluations.best_index), delta); 
+    for ( int i = 0; i < evaluations.active_index.size(); ++i) {
+      for ( int j = 0; j < dim; ++j )
+        outputfile << outputnodes[i][j] << "; ";
+      outputfile << std::endl;
+    }
+    for ( int j = 0; j < dim; ++j )
+      outputfile << evaluations.nodes[evaluations.best_index][j] << "; ";
+    outputfile << std::endl;    
+    for ( int j = 0; j < dim; ++j )
+    outputfile << x_trial[j] << "; "; 
+    outputfile << std::endl;    
+    if (acceptance_ratio >= eta_0)
+      outputfile << "1; " << inner_boundary_path_constants[0] << "; " ;
+    else
+      outputfile << "0; " << inner_boundary_path_constants[0] << "; ";
+    for ( int i = 0; i < dim-2; ++i)     
+      outputfile << "0 ;";
+    outputfile << std::endl;
+    outputfile << xcoord << "; " << ycoord << "; ";
+    for ( int i = 0; i < dim-2; ++i)     
+      outputfile << "0 ;";
+    outputfile << std::endl;
+    outputfile.close( );
+  } else std::cout << "Unable to open file." << std::endl;
+
+//  std::cin >> EXIT_FLAG;
+//XXX--------------------------------------------------------------------------------
+
+
+
+
+      tmp_dbl = pow( diff_norm( x_trial, evaluations.nodes[ evaluations.best_index ] ) / delta, 5e-1 );
+      for (int i = 0; i < nb_constraints; ++i) 
+        inner_boundary_path_constants.at(i) = tmp_dbl * inner_boundary_path_constants.at(i);
+//        inner_boundary_path_constants.at(i) = tmp_dbl * max_inner_boundary_path_constants.at(i);
+      std::cout << " step size scale = " << sqrt(tmp_dbl) << std::endl; 
       if ( verbose == 3 ) { std::cout << std::endl; }
       if ( verbose >= 2 ) { 
         std::cout << "*****************************************" << std::endl; 
       }
       fflush(stdout);
       if ( acceptance_ratio >= eta_1 && acceptance_ratio < 2e0 ) {
-        if ( verbose >= 2 ) { std::cout << " Step successful" << std::endl; }
+        if ( verbose >= 2 ) { std::cout << " Step successful" << std::endl << std::flush; }
         update_trustregion( gamma_inc );
       } 
       fflush(stdout);
       if ( (acceptance_ratio >= eta_0 && acceptance_ratio < eta_1) || acceptance_ratio >= 2e0 ) {
-        if ( verbose >= 2 ) { std::cout << " Step acceptable" << std::endl; }
+        if ( verbose >= 2 ) { std::cout << " Step acceptable" << std::endl << std::flush; }
       }
       fflush(stdout);
       if ( acceptance_ratio >= eta_0 ) {
         replace_node_index = surrogate_nodes.replace_node( evaluations.best_index, 
                                                            evaluations, x_trial );
         add_trial_node( );
-        update_surrogate_models( );
-        
         evaluations.best_index = evaluations.nodes.size()-1;
+        update_surrogate_models( );
       }
       if ( acceptance_ratio < eta_0 ) {
-        if ( verbose >= 2 ) { std::cout << " Step rejected" << std::endl; }
+        if ( verbose >= 2 ) { std::cout << " Step rejected" << std::endl << std::flush; }
         tmp_dbl = 1e0;
-        for ( unsigned int i = 0; i < evaluations.surrogate_nodes_index.size(); ++i ) {
-           if ( diff_norm ( evaluations.nodes.at( evaluations.surrogate_nodes_index.at(i) ),
+        for ( int i = 0; i < evaluations.active_index.size(); ++i ) {
+           if ( diff_norm ( evaluations.nodes.at( evaluations.active_index.at(i) ),
                             evaluations.nodes.at( evaluations.nodes.size()-1 ) ) < 1e-2 * delta ) {
+           //if ( diff_norm ( evaluations.nodes.at( evaluations.active_index.at(i) ),
+           //                 x_trial ) < 1e-2 * delta ) {
              tmp_dbl = -1e0;
              break;
           }
         } 
-//        if ( diff_norm ( evaluations.nodes.at( evaluations.best_index), 
-//                         evaluations.nodes.at( evaluations.nodes.size()-1 ) ) > 1e-3 * delta ) {
-        if ( tmp_dbl > 0e0 ) {
+        if ( tmp_dbl > 0e0 ) { // XXX --- XXX
           replace_node_index = surrogate_nodes.replace_node( evaluations.best_index, 
                                                              evaluations, x_trial );
           add_trial_node( );
           update_surrogate_models( );
         }
         if ( stochastic_optimization ) {
-          for ( unsigned int i = 0; i < dim; ++i )
+          for ( int i = 0; i < dim; ++i )
             x_trial.at(i) = evaluations.nodes[ evaluations.best_index ].at( i ) +
                             delta * norm_dis( rand_generator ) * 1e0;
           evaluations.nodes.push_back( x_trial );
@@ -842,15 +935,17 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
         blackbox_evaluator( );
         update_trustregion( gamma );
         if ( EXIT_FLAG == NOEXIT ) {
+          update_surrogate_models( );
           surrogate_nodes.improve_poisedness( evaluations.best_index, evaluations );
           blackbox_evaluator( );
           if ( EXIT_FLAG != NOEXIT ) {
-            std::cout << "*****************************************" << std::endl;
+            std::cout << "*****************************************" << std::endl << std::flush;
             break;
           }
           update_surrogate_models( );
         }
       }
+
 
       x_trial = evaluations.nodes[ evaluations.best_index ];
       criticality_value = surrogate_optimization.compute_criticality_measure( x_trial );
@@ -875,10 +970,11 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
           std::cout << "                           " << std::setprecision(8) << evaluations.nodes[ evaluations.best_index ].at(dim-1) << "]"<< std::endl;
         } else
           std::cout << "  Current point         : [" << std::setprecision(8) << evaluations.nodes[ evaluations.best_index ].at(0) << "]"<< std::endl;
-        std::cout << "*****************************************" << std::endl << std::endl;
+        std::cout << "*****************************************" << std::endl << std::endl << std::flush;
       }
 
     }
+
 
   } while ( EXIT_FLAG == NOEXIT );
 
@@ -909,7 +1005,7 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
       std::cout << " Maximal number of evaluations reached" << std::endl;
     if ( EXIT_FLAG == -4 )
       std::cout << " Inconsistent parameter" << std::endl;
-    std::cout << "*********************************************" << std::endl << std::endl;
+    std::cout << "*********************************************" << std::endl << std::endl << std::flush;
   }
 
 
@@ -923,9 +1019,9 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
       x_loc(0) = i;
       for (double j = -1.0; j < 2.0; j+=0.01) {
         x_loc(1) = j;
-        fvals(0) = surrogate_models[0].evaluate( x_loc );
-        fvals(1) = surrogate_models[1].evaluate( x_loc );
-        fvals(2) = surrogate_models[2].evaluate( x_loc );
+        fvals(0) = surrogate_models[0].evaluate( evaluations.transform(x_loc) );
+        fvals(1) = surrogate_models[1].evaluate( evaluations.transform(x_loc) );
+        fvals(2) = surrogate_models[2].evaluate( evaluations.transform(x_loc) );
         outputfile << x_loc(0) << "; " << x_loc(1) << "; " << fvals(0)<< "; " << 
                      fvals(1)<< "; " << fvals(2) << std::endl;
       }

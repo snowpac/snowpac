@@ -41,9 +41,9 @@ void QuadraticMinimization::minimize ( std::vector<double> &y,
   norm_g_d_delta = norm_g / delta_loc;
   l1_norm_B      = 0e0;
   lam_S = H.at(0).at(0);
-  for (int i = 0; i < dim; i++) {
+  for (int i = 0; i < dim; ++i) {
     tmp_dbl = 0e0;
-    for (int j = 0; j < dim; j++) 
+    for (int j = 0; j < dim; ++j) 
       tmp_dbl += fabs(H.at(j).at(i));
     if (tmp_dbl > l1_norm_B) l1_norm_B = tmp_dbl;
     if ( H.at(i).at(i) < lam_S ) lam_S = H.at(i).at(i);
@@ -68,7 +68,7 @@ void QuadraticMinimization::minimize ( std::vector<double> &y,
       if (lam < sqrt(lam_L*lam_U)) lam = sqrt(lam_L*lam_U);
     }
     M = H;
-    for ( int i = 0; i < dim; ++i) 
+    for ( int i = 0; i < dim; ++i ) 
       M.at(i).at(i) += lam; 
     CholeskyFactorization::compute(M, p, offset, dim);
     if (p == 0) {  //i.e. if M = H+lam*I is positive definite

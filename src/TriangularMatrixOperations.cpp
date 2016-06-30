@@ -20,9 +20,9 @@ void TriangularMatrixOperations::forward_substitution (
   // solves the system L * y = x for a lower triangular nonsingular matrix L
   // and stores the solution y in x 
   dim = x.size();
-  for (int i = 0; i < dim; i++) {
+  for (int i = 0; i < dim; ++i) {
     tmp = x[i];
-    for (int j = 0; j <= i-1; j++)
+    for (int j = 0; j <= i-1; ++j)
       tmp -= L[i][j]*x[j];
     x[i] = tmp / L[i][i];
   }
@@ -39,9 +39,9 @@ void TriangularMatrixOperations::backward_substitution (
   // solves the system L' * y = x for a lower triangular nonsingular matrix L
   // and stores the solution y in x
   dim = x.size();
-  for (int i = dim-1; i >= 0; i--) {
+  for (int i = dim-1; i >= 0; --i) {
     tmp = x[i];
-    for (int j = i+1; j < dim; j++)
+    for (int j = i+1; j < dim; ++j)
       tmp -= L[j][i]*x[j];
     x[i] = tmp / L[i][i];
   }
@@ -58,13 +58,13 @@ void TriangularMatrixOperations::compute_large_norm_solution (
   //Ly = p for any vector ||p||_2 = 1. Reference: Cline et. al (1982)
 
   //define the weights and initialize solution
-  for (int i = 0; i < dim; i++) {
+  for (unsigned int i = 0; i < dim; ++i) {
     p.at(i) = 0e0;
     w.at(i) = 1e0/L.at(i).at(i);
   }
   yy = 0e0;
 
-  for (int k = 0; k < dim; k++) {
+  for (int k = 0; k < dim; ++k) {
     //step 1: compute cosine/sine pairs
     if (k == 0) {
       c    = 1e0;
@@ -120,12 +120,12 @@ void TriangularMatrixOperations::compute_large_norm_solution (
     //note: updating y(k) has already been incorporated in step 1 
     d.at(k) = c;
 
-    for ( int i = 0; i < k; ++i) {
+    for ( unsigned int i = 0; i < k; ++i) {
       d.at(i) *= s;
       y.at(i) *= s;
     }
 
-    for ( int i = k+1; i < dim; ++i)
+    for ( unsigned int i = k+1; i < dim; ++i)
       p.at(i) = s*p.at(i) + L.at(i).at(k)*y.at(k);
   
   }
