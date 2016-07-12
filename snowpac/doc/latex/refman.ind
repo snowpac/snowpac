@@ -1,0 +1,145 @@
+\begin{theindex}
+
+  \item {add}
+    \subitem {Vector\+Operations}, \hyperpage{23}
+
+  \indexspace
+
+  \item {backward\+\_\+substitution}
+    \subitem {Triangular\+Matrix\+Operations}, \hyperpage{21}
+  \item {Basis\+For\+Minimum\+Frobenius\+Norm\+Model}, \hyperpage{5}
+  \item {Basis\+For\+Surrogate\+Model\+Base\+Class}, \hyperpage{5}
+    \subitem {Basis\+For\+Surrogate\+Model\+Base\+Class}, \hyperpage{6}
+    \subitem {nb\+\_\+basis\+\_\+functions}, \hyperpage{6}
+  \item {Black\+Box\+Base\+Class}, \hyperpage{7}
+  \item {Blackbox\+Data}, \hyperpage{7}
+  \item {build}
+    \subitem {Gaussian\+Process}, \hyperpage{9}
+
+  \indexspace
+
+  \item {Cholesky\+Factorization}, \hyperpage{7}
+    \subitem {compute}, \hyperpage{8}
+  \item {compute}
+    \subitem {Cholesky\+Factorization}, \hyperpage{8}
+  \item {compute\+\_\+large\+\_\+norm\+\_\+solution}
+    \subitem {Triangular\+Matrix\+Operations}, \hyperpage{21}
+
+  \indexspace
+
+  \item {diff\+\_\+norm}
+    \subitem {Vector\+Operations}, \hyperpage{23}
+  \item {dot\+\_\+product}
+    \subitem {Vector\+Operations}, \hyperpage{23}
+
+  \indexspace
+
+  \item {estimate\+\_\+hyper\+\_\+parameters}
+    \subitem {Gaussian\+Process}, \hyperpage{10}
+  \item {evaluate}
+    \subitem {Gaussian\+Process}, \hyperpage{10}
+  \item {evaluate\+\_\+kernel}
+    \subitem {Gaussian\+Process}, \hyperpage{10}
+  \item {evaluate\+\_\+monomial}
+    \subitem {Quadratic\+Monomial}, \hyperpage{18}
+
+  \indexspace
+
+  \item {forward\+\_\+substitution}
+    \subitem {Triangular\+Matrix\+Operations}, \hyperpage{22}
+
+  \indexspace
+
+  \item {Gaussian\+Process}, \hyperpage{8}
+    \subitem {build}, \hyperpage{9}
+    \subitem {estimate\+\_\+hyper\+\_\+parameters}, \hyperpage{10}
+    \subitem {evaluate}, \hyperpage{10}
+    \subitem {evaluate\+\_\+kernel}, \hyperpage{10}
+    \subitem {Gaussian\+Process}, \hyperpage{9}
+    \subitem {update}, \hyperpage{10}
+  \item {Gaussian\+Process\+Base\+Class}, \hyperpage{11}
+  \item {Gaussian\+Process\+Kernel\+Base\+Class}, \hyperpage{12}
+  \item {Gaussian\+Process\+Support}, \hyperpage{12}
+
+  \indexspace
+
+  \item {improve\+\_\+poisedness}
+    \subitem {Improve\+Poisedness}, \hyperpage{13}
+  \item {Improve\+Poisedness}, \hyperpage{12}
+    \subitem {improve\+\_\+poisedness}, \hyperpage{13}
+    \subitem {Improve\+Poisedness}, \hyperpage{13}
+    \subitem {replace\+\_\+node}, \hyperpage{14}
+  \item {Improve\+Poisedness\+Base\+Class}, \hyperpage{14}
+
+  \indexspace
+
+  \item {minimize}
+    \subitem {Quadratic\+Minimization}, \hyperpage{16}
+  \item {Minimum\+Frobenius\+Norm\+Model}, \hyperpage{15}
+  \item {minus}
+    \subitem {Vector\+Operations}, \hyperpage{24}
+
+  \indexspace
+
+  \item {N\+O\+W\+P\+A\+C$<$ T\+Surrogate\+Model, T\+Basis\+For\+Surrogate\+Model $>$}, 
+		\hyperpage{15}
+  \item {nb\+\_\+basis\+\_\+functions}
+    \subitem {Basis\+For\+Surrogate\+Model\+Base\+Class}, \hyperpage{6}
+
+  \indexspace
+
+  \item {Quadratic\+Minimization}, \hyperpage{16}
+    \subitem {minimize}, \hyperpage{16}
+    \subitem {Quadratic\+Minimization}, \hyperpage{16}
+  \item {Quadratic\+Monomial}, \hyperpage{17}
+    \subitem {evaluate\+\_\+monomial}, \hyperpage{18}
+    \subitem {Quadratic\+Monomial}, \hyperpage{17}
+
+  \indexspace
+
+  \item {Regularized\+Minimum\+Frobenius\+Norm\+Model}, \hyperpage{18}
+  \item {replace\+\_\+node}
+    \subitem {Improve\+Poisedness}, \hyperpage{14}
+  \item {rescale}
+    \subitem {Vector\+Operations}, \hyperpage{24}
+
+  \indexspace
+
+  \item {scale}
+    \subitem {Vector\+Operations}, \hyperpage{24}
+  \item {set\+\_\+zero}
+    \subitem {Vector\+Operations}, \hyperpage{25}
+  \item {Subproblem\+Data$<$ T\+Surrogate\+Model, T\+Subproblem\+Optimization $>$}, 
+		\hyperpage{19}
+  \item {Subproblem\+Definitions$<$ T\+Surrogate\+Model, T\+Subproblem\+Optimization $>$}, 
+		\hyperpage{19}
+  \item {Subproblem\+Optimization$<$ T\+Surrogate\+Model $>$}, 
+		\hyperpage{19}
+  \item {Surrogate\+Model\+Base\+Class}, \hyperpage{20}
+
+  \indexspace
+
+  \item {Triangular\+Matrix\+Operations}, \hyperpage{20}
+    \subitem {backward\+\_\+substitution}, \hyperpage{21}
+    \subitem {compute\+\_\+large\+\_\+norm\+\_\+solution}, 
+		\hyperpage{21}
+    \subitem {forward\+\_\+substitution}, \hyperpage{22}
+    \subitem {Triangular\+Matrix\+Operations}, \hyperpage{21}
+
+  \indexspace
+
+  \item {update}
+    \subitem {Gaussian\+Process}, \hyperpage{10}
+
+  \indexspace
+
+  \item {Vector\+Operations}, \hyperpage{22}
+    \subitem {add}, \hyperpage{23}
+    \subitem {diff\+\_\+norm}, \hyperpage{23}
+    \subitem {dot\+\_\+product}, \hyperpage{23}
+    \subitem {minus}, \hyperpage{24}
+    \subitem {rescale}, \hyperpage{24}
+    \subitem {scale}, \hyperpage{24}
+    \subitem {set\+\_\+zero}, \hyperpage{25}
+
+\end{theindex}
