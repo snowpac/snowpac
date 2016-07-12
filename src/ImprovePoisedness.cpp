@@ -70,12 +70,12 @@ int ImprovePoisedness::replace_node ( int reference_node,
 //      v2 = evaluations.nodes[ reference_node ];
       add ( -1e0, evaluations.nodes[ evaluations.active_index[ i ] ], v2 );    
       scale( 1e0/norm(v2), v2, v2);
-      if ( diff_norm( v1, v2) < 1e-2 ) {
+      if ( diff_norm( v1, v2) < 1e-3 ) {
         evaluations.active_index.erase( evaluations.active_index.begin() + i ); 
         tmp_int--;
       } else {
         scale( -1e0, v2, v2);
-        if ( diff_norm( v1, v2) < 1e-2 ) {
+        if ( diff_norm( v1, v2) < 1e-3 ) {
           evaluations.active_index.erase( evaluations.active_index.begin() + i ); 
           tmp_int--;
         }
