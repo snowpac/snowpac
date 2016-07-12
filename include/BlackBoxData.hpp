@@ -38,6 +38,10 @@ class BlackBoxData : public VectorOperations{
     center_node = center_node_input;
     int scaled_active_nodes_size = scaled_active_nodes.size();
     int active_index_size = active_index.size();
+    if ( scaled_active_nodes_size > active_index_size ) {
+      scaled_active_nodes.resize( active_index_size );
+      scaled_active_nodes_size = active_index_size;
+    }
     for ( int i = 0; i < scaled_active_nodes_size; ++i ) {
       rescale( 1e0 / scaling,  nodes[ active_index[i] ], center_node, scaled_active_nodes[i]);  
     }
@@ -50,15 +54,27 @@ class BlackBoxData : public VectorOperations{
   std::vector<double> &get_active_values( int i ) {
     int active_values_size = active_values.size();
     int active_index_size = active_index.size();
-    for ( int j = 0; j < active_values_size; ++j )
+    if ( active_values_size > active_index_size ) {
+      active_values.resize( active_index_size );
+      active_values_size = active_index_size;
+    }
+    for ( int j = 0; j < active_values_size; ++j ) {
       active_values.at(j) = values.at( i ).at( active_index.at(j) );
-    for ( int j = active_values_size; j < active_index_size; ++j )
+//      std::cout << active_values.at(j) << std::endl;
+    }
+    for ( int j = active_values_size; j < active_index_size; ++j ) {
       active_values.push_back( values.at( i ).at(  active_index.at(j) ) );
+//      std::cout << active_values.at(j) << std::endl;
+    }
     return active_values;
   }
   std::vector<double> &get_active_noise( int i ) {
     int active_noise_size = active_noise.size();
     int active_index_size = active_index.size();
+    if ( active_noise_size > active_index_size ) {
+      active_noise.resize( active_index_size );
+      active_noise_size = active_index_size;
+    }
     for (int j = 0; j < active_noise_size; ++j )
       active_noise[j] = noise[i][ active_index[j] ];
     for (int j = active_noise_size; j < active_index_size; ++j )

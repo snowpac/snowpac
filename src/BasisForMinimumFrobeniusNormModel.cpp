@@ -25,6 +25,8 @@ void BasisForMinimumFrobeniusNormModel::set_nb_nodes( int nb_nodes_input ) {
   if ( nb_nodes == nb_nodes_input ) return;
   nb_nodes = nb_nodes_input;
 
+//  if ( nb_basis_functions <= nb_nodes ) nb_basis_functions = 0;
+
   basis_values.clear();
   basis_values.resize ( nb_nodes );
   A_sysmat = Eigen::MatrixXd::Zero(nb_basis_functions + nb_nodes, 
@@ -44,6 +46,9 @@ void BasisForMinimumFrobeniusNormModel::set_nb_nodes( int nb_nodes_input ) {
   basis_Hessians.resize( nb_nodes );
   basis_coefficients.clear();
   basis_coefficients.resize( nb_nodes );
+
+//  if ( nb_basis_functions == 0 ) nb_basis_functions = nb_nodes;
+
   for ( int i = 0; i < nb_nodes; ++i ) {
     basis_coefficients[i] = Eigen::VectorXd::Zero( nb_basis_functions ) ;
     gradients[i].resize( BasisForSurrogateModelBaseClass::dim );
@@ -52,6 +57,7 @@ void BasisForMinimumFrobeniusNormModel::set_nb_nodes( int nb_nodes_input ) {
     for ( int j = 0; j < BasisForSurrogateModelBaseClass::dim; ++j) 
       basis_Hessians[i][j].resize( BasisForSurrogateModelBaseClass::dim );
   }
+
 
   return;
 }
@@ -70,6 +76,8 @@ void BasisForMinimumFrobeniusNormModel::compute_basis_coefficients (
 
 
   set_nb_nodes ( nodes.size( ) );
+
+//  assert ( nb_nodes <= 6 );
 
 
   // system matrix for computing coeffs of Lagrange interpolation models
@@ -132,7 +140,7 @@ void BasisForMinimumFrobeniusNormModel::compute_basis_coefficients (
   } 
 
 
-   if ( (A_sysmat * S_coeffsolve - F_rhsmat).norm() > 1e-6 ) {
+   if ( (A_sysmat * S_coeffsolve - F_rhsmat).norm() > 1e-5 ) {
 /*
      std::vector<double> fvals;
      for ( int i = 0; i < nb_nodes; ++i) { 
@@ -141,6 +149,7 @@ void BasisForMinimumFrobeniusNormModel::compute_basis_coefficients (
          std::cout << std::setprecision(2) << fabs(fvals[j]) << ", " ;
        std::cout << std::endl;
      }
+*/
 
     std::ofstream outputfile ( "points.dat" );
     if ( outputfile.is_open() ) {
@@ -151,15 +160,29 @@ void BasisForMinimumFrobeniusNormModel::compute_basis_coefficients (
       }
     } 
     outputfile.close();
-*/
+
+  
+    std::cout << " nb nodes = " << nb_nodes << std::endl;
     std::cout << "----------------" << std::endl; 
     std::cout << (A_sysmat * S_coeffsolve - F_rhsmat).norm() << std::endl;
     std::cout << "----------------" << std::endl; 
 
-//     assert(false);
+/*
+  std::vector<double> vals;
+  for ( int j = 0; j < nb_nodes; ++j ) {
+    vals = evaluate( nodes[ j ]);
+    for ( int i = 0; i < nb_nodes; ++i ) {
+      std::cout << vals.at(i) << ", ";
+    }    
+    std::cout << std::endl;
+  }
+*/
+
+     assert(false);
   }
 
-  
+
+
   return;
 }
 //--------------------------------------------------------------------------------

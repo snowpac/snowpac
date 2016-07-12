@@ -42,48 +42,90 @@ int ImprovePoisedness::replace_node ( int reference_node,
   // test for collinearity
   std::vector<double> v1 ( dim );
   std::vector<double> v2 ( dim );
-  v1 = evaluations.nodes[ reference_node ];
+
+  int checked_nodes_counter = 0;
+  int check_node = 0;
+  int tmp_int;
+
+  bool ref_is_best = false;
+  if ( reference_node >= 0 ) ref_is_best = true;
+
+  reference_node = evaluations.best_index;
+
+  std::vector<int> eval_act_ind =  evaluations.active_index;
+  tmp_int = nb_nodes;
+
+  while ( nb_nodes - 1 - checked_nodes_counter >= 0 ) { 
+ 
+  check_node = eval_act_ind[ nb_nodes - checked_nodes_counter - 1 ];  
+
+  v1 = evaluations.nodes[ check_node ];
   add ( -1e0, new_node, v1 );
   scale( 1e0/norm(v1), v1, v1);
-  for ( int i = nb_nodes-1; i >= 0; --i ) {
-    if ( evaluations.active_index[ i ] != reference_node ) {
-      v2 = evaluations.nodes[ reference_node ];
+
+  for ( int i = tmp_int-1; i >= 0; --i ) {
+    if ( evaluations.active_index[ i ] != reference_node && 
+         evaluations.active_index[ i ] != check_node ) {
+      v2 = new_node;//evaluations.nodes[ reference_node ];
+//      v2 = evaluations.nodes[ reference_node ];
       add ( -1e0, evaluations.nodes[ evaluations.active_index[ i ] ], v2 );    
       scale( 1e0/norm(v2), v2, v2);
-      if ( diff_norm( v1, v2) < 1e-3 ) {
-        //change_index = i;
-        //return change_index;
+      if ( diff_norm( v1, v2) < 1e-2 ) {
         evaluations.active_index.erase( evaluations.active_index.begin() + i ); 
-//        break;
+        tmp_int--;
       } else {
         scale( -1e0, v2, v2);
-        if ( diff_norm( v1, v2) < 1e-3 ) {
-          //change_index = i;
-          //return change_index;
+        if ( diff_norm( v1, v2) < 1e-2 ) {
           evaluations.active_index.erase( evaluations.active_index.begin() + i ); 
-  //        break;
+          tmp_int--;
         }
       }
     }
   }
+//  nb_nodes = tmp_int;
+
+  checked_nodes_counter++;
+
+  }
+
+  nb_nodes = evaluations.active_index.size( );
+//  std::cout << "nb_nodes = " << nb_nodes << std::endl;
+
+  if ( !ref_is_best ) reference_node = -1;
+  for ( int i = nb_nodes-1; i >= 0; --i ) {
+    if ( evaluations.active_index[ i ] != reference_node ) {
+      if ( diff_norm( evaluations.nodes[ evaluations.active_index[i]], 
+                      new_node) / (*delta) < 1e-3 ) {
+        change_index = i;
+//        assert ( evaluations.active_index[change_index] != evaluations.best_index);
+//        std::cout << "YYY ---- " << std::endl;
+        return change_index;
+      }
+    }
+  }
+//  if ( ref_is_best ) 
+    reference_node = evaluations.best_index;
+
+//  nb_nodes = evaluations.active_index.size( );
+
 
 
   basis_values = basis->evaluate ( evaluations.transform( new_node ) );
 
   for (int i = 0; i < nb_nodes; ++i) {
     if ( evaluations.active_index[ i ] != reference_node ) {
-      //if ( diff_norm( evaluations.nodes[ evaluations.active_index[i]], 
-      //                new_node) / (*delta) < 1e-4 ) {
-      //  change_index = i;
-      //  return change_index;
-      //}
+//      if ( diff_norm( evaluations.nodes[ evaluations.active_index[i]], 
+//                      new_node) / (*delta) < 1e-3 ) {
+//        change_index = i;
+//        return change_index;
+//      }
       LK = basis_values.at(i);
       if ( LK < 0e0 ) LK = -LK;
       norm_dbl = diff_norm( evaluations.nodes[ evaluations.active_index[i]],
                evaluations.nodes[ evaluations.best_index ] ) / (*delta);
-      norm_dbl /= sqrt( (double) dim );
+//      norm_dbl /= sqrt( (double) dim );
       if ( norm_dbl <= 1e0 ) norm_dbl = 1e0;
-      else norm_dbl = pow( norm_dbl, 6e0 );
+      else norm_dbl = pow( norm_dbl, 3e0 );
    
       //if (norm_dbl > 1e0) LK = LK * norm;
       LK *= norm_dbl;
@@ -170,15 +212,23 @@ void ImprovePoisedness::improve_poisedness ( int reference_node,
     if ( print_output ) {
       if ( counter_max_improvement_steps == 1 ) std::cout << std::endl;
       std::cout << "   Current poisedness value: " << poisedness_constant << std::endl; 
+      fflush( stdout );
     }
 
     evaluations.nodes.push_back ( new_node );
 
+/*
+    std::cout << new_node[0] << ", " << new_node[1] << std::endl;
+    std::cout << "++" << std::endl;
+    for ( int i = 0 ; i < evaluations.active_index.size(); ++i )
+      std::cout << evaluations.nodes[evaluations.active_index[i]][0] << ", " << 
+                   evaluations.nodes[evaluations.active_index[i]][1] << std::endl;
+*/
  //   for ( int i = 0; i < evaluations.active_index.size(); ++i ) 
  //     std::cout <<  i+1 << " : " << evaluations.active_index[i] << std::endl;
 
-    if ( evaluations.active_index.size( ) >= max_nb_nodes || 
-         poisedness_constant > 1e2 * threshold_for_poisedness_constant || true) {
+    if ( (evaluations.active_index.size( ) >= max_nb_nodes || 
+         poisedness_constant > 1e2 * threshold_for_poisedness_constant) || true) {
       assert ( evaluations.active_index.at(change_index) != evaluations.best_index );
       evaluations.active_index.erase( 
         evaluations.active_index.begin() + change_index );
@@ -216,6 +266,7 @@ void ImprovePoisedness::improve_poisedness ( int reference_node,
   else if ( print_output )
     std::cout << "done" << std::endl; 
 
+
   return;
 }
 //--------------------------------------------------------------------------------
@@ -235,10 +286,10 @@ void ImprovePoisedness::compute_poisedness_constant ( int reference_node,
     node_norm_scaling = 
       diff_norm( evaluations.nodes[ evaluations.active_index[i] ],
                  evaluations.nodes[ evaluations.best_index ] ) / (*delta);
-    node_norm_scaling /= sqrt((double) dim);    
+  //  node_norm_scaling /= sqrt((double) dim);    
     if (node_norm_scaling <= 1e0) { node_norm_scaling = 1e0; 
     } else {
-      node_norm_scaling = pow(node_norm_scaling, 6e0);
+      node_norm_scaling = pow(node_norm_scaling, 3e0);
     }
 
 //    if ( node_norm_scaling > 1e2 && nb_nodes < max_nb_nodes ) continue;
@@ -317,7 +368,7 @@ void ImprovePoisedness::compute_poisedness_constant ( int reference_node,
   }
 
   assert ( evaluations.best_index != evaluations.active_index[change_index] );
-
+  assert ( poisedness_constant > 0e0 );
     	
   return;
 }

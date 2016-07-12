@@ -77,15 +77,16 @@ SubproblemOptimization<TSurrogateModel>::SubproblemOptimization (
   criticality_gradient.resize( dim );
   best_point.resize( dim );
 
-  constraint_tolerance = 1e-12;
+  constraint_tolerance = 1e-10;
 
   lb.resize( dim );
   ub.resize( dim );
 
-  double opt_time = 2e0;
+  double opt_time = 1e1;
   rel_tol = 1e-11; //1e-11
+  double abs_ftol = 1e-16;
   for (int i = 0; i < dim; ++i) {
-    abs_tol.push_back( 1e-7 ); //1e-5
+    abs_tol.push_back( 1e-11 ); //1e-5
     x.push_back ( 0e0 );    
     lb[i] = -1e0;
     ub[i] = 1e0;
@@ -103,7 +104,9 @@ SubproblemOptimization<TSurrogateModel>::SubproblemOptimization (
     SpD.push_back( SpD_prototype );
   }
 
-  opt_criticality_measure.set_xtol_abs( abs_tol );
+  //opt_criticality_measure.set_ftol_abs( abs_ftol );
+  //opt_criticality_measure.set_ftol_rel( rel_tol );
+  //opt_criticality_measure.set_xtol_abs( abs_tol );
   opt_criticality_measure.set_xtol_rel( rel_tol );
   opt_criticality_measure.set_maxtime( opt_time );
   opt_criticality_measure.set_min_objective ( subproblems.opt_criticality_measure_obj, &SpD[0] );
@@ -115,6 +118,8 @@ SubproblemOptimization<TSurrogateModel>::SubproblemOptimization (
  // opt_criticality_measure.add_inequality_mconstraint( 
  //   subproblems.constraints_for_subproblems<1>, me, constraint_tolerance );
 
+  //opt_trial_point.set_ftol_abs( abs_ftol );
+  //opt_trial_point.set_ftol_rel( rel_tol );
   opt_trial_point.set_xtol_abs( abs_tol );
   opt_trial_point.set_xtol_rel( rel_tol );
   opt_trial_point.set_maxtime( opt_time );
@@ -128,6 +133,8 @@ SubproblemOptimization<TSurrogateModel>::SubproblemOptimization (
 //    subproblems.constraints_for_subproblems, me, constraint_tolerance );
 
 
+  //opt_restore_feasibility.set_ftol_abs( abs_ftol );
+  //opt_restore_feasibility.set_ftol_rel( rel_tol );
   opt_restore_feasibility.set_xtol_abs( abs_tol );
   opt_restore_feasibility.set_xtol_rel( rel_tol );
   opt_restore_feasibility.set_maxtime( opt_time );  
@@ -189,6 +196,9 @@ void SubproblemOptimization<TSurrogateModel>::set_feasibility_thresholds (
 
   if( !point_is_feasible ) {
    std::cout << std::endl;
+   for ( int i = 0; i < x.size(); ++i )
+     std::cout << x.at(i) << ", ";
+   std::cout << std::endl;
    for ( int i = 0; i < number_constraints; i++ ) 
       std::cout << (*surrogate_models)[i+1].evaluate ( x ) << std::endl;
     assert(point_is_feasible);
@@ -204,16 +214,20 @@ double SubproblemOptimization<TSurrogateModel>::compute_criticality_measure (
                                                 std::vector<double> &x )
 {
 
+ 
+
   best_point = x;
 
   for ( int i = 0; i < dim; ++i ) {
     x[i] = 0e0;
     if ( !lower_bounds.empty() ) {
       lb[i] = (best_point[i] - lower_bounds[i])/(*delta);
+      if ( lb[i] > 0e0 ) lb[i] = 0e0;
       if ( lb[i] < -1e0 ) lb[i] = -1e0;
     }
     if ( !upper_bounds.empty() ) {
       ub[i] = (upper_bounds[i] - best_point[i])/(*delta);
+      if ( ub[i] < 0e0 ) ub[i] = 0e0;
       if ( ub[i] > 1e0 ) ub[i] = 1e0;
     }
   }
@@ -224,8 +238,11 @@ double SubproblemOptimization<TSurrogateModel>::compute_criticality_measure (
   set_feasibility_thresholds ( x );
 
   if ( point_is_feasible ) {
+//    for ( int i = 0; i < number_constraints; ++i )
+//      if ( inner_boundary_constant->at(i) > 1e1 ) 
+//        inner_boundary_constant->at(i) = 1e1; 
     criticality_gradient = (*surrogate_models)[0].gradient ( );
-    assert ( norm(criticality_gradient) > 1e-6 );
+//    assert ( norm(criticality_gradient) > 1e-6 );
   } else {
     assert ( false ); 
     set_zero( criticality_gradient );
@@ -236,6 +253,7 @@ double SubproblemOptimization<TSurrogateModel>::compute_criticality_measure (
   }
 
   int errmess =  opt_criticality_measure.optimize ( x, optimization_result );
+
 
 /*
   if ( fabs(optimization_result) < 1e-6 ) { 
@@ -270,10 +288,12 @@ double SubproblemOptimization<TSurrogateModel>::compute_trial_point (
     x[i] = 0e0;
     if ( !lower_bounds.empty() ) {
       lb[i] = (best_point[i] - lower_bounds[i])/(*delta);
+      if ( lb[i] > 0e0 ) lb[i] = 0e0;
       if ( lb[i] < -1e0 ) lb[i] = -1e0;
     }
     if ( !upper_bounds.empty() ) {
       ub[i] = (upper_bounds[i] - best_point[i])/(*delta);
+      if ( ub[i] < 0e0 ) ub[i] = 0e0;
       if ( ub[i] > 1e0 ) ub[i] = 1e0;
     }
   }
@@ -293,8 +313,14 @@ double SubproblemOptimization<TSurrogateModel>::compute_trial_point (
     errmess = opt_trial_point.optimize ( x, optimization_result );
   }
 
-  
-  if ( norm(x) > 2e0 ) {
+  double tmp_dbl = norm(x);
+  if ( tmp_dbl > 1e0 ) {
+   for (int i = 0; i < dim; ++i )
+     x.at(i) = x.at(i) / tmp_dbl;
+  }
+
+//        std::cout << errmess << std::endl;
+  if ( norm(x) > 1e0 ) {
       std::cout << errmess << std::endl;
     for ( int i = 0; i < dim; ++i ) {
       std::cout << "x["<<i<<"]="<< x[i] << std::endl;
@@ -321,10 +347,12 @@ double SubproblemOptimization<TSurrogateModel>::restore_feasibility (
     x[i] = 0e0;
     if ( !lower_bounds.empty() ) {
       lb[i] = (best_point[i] - lower_bounds[i])/(*delta);
+      if ( lb[i] > 0e0 ) lb[i] = 0e0;
       if ( lb[i] < -1e0 ) lb[i] = -1e0;
     }
     if ( !upper_bounds.empty() ) {
       ub[i] = (upper_bounds[i] - best_point[i])/(*delta);
+      if ( ub[i] < 0e0 ) ub[i] = 0e0;
       if ( ub[i] > 1e0 ) ub[i] = 1e0;
     }
   }

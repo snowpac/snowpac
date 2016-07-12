@@ -234,8 +234,8 @@ class Wrapper_ImprovePoisedness : public ImprovePoisedness {
         if ( fabs( active_nodes.at(0).at(1) + 0.96 ) > 1e-6 ) return -2;
         if ( fabs( active_nodes.at(1).at(0) + 0.96 ) > 1e-6 ) return -3;
         if ( fabs( active_nodes.at(1).at(1) + 0.98 ) > 1e-6 ) return -4;
-        if ( fabs( active_nodes.at(2).at(0) + 0.0 ) > 1e-6 ) return -5;
-        if ( fabs( active_nodes.at(2).at(1) + 0.0 ) > 1e-6 ) return -6;
+        if ( fabs( active_nodes.at(2).at(0) + 0.00 ) > 1e-6 ) return -5;
+        if ( fabs( active_nodes.at(2).at(1) + 0.00 ) > 1e-6 ) return -6;
         if ( fabs( active_nodes.at(3).at(0) - 0.98 ) > 1e-6 ) return -7;
         if ( fabs( active_nodes.at(3).at(1) - 0.96 ) > 1e-6 ) return -8;
         if ( fabs( active_nodes.at(4).at(0) - 0.96 ) > 1e-6 ) return -9;
@@ -249,8 +249,8 @@ class Wrapper_ImprovePoisedness : public ImprovePoisedness {
         if ( fabs( active_nodes.at(0).at(1) + 0.96 ) > 1e-6 ) return -2;
         if ( fabs( active_nodes.at(1).at(0) + 0.96 ) > 1e-6 ) return -3;
         if ( fabs( active_nodes.at(1).at(1) + 0.98 ) > 1e-6 ) return -4;
-        if ( fabs( active_nodes.at(2).at(0) + 0.0 ) > 1e-6 ) return -5;
-        if ( fabs( active_nodes.at(2).at(1) + 0.0 ) > 1e-6 ) return -6;
+        if ( fabs( active_nodes.at(2).at(0) + 0.00 ) > 1e-6 ) return -5;
+        if ( fabs( active_nodes.at(2).at(1) + 0.00 ) > 1e-6 ) return -6;
         if ( fabs( active_nodes.at(3).at(0) - 0.98 ) > 1e-6 ) return -7;
         if ( fabs( active_nodes.at(3).at(1) - 0.96 ) > 1e-6 ) return -8;
         if ( fabs( active_nodes.at(4).at(0) - 0.96 ) > 1e-6 ) return -9;
@@ -264,8 +264,8 @@ class Wrapper_ImprovePoisedness : public ImprovePoisedness {
         if ( fabs( active_nodes.at(0).at(1) + 0.96 ) > 1e-6 ) return -2;
         if ( fabs( active_nodes.at(1).at(0) + 0.96 ) > 1e-6 ) return -3;
         if ( fabs( active_nodes.at(1).at(1) + 0.98 ) > 1e-6 ) return -4;
-        if ( fabs( active_nodes.at(2).at(0) + 0.0 ) > 1e-6 ) return -5;
-        if ( fabs( active_nodes.at(2).at(1) + 0.0 ) > 1e-6 ) return -6;
+        if ( fabs( active_nodes.at(2).at(0) + 0.00 ) > 1e-6 ) return -5;
+        if ( fabs( active_nodes.at(2).at(1) + 0.00 ) > 1e-6 ) return -6;
         if ( fabs( active_nodes.at(3).at(0) - 0.98 ) > 1e-6 ) return -7;
         if ( fabs( active_nodes.at(3).at(1) - 0.96 ) > 1e-6 ) return -8;
         if ( fabs( active_nodes.at(4).at(0) - 0.70710678119654 ) > 1e-6 ) return -11;
@@ -279,8 +279,8 @@ class Wrapper_ImprovePoisedness : public ImprovePoisedness {
         if ( fabs( active_nodes.at(0).at(1) + 0.96 ) > 1e-6 ) return -2;
         if ( fabs( active_nodes.at(1).at(0) + 0.96 ) > 1e-6 ) return -3;
         if ( fabs( active_nodes.at(1).at(1) + 0.98 ) > 1e-6 ) return -4;
-        if ( fabs( active_nodes.at(2).at(0) + 0.0 ) > 1e-6 ) return -5;
-        if ( fabs( active_nodes.at(2).at(1) + 0.0 ) > 1e-6 ) return -6;
+        if ( fabs( active_nodes.at(2).at(0) + 0.00 ) > 1e-6 ) return -5;
+        if ( fabs( active_nodes.at(2).at(1) + 0.00 ) > 1e-6 ) return -6;
         if ( fabs( active_nodes.at(3).at(0) - 0.98 ) > 1e-6 ) return -7;
         if ( fabs( active_nodes.at(3).at(1) - 0.96 ) > 1e-6 ) return -8;
         if ( fabs( active_nodes.at(4).at(0) - 0.70710678119654 ) > 1e-6 ) return -11;

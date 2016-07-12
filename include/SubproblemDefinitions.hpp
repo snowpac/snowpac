@@ -134,12 +134,15 @@ double SubproblemDefinitions<TSurrogateModel, TSubproblemOptimization>::constrai
   //d->vo->minus ( x, d->me->best_point, d->vector );
   tmpdbl = d->vo->dot_product( x, x );
 
-  result += d->me->inner_boundary_constant->at( d->constraint_number ) * tmpdbl * 
-            pow(*(d->me->delta), 2e0) -
+  double tmpdbl1 = pow(*(d->me->delta), 2e0);
+//  if ( d->me->inner_boundary_constant->at( d->constraint_number ) < 9.9e0 ) tmpdbl1 = 1e0;
+
+  result += d->me->inner_boundary_constant->at( d->constraint_number ) * tmpdbl /
+            tmpdbl1 -
             d->me->feasibility_thresholds.at( d->constraint_number );
   if (!grad.empty()) {
-    tmpdbl = d->me->inner_boundary_constant->at( d->constraint_number ) * 2e0 *
-             pow(*(d->me->delta), 2e0) ;
+    tmpdbl = d->me->inner_boundary_constant->at( d->constraint_number ) * 2e0 /
+             tmpdbl1 ;
     for (int j = 0; j < x.size(); ++j) 
       grad[j] += tmpdbl * x.at(j);
   }
