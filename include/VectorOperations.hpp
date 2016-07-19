@@ -8,7 +8,7 @@
 class VectorOperations {
   private:
     double dbl;
-    int size;
+    int size, size1, size2;
   public:
     //! Setting vector to zero
     /*!
@@ -25,6 +25,15 @@ class VectorOperations {
     */
     void scale ( double, std::vector<double> const&, 
                  std::vector<double>& );
+    //! Scaling of matrix
+    /*!
+     Computes W = s V
+     \param s scaling factor
+     \param V input matrix to be scaled
+     \param W scaled matrix s v
+    */
+    void scale ( double, std::vector< std::vector<double> > const&, 
+                 std::vector< std::vector<double> >& );
     //! Adding scaled vector
     /*!
      Computes w = w + s v
@@ -34,6 +43,15 @@ class VectorOperations {
     */
     void add( double, std::vector<double> const&,
               std::vector<double> &);
+    //! Adding scaled matrix
+    /*!
+     Computes W = W + s V
+     \param s scaling factor
+     \param V input matrix 
+     \param W input and output matrix
+    */
+    void add( double, std::vector< std::vector<double> > const&,
+              std::vector< std::vector<double> > &);
     //! Substracting two vectors
     /*!
      Computes w = v1 - v2
@@ -69,6 +87,26 @@ class VectorOperations {
      \return dot product of v1 and v2
     */
     double dot_product ( std::vector<double> const&, std::vector<double> const& );
+    //! Product of two matrices
+    /*!
+     Computes the product of two matrices
+     \param V1 input matrix
+     \param V2 input matrix
+     \param W output matrix
+     \return product of V1 and V2
+    */
+    void mat_product ( std::vector< std::vector<double> > const&, 
+                       std::vector< std::vector<double> > const&,
+                       std::vector< std::vector<double> > & );
+    //! Product of matrix with its transpose V'*V
+    /*!
+     Computes the product of two matrices
+     \param V input matrix
+     \param W output matrix
+     \return product of V' and V
+    */
+    void mat_square ( std::vector< std::vector<double> > const&, 
+                      std::vector< std::vector<double> > & );
     //! Norm of a vector
     /*!
      Computes the norm of a vector
@@ -76,6 +114,13 @@ class VectorOperations {
      \return norm of v
     */
     double norm ( std::vector<double> const& );
+    //! Frobenius norm of a matrix
+    /*!
+     Computes the Frobenius norm of a matrix
+     \param V input matrix
+     \return norm of V
+    */
+    double norm ( std::vector< std::vector<double> > const& );
 };
 //--------------------------------------------------------------------------------
 

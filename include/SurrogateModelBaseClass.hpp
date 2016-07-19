@@ -6,6 +6,7 @@
 class SurrogateModelBaseClass {
   protected: 
     std::vector<double> model_gradient;
+    std::vector< std::vector< double> > model_hessian;
     std::vector<double> function_values;
     BasisForSurrogateModelBaseClass *basis;
   public:
@@ -13,6 +14,7 @@ class SurrogateModelBaseClass {
                             { basis = &basis_input; }
     virtual double evaluate ( std::vector<double> const& ) = 0;    
     virtual std::vector<double> &gradient ( std::vector<double> const& ) = 0;
+    virtual std::vector< std::vector<double> > &hessian ( std::vector<double> const& ) = 0;
     virtual void set_function_values ( std::vector<double> const& ) = 0;
     int dimension ( ) { return basis->dimension( ); }
     BasisForSurrogateModelBaseClass *get_basis() { return basis; }

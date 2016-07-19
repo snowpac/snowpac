@@ -26,6 +26,21 @@ void VectorOperations::scale(double s, std::vector<double> const& v,
 //--------------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------------
+void VectorOperations::scale(double s, std::vector< std::vector<double> > const& V, 
+                             std::vector< std::vector<double> > &W ) 
+{
+  // computes W = s*V;
+  assert( W[0].size() == W.size() );
+  size = W[0].size();
+  for ( unsigned int i = 0; i < size; ++i ) {
+    for ( unsigned int j = 0; j < size; ++j )
+      W[i][j] = s * V[i][j];
+  }
+  return;
+}
+//--------------------------------------------------------------------------------
+
+//--------------------------------------------------------------------------------
 void VectorOperations::add( double s, std::vector<double> const &v,
                             std::vector<double> &w)
 {
@@ -33,6 +48,21 @@ void VectorOperations::add( double s, std::vector<double> const &v,
   size = w.size();
   for ( unsigned int i = 0; i < size; i++)
     w[i] += s * v[i];
+  return;
+}
+//--------------------------------------------------------------------------------
+
+//--------------------------------------------------------------------------------
+void VectorOperations::add( double s, std::vector< std::vector<double> > const &V,
+                            std::vector< std::vector<double> > &W)
+{
+  // computes W = W + s*V
+  assert( W[0].size() == W.size() );
+  size = W[0].size();
+  for ( unsigned int i = 0; i < size; i++) {
+    for ( unsigned int j = 0; j < size; j++)
+      W[i][j] += s * V[i][j];
+  }
   return;
 }
 //--------------------------------------------------------------------------------
@@ -90,6 +120,44 @@ double VectorOperations::dot_product( std::vector<double> const &v1,
 //--------------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------------
+void VectorOperations::mat_product( std::vector< std::vector<double> > const &V1, 
+                                    std::vector< std::vector<double> > const &V2,
+                                    std::vector< std::vector<double> > &W ) 
+{
+  // computes W = V1 * V2
+  size  = V1[0].size();
+  size1 = V1.size();
+  size2 = V2.size();
+  for ( unsigned int i = 0; i < size1; ++i ) {
+    for ( unsigned int j = 0; j < size2; ++j ) {
+      W[i][j] = 0e0;
+      for ( unsigned int k = 0; k < size; ++k )
+        W[i][j] += V1[i][k] * V2[k][j];
+    }
+  }
+  return;
+}
+//--------------------------------------------------------------------------------
+
+//--------------------------------------------------------------------------------
+void VectorOperations::mat_square( std::vector< std::vector<double> > const &V, 
+                                   std::vector< std::vector<double> > &W ) 
+{
+  // computes W = V' * V
+  size  = V[0].size();
+  size1 = V.size();
+  for ( unsigned int i = 0; i < size1; ++i ) {
+    for ( unsigned int j = 0; j < size1; ++j ) {
+      W[i][j] = 0e0;
+      for ( unsigned int k = 0; k < size; ++k )
+        W[i][j] += V[k][i] * V[k][j];
+    }
+  }
+  return;
+}
+//--------------------------------------------------------------------------------
+
+//--------------------------------------------------------------------------------
 double VectorOperations::norm( std::vector<double> const &v )
 {
   // computes || v ||
@@ -97,6 +165,21 @@ double VectorOperations::norm( std::vector<double> const &v )
   size = v.size();
   for ( unsigned int i = 0; i < size; ++i)
     dbl += pow( v[i], 2e0 );
+  return sqrt(dbl);
+}
+//--------------------------------------------------------------------------------
+
+//--------------------------------------------------------------------------------
+double VectorOperations::norm( std::vector< std::vector<double> > const &V )
+{
+  // computes || V ||_F
+  assert(V[0].size() == V.size());
+  dbl = 0e0;
+  size = V.size();
+  for ( unsigned int i = 0; i < size; ++i ) {
+    for ( unsigned int j = 0; j < size; ++j ) 
+      dbl += pow( V[i][j], 2e0 );
+  }
   return sqrt(dbl);
 }
 //--------------------------------------------------------------------------------

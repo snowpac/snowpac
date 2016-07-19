@@ -226,6 +226,19 @@ void BasisForMinimumFrobeniusNormModel::compute_gradients (
 }
 //--------------------------------------------------------------------------------
 
+//--------------------------------------------------------------------------------
+std::vector< std::vector<double> > &BasisForMinimumFrobeniusNormModel::hessian ( int basis_number ) 
+{
+  return basis_Hessians[ basis_number ];
+}
+//--------------------------------------------------------------------------------
+
+//--------------------------------------------------------------------------------
+std::vector< std::vector<double> > &BasisForMinimumFrobeniusNormModel::hessian ( std::vector<double> const &x, int basis_number ) 
+{
+  return hessian( basis_number );
+}
+//--------------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------------
 void BasisForMinimumFrobeniusNormModel::compute_mat_vec_representation ( int basis_number )

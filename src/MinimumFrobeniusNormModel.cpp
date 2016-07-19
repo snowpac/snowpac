@@ -6,7 +6,11 @@ MinimumFrobeniusNormModel::MinimumFrobeniusNormModel (
                            BasisForMinimumFrobeniusNormModel &basis_input) :
                            SurrogateModelBaseClass ( basis_input )
 {
-  model_gradient.resize( basis_input.dimension ( ) );
+  dim = basis_input.dimension();
+  model_gradient.resize( dim );
+  model_hessian.resize( dim );
+  for ( int i = 0; i < dim; ++i )
+    model_hessian[i].resize( dim );
 }
 //--------------------------------------------------------------------------------
 
@@ -32,6 +36,25 @@ std::vector<double> &MinimumFrobeniusNormModel::gradient ( )
 }
 //--------------------------------------------------------------------------------
 
+//--------------------------------------------------------------------------------
+std::vector< std::vector<double> > &MinimumFrobeniusNormModel::hessian (
+  std::vector<double> const &x ) 
+{
+  return hessian( );
+}
+//--------------------------------------------------------------------------------
+
+//--------------------------------------------------------------------------------
+std::vector< std::vector<double> > &MinimumFrobeniusNormModel::hessian ( ) 
+{
+  for ( unsigned int j = 0; j < dim; ++j ) {
+  scale( function_values.at(0), basis->hessian(0), model_hessian );
+  for ( unsigned int i = 1; i < size; ++i)
+    add( function_values.at(i), basis->hessian(i), model_hessian );
+  }
+  return model_hessian;
+}
+//--------------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------------
 double MinimumFrobeniusNormModel::evaluate (

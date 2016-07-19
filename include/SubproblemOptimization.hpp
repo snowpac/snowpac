@@ -194,6 +194,7 @@ void SubproblemOptimization<TSurrogateModel>::set_feasibility_thresholds (
     else point_is_feasible = false;
   }
 
+/*
   if( !point_is_feasible ) {
    std::cout << std::endl;
    for ( int i = 0; i < x.size(); ++i )
@@ -203,6 +204,7 @@ void SubproblemOptimization<TSurrogateModel>::set_feasibility_thresholds (
       std::cout << (*surrogate_models)[i+1].evaluate ( x ) << std::endl;
     assert(point_is_feasible);
   }
+*/
   return;
 }
 //--------------------------------------------------------------------------------
@@ -221,7 +223,7 @@ double SubproblemOptimization<TSurrogateModel>::compute_criticality_measure (
   for ( int i = 0; i < dim; ++i ) {
     x[i] = 0e0;
     if ( !lower_bounds.empty() ) {
-      lb[i] = (best_point[i] - lower_bounds[i])/(*delta);
+      lb[i] = -(best_point[i] - lower_bounds[i])/(*delta);
       if ( lb[i] > 0e0 ) lb[i] = 0e0;
       if ( lb[i] < -1e0 ) lb[i] = -1e0;
     }
@@ -238,13 +240,9 @@ double SubproblemOptimization<TSurrogateModel>::compute_criticality_measure (
   set_feasibility_thresholds ( x );
 
   if ( point_is_feasible ) {
-//    for ( int i = 0; i < number_constraints; ++i )
-//      if ( inner_boundary_constant->at(i) > 1e1 ) 
-//        inner_boundary_constant->at(i) = 1e1; 
     criticality_gradient = (*surrogate_models)[0].gradient ( );
-//    assert ( norm(criticality_gradient) > 1e-6 );
   } else {
-    assert ( false ); 
+//    assert ( false ); 
     set_zero( criticality_gradient );
     for ( int i = 1; i < number_constraints+1; ++i )
       add( 2e0*feasibility_thresholds.at(i-1),   
@@ -287,7 +285,7 @@ double SubproblemOptimization<TSurrogateModel>::compute_trial_point (
   for ( int i = 0; i < dim; ++i ) {
     x[i] = 0e0;
     if ( !lower_bounds.empty() ) {
-      lb[i] = (best_point[i] - lower_bounds[i])/(*delta);
+      lb[i] = -(best_point[i] - lower_bounds[i])/(*delta);
       if ( lb[i] > 0e0 ) lb[i] = 0e0;
       if ( lb[i] < -1e0 ) lb[i] = -1e0;
     }
@@ -308,7 +306,7 @@ double SubproblemOptimization<TSurrogateModel>::compute_trial_point (
     set_feasibility_thresholds ( x );    
     if ( point_is_feasible )
       opt_trial_point.optimize ( x, optimization_result );
-    assert( false );
+//    assert( false );
   } else {
     errmess = opt_trial_point.optimize ( x, optimization_result );
   }
@@ -319,6 +317,7 @@ double SubproblemOptimization<TSurrogateModel>::compute_trial_point (
      x.at(i) = x.at(i) / tmp_dbl;
   }
 
+/*
 //        std::cout << errmess << std::endl;
   if ( norm(x) > 1e0 ) {
       std::cout << errmess << std::endl;
@@ -327,6 +326,7 @@ double SubproblemOptimization<TSurrogateModel>::compute_trial_point (
     }
 //    assert(false);
   }
+*/
 
   add( *delta, x, best_point );
   x = best_point;
@@ -346,7 +346,7 @@ double SubproblemOptimization<TSurrogateModel>::restore_feasibility (
   for ( int i = 0; i < dim; ++i ) {
     x[i] = 0e0;
     if ( !lower_bounds.empty() ) {
-      lb[i] = (best_point[i] - lower_bounds[i])/(*delta);
+      lb[i] = -(best_point[i] - lower_bounds[i])/(*delta);
       if ( lb[i] > 0e0 ) lb[i] = 0e0;
       if ( lb[i] < -1e0 ) lb[i] = -1e0;
     }

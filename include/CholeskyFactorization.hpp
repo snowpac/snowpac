@@ -1,7 +1,9 @@
 #ifndef HCholeskyFactorization
 #define HCholeskyFactorization
 
-#include <Eigen/Core>
+#include <vector>
+#include "math.h"
+
 
 //! Cholesky factorization
 /*!

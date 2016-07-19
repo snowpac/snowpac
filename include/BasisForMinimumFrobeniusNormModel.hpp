@@ -41,6 +41,8 @@ class BasisForMinimumFrobeniusNormModel : public BasisForSurrogateModelBaseClass
     double evaluate ( std::vector<double> const&, int);
     std::vector<double> &gradient ( std::vector<double> const&, int );
     std::vector<double> &gradient ( int );
+    std::vector< std::vector<double> > &hessian ( std::vector<double> const&, int );
+    std::vector< std::vector<double> > &hessian ( int );
     void compute_basis_coefficients ( std::vector< std::vector<double> > const& );
     void get_mat_vec_representation ( int, std::vector<double>&,
                                       std::vector< std::vector<double> >&);
