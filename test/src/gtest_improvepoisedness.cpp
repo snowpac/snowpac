@@ -114,15 +114,15 @@ class Wrapper_ImprovePoisedness : public ImprovePoisedness {
       */
 
       if ( data.nodes.size() < 7 ) return 0;
-      if ( fabs( data.nodes.at(5).at(0) - 0.0102300802149 ) > 1e-6 ) return 0;
-      if ( fabs( data.nodes.at(5).at(1) - 0.0994753510344 ) > 1e-6 ) return 0;
-      if ( fabs( data.nodes.at(6).at(0) - 0.0995591752728 ) > 1e-6 ) return 0;
-      if ( fabs( data.nodes.at(6).at(1) + 0.00937926537677 ) > 1e-6 ) return 0;
-      if ( data.active_index.at(0) != 0 ) return 0;
-      if ( data.active_index.at(1) != 3 ) return 0;
-      if ( data.active_index.at(2) != 4 ) return 0;
-      if ( data.active_index.at(3) != 5 ) return 0;
-      if ( data.active_index.at(4) != 6 ) return 0;
+      if ( fabs( data.nodes.at(5).at(0) - 0.0102300802149 ) > 1e-6 ) return -1;
+      if ( fabs( data.nodes.at(5).at(1) - 0.0994753510344 ) > 1e-6 ) return -2;
+      if ( fabs( data.nodes.at(6).at(0) - 0.0995591752728 ) > 1e-6 ) return -3;
+      if ( fabs( data.nodes.at(6).at(1) + 0.00937926537677 ) > 1e-6 ) return -4;
+      if ( data.active_index.at(0) != 0 ) return -5;
+      if ( data.active_index.at(1) != 3 ) return -6;
+      if ( data.active_index.at(2) != 4 ) return -7;
+      if ( data.active_index.at(3) != 5 ) return -8;
+      if ( data.active_index.at(4) != 6 ) return -9;
 
       return 1;
       
@@ -216,15 +216,17 @@ class Wrapper_ImprovePoisedness : public ImprovePoisedness {
       int reference_node = 2;
       improve_poisedness ( reference_node, data );
 
-      //std::cout << std::setprecision(14) << data.nodes.size() << std::endl;
-      //for ( unsigned i = 0; i < data.nodes.size(); ++i) {
-      //  std::cout << "x[" << i << "] = [";
-      //  for ( unsigned j = 0; j < dim-1; ++j )
-      //    std::cout << data.nodes[i][j] << ", ";
-      //  std::cout << data.nodes[i][dim-1] << "]"<< std::endl;
-      //}
-      //for ( unsigned i = 0; i < data.active_index.size(); ++i) 
-      //  std::cout << "active node: " << data.active_index[i] << std::endl;
+/*
+      std::cout << std::setprecision(14) << data.nodes.size() << std::endl;
+      for ( unsigned i = 0; i < data.nodes.size(); ++i) {
+        std::cout << "x[" << i << "] = [";
+        for ( unsigned j = 0; j < dim-1; ++j )
+          std::cout << data.nodes[i][j] << ", ";
+        std::cout << data.nodes[i][dim-1] << "]"<< std::endl;
+      }
+      for ( unsigned i = 0; i < data.active_index.size(); ++i) 
+        std::cout << "active node: " << data.active_index[i] << std::endl;
+*/
       
       std::vector< std::vector<double> > active_nodes;
       active_nodes = data.get_scaled_active_nodes( data.nodes[reference_node], delta);
@@ -348,7 +350,7 @@ TEST ( ImprovePoisednessTest, improvepoisedness_test3 )
 //--------------------------------------------------------------------------------
 TEST ( ImprovePoisednessTest, improvepoisedness_test4_1 ) 
 {
-  double threshold_for_poisedness_constant = 1e4;
+  double threshold_for_poisedness_constant = 2e4;
   int max_nb_nodes = 6;
   double delta = 1.0;
   int print_output = 0;
@@ -364,7 +366,7 @@ TEST ( ImprovePoisednessTest, improvepoisedness_test4_1 )
 //--------------------------------------------------------------------------------
 TEST ( ImprovePoisednessTest, improvepoisedness_test4_2 ) 
 {
-  double threshold_for_poisedness_constant = 4e3;
+  double threshold_for_poisedness_constant = 1e2;
   int max_nb_nodes = 6;
   double delta = 1.0;
   int print_output = 0;

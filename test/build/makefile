@@ -34,7 +34,7 @@ LIB_PATHS += -L$(PATH_LIB_GTEST)
 
 
 # DEFINE OBJECT FILES NEEDED TO BUILD THE LIBRARY
-OBJNOWPAC = VectorOperations.o GaussianProcessSupport.o GaussianProcess.o TriangularMatrixOperations.o CholeskyFactorization.o BasisForMinimumFrobeniusNormModel.o  MinimumFrobeniusNormModel.o RegularizedMinimumFrobeniusNormModel.o ImprovePoisedness.o QuadraticMonomial.o QuadraticMinimization.o
+OBJNOWPAC = VectorOperations.o GaussianProcessSupport.o GaussianProcess.o TriangularMatrixOperations.o CholeskyFactorization.o BasisForMinimumFrobeniusNormModel.o  MinimumFrobeniusNormModel.o ImprovePoisedness.o QuadraticMonomial.o QuadraticMinimization.o
 OBJ = main_test.o
 
 NOWPAC: $(OBJ) $(OBJNOWPAC)

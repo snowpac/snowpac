@@ -6,12 +6,18 @@
 //--------------------------------------------------------------------------------
 double function1 ( std::vector<double> x ) {
 //  return pow(x[0], 2e0) + pow(x[1], 2e0);
-  return pow(x[0], 2e0) + pow(x[1], 2e0) + 0.5*x[0] + 9e0;
+  return pow(x[0], 2e0) + pow(x[1], 2e0) + 3e0*x[0]*x[1] + 0.5*x[0] + 9e0;
 }
 double gradient1 ( std::vector<double> x, int element ) {
 //  return 2e0*x[ element ];
   double returnvalue = 2e0*x[element];
-  if ( element == 0 ) returnvalue += 0.5;
+  if ( element == 0 ) returnvalue += 0.5 + 3e0*x[1];
+  if ( element == 1 ) returnvalue += 3e0*x[0];
+  return returnvalue;
+}
+double hessian1 ( std::vector<double> x, int element1, int element2 ) {
+  double returnvalue = 3e0;
+  if ( element1 == element2 ) returnvalue = 2.0;
   return returnvalue;
 }
 //--------------------------------------------------------------------------------
@@ -57,6 +63,7 @@ class Wrapper_MinimumFrobeniusNormModel {
       model.set_function_values( function_values );
 
       std::vector<double> gradient;
+      std::vector< std::vector<double> > hessian;
 
       gradient = model.gradient();
       for ( unsigned i = 0; i < dim; ++i ) 
@@ -73,19 +80,24 @@ class Wrapper_MinimumFrobeniusNormModel {
 
     
       for ( unsigned i = 0; i < dim; ++i ) 
-        node[i] = 0.5;    
-      gradient = model.gradient( node);
+        node[i] = 0.0;    
+      hessian = model.hessian( );
       for ( unsigned i = 0; i < dim; ++i ) {
-        if ( fabs( gradient[i] - gradient1( node, i ) ) > 1e-6 ) {
-          std::cout << "Something is wrong with the gradient" << std::endl;
-          for ( unsigned j = 0; j < dim; ++j )
-            std::cout << "Error in gradient[" << j << "] = " << fabs(gradient[j]) << std::endl;
-          test_passed = 0; 
-          break;
+        for ( unsigned j = 0; j < dim; ++j ) {
+          if ( fabs( hessian[i][j] - hessian1( node, i, j ) ) > 1e-6 ) {
+            std::cout << "Something is wrong with the hessian" << std::endl;
+            for ( unsigned k = 0; k < dim; ++k ) {
+              for ( unsigned n = 0; n < dim; ++n ) {
+                std::cout << "Error in hessian[" << k << "," << n << "] = " << fabs(hessian[k][n]) << std::endl;
+              }
+            }
+            test_passed = 0; 
+            break;
+          }
         }
       }
 
-
+/*
       for ( unsigned i = 0; i < dim; ++i ) 
         node[0] = 0.0 + ((double)i)/((double)dim) ;    
       gradient = model.gradient( node);
@@ -98,7 +110,7 @@ class Wrapper_MinimumFrobeniusNormModel {
           break;
         }
       }
-
+*/
      
       return test_passed;
     }

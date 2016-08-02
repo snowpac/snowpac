@@ -4,17 +4,11 @@
 #include <iomanip>
 
 
-#define mybool false 
-
 //--------------------------------------------------------------------------------
 BasisForMinimumFrobeniusNormModel::BasisForMinimumFrobeniusNormModel ( int dim_input ) :
                                    BasisForSurrogateModelBaseClass ( dim_input ),
                                    QuadraticMonomial ( dim_input ) 
 {
-  cache_values_exist = false;
-  cache_gradients_exist = false;
-  cache_point_basis_values.resize( 0 );
-  cache_point_basis_gradients.resize( 0 );
   nb_basis_functions = ( dim_input * ( dim_input + 3 ) + 2 ) / 2;
   nb_nodes = 0;
 }
@@ -38,8 +32,8 @@ void BasisForMinimumFrobeniusNormModel::set_nb_nodes( int nb_nodes_input ) {
 
   for ( int i = 0; i < nb_nodes; ++i ) 
     F_rhsmat(nb_basis_functions + i, i) = 1e0;
-  gradients.clear();
-  gradients.resize( nb_nodes );
+  basis_constants.clear();
+  basis_constants.resize( nb_nodes );
   basis_gradients.clear();
   basis_gradients.resize( nb_nodes );
   basis_Hessians.clear();
@@ -51,13 +45,11 @@ void BasisForMinimumFrobeniusNormModel::set_nb_nodes( int nb_nodes_input ) {
 
   for ( int i = 0; i < nb_nodes; ++i ) {
     basis_coefficients[i] = Eigen::VectorXd::Zero( nb_basis_functions ) ;
-    gradients[i].resize( BasisForSurrogateModelBaseClass::dim );
     basis_gradients[i].resize( BasisForSurrogateModelBaseClass::dim );
     basis_Hessians[i].resize( BasisForSurrogateModelBaseClass::dim );
     for ( int j = 0; j < BasisForSurrogateModelBaseClass::dim; ++j) 
       basis_Hessians[i][j].resize( BasisForSurrogateModelBaseClass::dim );
   }
-
 
   return;
 }
@@ -69,15 +61,7 @@ void BasisForMinimumFrobeniusNormModel::compute_basis_coefficients (
   std::vector< std::vector<double> > const &nodes )
 {
 
-  cache_point_basis_values.resize( 0 );
-  cache_point_basis_gradients.resize( 0 );
-  cache_values_exist = false;
-  cache_gradients_exist = false;
-
-
   set_nb_nodes ( nodes.size( ) );
-
-//  assert ( nb_nodes <= 6 );
 
 
   // system matrix for computing coeffs of Lagrange interpolation models
@@ -99,6 +83,14 @@ void BasisForMinimumFrobeniusNormModel::compute_basis_coefficients (
 */
 
   S_coeffsolve = A_sysmat.colPivHouseholderQr().solve(F_rhsmat);
+
+  if ( (A_sysmat * S_coeffsolve - F_rhsmat).norm() > 1e-5 ) {
+    for ( int i = 0; i < nb_nodes; ++i ) {
+      if ( norm( nodes[i]) < 1e-16 ) S_coeffsolve(0, i) = 1e0;
+      else                           S_coeffsolve(0, i) = 0e0;
+    }
+  }
+
 
 /*
     std::cout << "----------------" << std::endl; 
@@ -136,11 +128,12 @@ void BasisForMinimumFrobeniusNormModel::compute_basis_coefficients (
 //  S_coeffsolve = A_sysmat.colPivHouseholderQr().solve(F_rhsmat);
   for ( int i = 0; i < nb_nodes; ++i ) {
     basis_coefficients[i] = S_coeffsolve.block(0,0,nb_basis_functions, nb_nodes).col(i);  
+    basis_constants[i] = basis_coefficients[i][0];
     compute_mat_vec_representation ( i );
   } 
 
 
-   if ( (A_sysmat * S_coeffsolve - F_rhsmat).norm() > 1e-5 ) {
+   if ( (A_sysmat * S_coeffsolve - F_rhsmat).norm() > 1e-5 && false) {
 /*
      std::vector<double> fvals;
      for ( int i = 0; i < nb_nodes; ++i) { 
@@ -178,7 +171,7 @@ void BasisForMinimumFrobeniusNormModel::compute_basis_coefficients (
   }
 */
 
-     assert(false);
+//     assert(false);
   }
 
 
@@ -189,56 +182,27 @@ void BasisForMinimumFrobeniusNormModel::compute_basis_coefficients (
 
 
 //--------------------------------------------------------------------------------
-void BasisForMinimumFrobeniusNormModel::compute_gradients ( 
- std::vector<double> const &x )
+double &BasisForMinimumFrobeniusNormModel::value ( int basis_number ) 
 {
-
-  if ( cache_point_basis_gradients.size() > 0 && cache_gradients_exist && mybool ) {
-    if ( diff_norm( cache_point_basis_gradients, x ) < 1e-20 ) 
-      return;
-  }
-  for (int m = 0; m < nb_nodes; ++m) {
-    for (int i = 0; i < BasisForSurrogateModelBaseClass::dim; ++i) {
-      gradients[m].at(i) = basis_coefficients[m](i+1);
-      gradients[m].at(i) += basis_coefficients[m](
-                            BasisForSurrogateModelBaseClass::dim+1+i) * x.at(i);
-      counter = 0;
-      for (int j = 0; j < BasisForSurrogateModelBaseClass::dim; ++j) {
-        for (int k = j+1; k < BasisForSurrogateModelBaseClass::dim; ++k) {
-          if (j == i) 
-            gradients[m].at(i) += basis_coefficients[m](
-                                  2*BasisForSurrogateModelBaseClass::dim+
-                                  1+counter) * x.at(k);
-          if (k == i) 
-            gradients[m].at(i) += basis_coefficients[m](
-                                  2*BasisForSurrogateModelBaseClass::dim+
-                                  1+counter) * x.at(j);
-          counter++;
-        }
-      }
-    }
-  }
-
-  cache_gradients_exist = true;
-  cache_point_basis_gradients = x;
-
-  return;
+  return basis_constants[ basis_number ];
 }
 //--------------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------------
-std::vector< std::vector<double> > &BasisForMinimumFrobeniusNormModel::hessian ( int basis_number ) 
+std::vector<double> &BasisForMinimumFrobeniusNormModel::gradient (int basis_number)
+{ 
+  return basis_gradients.at( basis_number );
+}
+//--------------------------------------------------------------------------------
+
+//--------------------------------------------------------------------------------
+std::vector< std::vector<double> > &BasisForMinimumFrobeniusNormModel::hessian ( 
+  int basis_number ) 
 {
   return basis_Hessians[ basis_number ];
 }
 //--------------------------------------------------------------------------------
 
-//--------------------------------------------------------------------------------
-std::vector< std::vector<double> > &BasisForMinimumFrobeniusNormModel::hessian ( std::vector<double> const &x, int basis_number ) 
-{
-  return hessian( basis_number );
-}
-//--------------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------------
 void BasisForMinimumFrobeniusNormModel::compute_mat_vec_representation ( int basis_number )
@@ -263,28 +227,13 @@ void BasisForMinimumFrobeniusNormModel::compute_mat_vec_representation ( int bas
 }
 //--------------------------------------------------------------------------------
 
-//--------------------------------------------------------------------------------
-void BasisForMinimumFrobeniusNormModel::get_mat_vec_representation ( int basis_number,
-  std::vector<double> &g, std::vector< std::vector<double> > &H )
-// returns the representation m(x) = c + g.dot(x) + 0.5*x.dot(H*x) in scaled form
-// x_best = 0 and delta = 1;
-{
-  g = basis_gradients [ basis_number ];
-  H = basis_Hessians [ basis_number ];
-  return;
-}
-//--------------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------------
 std::vector<double> &BasisForMinimumFrobeniusNormModel::evaluate ( 
   std::vector<double> const &x ) 
 {  
-  if ( cache_point_basis_values.size() > 0 && cache_values_exist && mybool ) {
-    if ( diff_norm ( cache_point_basis_values, x ) < 1e-20 ) 
-      return basis_values;
-  }
  
-  assert( nb_nodes == basis_coefficients.size());
+  //assert( nb_nodes == basis_coefficients.size());
 
   for ( int i = 0; i < nb_nodes; ++i ) {
     basis_values.at( i ) = 0e0;
@@ -293,21 +242,16 @@ std::vector<double> &BasisForMinimumFrobeniusNormModel::evaluate (
     }
   }
 
-  cache_values_exist = true;
-  cache_point_basis_values = x;
-
   return basis_values;
 }
 //--------------------------------------------------------------------------------
+
 
 //--------------------------------------------------------------------------------
 double BasisForMinimumFrobeniusNormModel::evaluate (
   std::vector<double> const &x, int basis_number)
 { 
-  if ( cache_point_basis_values.size() > 0 && cache_values_exist && mybool ) {
-    if ( diff_norm( cache_point_basis_values, x ) < 1e-20 ) 
-      return basis_values.at ( basis_number );
-  }
+
   double basis_value = 0e0;
   for ( int j = 0; j < nb_basis_functions; ++j ) {
     basis_value += basis_coefficients[ basis_number ]( j ) * 
@@ -317,18 +261,4 @@ double BasisForMinimumFrobeniusNormModel::evaluate (
 }
 //--------------------------------------------------------------------------------
 
-//--------------------------------------------------------------------------------
-std::vector<double> &BasisForMinimumFrobeniusNormModel::gradient (
-  std::vector<double> const &x, int basis_number)
-{ 
-  compute_gradients ( x );
-  return gradients.at( basis_number );
-}
-//--------------------------------------------------------------------------------
 
-//--------------------------------------------------------------------------------
-std::vector<double> &BasisForMinimumFrobeniusNormModel::gradient (int basis_number)
-{ 
-  return basis_gradients.at( basis_number );
-}
-//--------------------------------------------------------------------------------

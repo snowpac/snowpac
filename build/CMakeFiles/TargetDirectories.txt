@@ -1,0 +1,2 @@
+/Users/Florian/home/developments/git/snowpac/build/CMakeFiles/nowpac.dir
+/Users/Florian/home/developments/git/snowpac/build/CMakeFiles/nowpacOlib.dir

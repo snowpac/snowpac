@@ -8,8 +8,8 @@
 #include <nlopt.hpp>
 #include <cassert>
 
-//#define NLOPT_ALG LN_COBYLA
-#define NLOPT_ALG LD_CCSAQ
+#define NLOPT_ALG LN_COBYLA
+//#define NLOPT_ALG LD_CCSAQ
 //#define NLOPT_ALG LD_SLSQP
 
 
@@ -77,16 +77,16 @@ SubproblemOptimization<TSurrogateModel>::SubproblemOptimization (
   criticality_gradient.resize( dim );
   best_point.resize( dim );
 
-  constraint_tolerance = 1e-10;
+  constraint_tolerance = 1e-12;
 
   lb.resize( dim );
   ub.resize( dim );
 
-  double opt_time = 1e1;
+  double opt_time = 1e-1;
   rel_tol = 1e-11; //1e-11
-  double abs_ftol = 1e-16;
+  double abs_ftol = 1e-5;
   for (int i = 0; i < dim; ++i) {
-    abs_tol.push_back( 1e-11 ); //1e-5
+    abs_tol.push_back( 1e-5 ); //1e-5
     x.push_back ( 0e0 );    
     lb[i] = -1e0;
     ub[i] = 1e0;
@@ -97,11 +97,12 @@ SubproblemOptimization<TSurrogateModel>::SubproblemOptimization (
   SpD_prototype.me = this;
   SpD_prototype.vo = &vo;
 //  SpD_prototype.vector.resize( dim );
-  SpD_prototype.constraint_number = 0;
-  SpD.push_back( SpD_prototype );
-  for (int i = 1; i < number_constraints; ++i ) {
-    SpD_prototype.constraint_number = i;
+//  SpD_prototype.constraint_number = 0;
+//  SpD.push_back( SpD_prototype );
+  for (int i = 0; i < number_constraints; ++i ) {
+//    SpD_prototype.constraint_number = i;
     SpD.push_back( SpD_prototype );
+    SpD[ i ].constraint_number = i;
   }
 
   //opt_criticality_measure.set_ftol_abs( abs_ftol );
@@ -123,7 +124,8 @@ SubproblemOptimization<TSurrogateModel>::SubproblemOptimization (
   opt_trial_point.set_xtol_abs( abs_tol );
   opt_trial_point.set_xtol_rel( rel_tol );
   opt_trial_point.set_maxtime( opt_time );
-  opt_trial_point.set_min_objective ( subproblems.opt_trial_point_obj, me );
+//  opt_trial_point.set_min_objective ( subproblems.opt_trial_point_obj, me );
+  opt_trial_point.set_min_objective ( subproblems.opt_trial_point_obj, &SpD[0] );
   opt_trial_point.add_inequality_constraint( 
     subproblems.trustregion_constraint, &SpD[0], constraint_tolerance );
   for (int i = 0; i < number_constraints; ++i)
@@ -194,17 +196,6 @@ void SubproblemOptimization<TSurrogateModel>::set_feasibility_thresholds (
     else point_is_feasible = false;
   }
 
-/*
-  if( !point_is_feasible ) {
-   std::cout << std::endl;
-   for ( int i = 0; i < x.size(); ++i )
-     std::cout << x.at(i) << ", ";
-   std::cout << std::endl;
-   for ( int i = 0; i < number_constraints; i++ ) 
-      std::cout << (*surrogate_models)[i+1].evaluate ( x ) << std::endl;
-    assert(point_is_feasible);
-  }
-*/
   return;
 }
 //--------------------------------------------------------------------------------
@@ -215,8 +206,6 @@ template<class TSurrogateModel>
 double SubproblemOptimization<TSurrogateModel>::compute_criticality_measure ( 
                                                 std::vector<double> &x )
 {
-
- 
 
   best_point = x;
 
@@ -240,6 +229,7 @@ double SubproblemOptimization<TSurrogateModel>::compute_criticality_measure (
   set_feasibility_thresholds ( x );
 
   if ( point_is_feasible ) {
+//    scale( 1e0/(*delta), (*surrogate_models)[0].gradient ( ), criticality_gradient );
     criticality_gradient = (*surrogate_models)[0].gradient ( );
   } else {
 //    assert ( false ); 
@@ -250,21 +240,10 @@ double SubproblemOptimization<TSurrogateModel>::compute_criticality_measure (
            criticality_gradient );
   }
 
+  try {
   int errmess =  opt_criticality_measure.optimize ( x, optimization_result );
+  } catch ( ... ) {};
 
-
-/*
-  if ( fabs(optimization_result) < 1e-6 ) { 
-   std::cout << "errmess = " << errmess << std::endl;
-   std::cout << " --------- " << std::endl;
-   for ( int i = 0; i < dim; ++i )
-     std::cout << x[i] << ", " << std::endl;
-   std::cout << " --------- " << std::endl;
-   for ( int i = 0; i < dim; ++i )
-     std::cout << criticality_gradient[i] << ", " << std::endl;
-   std::cout << " --------- " << std::endl;
-  }
-*/
 
   add( *delta, x, best_point );
   x = best_point;
@@ -306,25 +285,30 @@ double SubproblemOptimization<TSurrogateModel>::compute_trial_point (
     set_feasibility_thresholds ( x );    
     if ( point_is_feasible )
       opt_trial_point.optimize ( x, optimization_result );
-//    assert( false );
+   // assert( false );
   } else {
+    try{
     errmess = opt_trial_point.optimize ( x, optimization_result );
+    } catch ( ... ) { };
   }
 
-  double tmp_dbl = norm(x);
-  if ( tmp_dbl > 1e0 ) {
-   for (int i = 0; i < dim; ++i )
-     x.at(i) = x.at(i) / tmp_dbl;
-  }
 
 /*
-//        std::cout << errmess << std::endl;
-  if ( norm(x) > 1e0 ) {
-      std::cout << errmess << std::endl;
-    for ( int i = 0; i < dim; ++i ) {
-      std::cout << "x["<<i<<"]="<< x[i] << std::endl;
-    }
-//    assert(false);
+  double tmp_dbl = norm(x);
+  if ( tmp_dbl > 1e0 && false ) {
+   std::cout << " errmess = " << errmess << std::endl;
+   std::cout << " norm of solution = " << tmp_dbl << std::endl;
+   for (int i = 0; i < dim; ++i ) 
+     std::cout << "x["<<i<<"] = " << x[i] << std::endl;
+   std::cout << " ------------------ " << std::endl;
+   for (int j = 0; j < number_constraints+1; ++j ) {
+     for (int i = 0; i < dim; ++i ) 
+       std::cout << "g"<<j<<"["<<i<<"] = " << (*surrogate_models)[j].gradient().at(i) << std::endl;
+     std::cout << " ------------------ " << std::endl;
+   }
+   if (tmp_dbl > 1.5e0 ) assert(false);
+   for (int i = 0; i < dim; ++i )
+     x.at(i) = x.at(i) / tmp_dbl;
   }
 */
 
