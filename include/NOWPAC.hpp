@@ -1,3 +1,30 @@
+/**************************************************************************************/
+/* Copyright (c) 2014, Massachusetts Institute of Technology                          */
+/* All rights reserved.                                                               */
+/*                                                                                    */
+/* Redistribution and use in source and binary forms, with or without modification,   */
+/* are permitted provided that the following conditions are met:                      */
+/*                                                                                    */
+/*  1. Redistributions of source code must retain the above copyright notice,         */
+/*     this list of conditions and the following disclaimer.                          */
+/*                                                                                    */
+/*  2. Redistributions in binary form must reproduce the above copyright notice,      */
+/*     this list of conditions and the following disclaimer in the documentation      */
+/*     and/or other materials provided with the distribution.                         */
+/*                                                                                    */
+/* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND    */
+/* ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED      */
+/* WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. */
+/* IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,   */
+/* INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT */
+/* NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR */
+/* PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,  */
+/* WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) */
+/* ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         */
+/* POSSIBILITY OF SUCH DAMAGE.                                                        */
+/**************************************************************************************/
+
+
 //#ifndef HNOWPAC
 //#define HNOWPAC
 
@@ -43,6 +70,7 @@ class NOWPAC : protected NoiseDetection<TSurrogateModel> {
     double compute_acceptance_ratio ( );
     void write_to_file( );
     void output_for_plotting( );
+    void check_parameter_consistency( std::vector<double> const&);
     std::unique_ptr<ImprovePoisedness> surrogate_nodes;
     std::unique_ptr< SubproblemOptimization<TSurrogateModel> > surrogate_optimization;
     const char *double_format = "  %.16e  ";
@@ -52,6 +80,7 @@ class NOWPAC : protected NoiseDetection<TSurrogateModel> {
     void *user_data = NULL;
     BlackBoxData evaluations;
     std::vector<double> x_trial;
+    bool delta_max_is_set;
     double delta, delta_min, delta_max;
     double omega, theta, gamma, gamma_inc, mu;
     double eta_0, eta_1, eps_c;
@@ -73,7 +102,9 @@ class NOWPAC : protected NoiseDetection<TSurrogateModel> {
     double acceptance_ratio;
     int replace_node_index;
     int max_number_blackbox_evaluations;
+    bool max_number_blackbox_evaluations_is_set;
     int max_number_accepted_steps;
+    bool max_number_accepted_steps_is_set;
     int number_accepted_steps;
     std::vector<double> update_at_evaluations;
     int update_interval_length;
@@ -100,124 +131,9 @@ class NOWPAC : protected NoiseDetection<TSurrogateModel> {
     void set_trustregion ( double const&, double const& );
     void set_max_trustregion ( double const& );
     void set_max_number_evaluations ( int const& );
-    //XXX
-    std::vector<double> vec_output;
-    std::vector<double> c_vec;
-    std::vector< std::vector<double> > g_vec;
-    std::vector< std::vector< std::vector<double> > > H_vec;
-    void initialize_c_g_H();
-    double get_trustregion();
-    void get_c_g_H( int, double&, std::vector<double>&, 
-                    std::vector< std::vector<double> >&);
-    double get_c( int, std::vector<double>& );
-    std::vector<double> get_g( int, std::vector<double>& );
-    std::vector< std::vector<double> > get_H( int );
 
 };
 //#endif
-
-
-//XXX
-//--------------------------------------------------------------------------------
-template<class TSurrogateModel, class TBasisForSurrogateModel>
-void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::initialize_c_g_H( )
-{
-//  std::cout << "x1" << std::endl << std::flush;
-//  update_surrogate_models( );
-//  std::cout << "x1" << std::endl << std::flush;
-  int nb_models;
-  if ( nb_constraints < 0 ) nb_models = 1; 
-  else                      nb_models = nb_constraints + 1;
-  vec_output.resize(dim);
-  c_vec.resize( nb_models );
-  g_vec.resize( nb_models );
-  H_vec.resize( nb_models );
-  for ( int i = 0; i < nb_models; ++i ) {
-    g_vec[i].resize( dim );
-    H_vec[i].resize( dim );
-    for ( int j = 0; j < dim; ++j ) {
-      H_vec[i][j].resize( dim );
-    }
-    get_c_g_H( i, c_vec[i], g_vec[i], H_vec[i]);
-  }
-  return;
-}
-//--------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------
-template<class TSurrogateModel, class TBasisForSurrogateModel>
-void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::get_c_g_H 
-  ( int model_number, double &c, std::vector<double> &g,
-    std::vector< std::vector<double> > &H )
-{
-
-  assert( g.size() == (unsigned) dim );
-  double evaluations_scaling = evaluations.get_scaling();
-  std::vector<double> evaluations_center_node = evaluations.nodes[ evaluations.best_index ];
-  for (int i = 0; i < dim; ++i) g.push_back(0.0);
-  c = surrogate_models[model_number].evaluate( g );
-  c -= this->dot_product( surrogate_models[model_number].gradient(), 
-                          evaluations_center_node) / evaluations_scaling;
-  this->mat_vec_product( surrogate_models[model_number].hessian(), 
-                         evaluations_center_node, g ); 
-  c += 0.5*this->dot_product( evaluations_center_node, g ) / 
-      ( evaluations_scaling * evaluations_scaling );
-
-  this->scale ( -1.0/(evaluations_scaling * evaluations_scaling), g, g);
-  this->add( 1.0/evaluations_scaling, surrogate_models[model_number].gradient(), g);  
-
-  H = surrogate_models[model_number].hessian();
-  for ( int i = 0; i < dim; ++i ) {
-    for ( int j = 0; j < dim; ++j ) {
-      H[i][j] /= (evaluations_scaling * evaluations_scaling);
-    }
-  }
-
-  return; 
-}
-//--------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------
-template<class TSurrogateModel, class TBasisForSurrogateModel>
-double NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::get_trustregion ( )
-{
-  return delta; 
-}
-//--------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------
-template<class TSurrogateModel, class TBasisForSurrogateModel>
-double NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::get_c 
-  ( int model_number, std::vector<double> &x )
-{
-
-  assert( x.size() == (unsigned) dim );
-  double c = c_vec[ model_number ];
-  c += this->dot_product( g_vec[ model_number], x );
-  this->mat_vec_product( H_vec[model_number], x, vec_output );
-  c += 0.5*this->dot_product( vec_output, x );
-  
-  return c; 
-}
-//--------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------
-template<class TSurrogateModel, class TBasisForSurrogateModel>
-std::vector<double> NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::get_g 
-  ( int model_number, std::vector<double> &x )
-{
-
-  this->mat_vec_product( H_vec[model_number], x, vec_output);
-  this->add( g_vec[model_number], vec_output );
-
-  return vec_output;
- 
-}
-//--------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------
-template<class TSurrogateModel, class TBasisForSurrogateModel>
-std::vector< std::vector<double> > NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::get_H 
-  ( int model_number )
-{
-  return H_vec[model_number]; 
-}
-//--------------------------------------------------------------------------------
 
 
 //--------------------------------------------------------------------------------    
@@ -249,6 +165,7 @@ NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::NOWPAC ( int dim_input ) :
   stochastic_optimization = false;
   x_trial.resize( dim );
   delta = 1e0;
+  delta_max_is_set = false;
   delta_max = 1e0;
   delta_min = 1e-3;
   threshold_for_poisedness_constant = 5e1;
@@ -270,7 +187,9 @@ NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::NOWPAC ( int dim_input ) :
   evaluations.max_nb_nodes = (dim*dim + 3*dim + 2)/2;
 //  evaluations.max_nb_nodes = dim +1;
 //  evaluations.max_nb_nodes = 2*dim+1;
+  max_number_blackbox_evaluations_is_set = false;
   max_number_blackbox_evaluations = (int) HUGE_VAL;
+  max_number_accepted_steps_is_set = false;
   max_number_accepted_steps = (int) HUGE_VAL;
   number_accepted_steps = 0;
   verbose = 3;
@@ -304,13 +223,11 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_option (
   if ( option_name.compare( "geometry_threshold" ) == 0 ) 
     { threshold_for_poisedness_constant = option_value; return; }
   if ( option_name.compare( "eps_b" ) == 0 ) { 
-    if ( nb_constraints == 0 ) {
-      std::cout << "Unable to set inner boundary path constants" << std::endl;
-      std::cout << "Reason: no constraints specified" << std::endl;
+    if ( nb_constraints == -1 ) {
+      std::cout << "Warning : Unable to set inner boundary path constants." << std::endl;
+      std::cout << "          Please call set_blackbox first." << std::endl;
       return;
     } else {
-      if ( option_value < 0e0 )
-        std::cout << "Inner boundary path constants have to be positive" << std::endl;
       for ( int i = 0; i < nb_constraints; i++ ) {
         inner_boundary_path_constants.at( i ) = option_value; 
         max_inner_boundary_path_constants.at( i ) = option_value; 
@@ -318,7 +235,7 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_option (
       return;
     } 
   }
-  std::cout << "Unknown parameter: " << option_name << std::endl;
+  std::cout << "Warning : Unknown parameter (" << option_name << ")"<< std::endl;
   return;
 }
 //--------------------------------------------------------------------------------
@@ -332,7 +249,6 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_option (
     stochastic_optimization  = option_value; 
     if ( stochastic_optimization && evaluations.values.size() > 0 ) {
       blackbox_noise.resize( nb_constraints + 1);
-      //evaluations.noise.resize( nb_constraints + 1);
     }
     return; 
   }
@@ -344,7 +260,7 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_option (
     noise_termination = option_value;
     return;
   } 
-  std::cout << "Unknown parameter: " << option_name << std::endl;
+  std::cout << "Warning : Unknown parameter (" << option_name << ")"<< std::endl;
   return;
 }
 //--------------------------------------------------------------------------------
@@ -355,9 +271,9 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_option (
   std::string const &option_name, std::vector<double> const &option_value )
 {
   if ( option_name.compare( "eps_b" ) == 0 ) { 
-    if ( nb_constraints == 0 ) {
-      std::cout << "Unable to set inner boundary path constants" << std::endl;
-      std::cout << "Reason: no constraints specified" << std::endl;
+    if ( nb_constraints == -1 ) {
+      std::cout << "Warning : Unable to set inner boundary path constants." << std::endl;
+      std::cout << "          Please call set_blackbox first." << std::endl;
       return;
     } else {
       for ( int i = 0; i < option_value.size(); ++i ) {
@@ -367,7 +283,7 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_option (
       return; 
     }
   }
-  std::cout << "Unknown parameter: " << option_name << std::endl;
+  std::cout << "Warning : Unknown parameter (" << option_name << ")"<< std::endl;
   return;
 }
 //--------------------------------------------------------------------------------
@@ -382,7 +298,7 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_option (
       update_at_evaluations.push_back( option_value.at( i ) );
     return;
   }
-  std::cout << "Unknown parameter: " << option_name << std::endl;
+  std::cout << "Warning : Unknown parameter (" << option_name << ")"<< std::endl;
   return;
 }
 //--------------------------------------------------------------------------------
@@ -411,10 +327,11 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_option (
     return;
   } 
   if ( option_name.compare( "max_nb_accepted_steps" ) == 0 ) {
+    max_number_accepted_steps_is_set = true;
     max_number_accepted_steps = option_value;
     return;
   }
-  std::cout << "Unknown parameter: " << option_name << std::endl;
+  std::cout << "Warning : Unknown parameter (" << option_name << ")"<< std::endl;
   return;
 }
 //--------------------------------------------------------------------------------
@@ -463,7 +380,7 @@ template<class TSurrogateModel, class TBasisForSurrogateModel>
 void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_trustregion ( 
   double const &delta_init_input )
 {
-  set_trustregion ( delta_init_input, 0 );
+  set_trustregion ( delta_init_input, -1.0 );
   return;
 }
 //--------------------------------------------------------------------------------
@@ -475,6 +392,7 @@ template<class TSurrogateModel, class TBasisForSurrogateModel>
 void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_max_trustregion ( 
   double const &delta_max_input )
 {
+  delta_max_is_set = true;
   delta_max = delta_max_input;
   return;
 }
@@ -488,6 +406,7 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_max_number_evaluation
   int const &max_number_blackbox_evaluations_input )
 {
   max_number_blackbox_evaluations = max_number_blackbox_evaluations_input;
+  max_number_blackbox_evaluations_is_set = true;
   return;
 }
 //--------------------------------------------------------------------------------
@@ -503,10 +422,8 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_blackbox (
   nb_constraints = nb_constraints_input;
   blackbox_values.resize( (nb_constraints+1) );
   evaluations.initialize ( nb_constraints+1, dim );
-//  evaluations.values.resize( nb_constraints + 1);
   if ( stochastic_optimization ) {
     blackbox_noise.resize( nb_constraints + 1);
-//    evaluations.noise.resize( nb_constraints + 1);
   }
   inner_boundary_path_constants.resize( nb_constraints );
   max_inner_boundary_path_constants.resize( nb_constraints );
@@ -793,7 +710,144 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::write_to_file ( )
 }
 //--------------------------------------------------------------------------------
 
+//--------------------------------------------------------------------------------
+template<class TSurrogateModel, class TBasisForSurrogateModel>
+void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::check_parameter_consistency ( 
+  std::vector<double> const &x ) 
+{
+  if ( nb_constraints == -1 ) {
+    std::cout << "Error   : No objective function has been specified." << std::endl;
+    EXIT_FLAG = -4;
+  }
+  if ( max_number_blackbox_evaluations < dim+1 ) {
+    std::cout << "Error   : Maximal number of blackbox evaluations to small." << std::endl;
+    EXIT_FLAG = -4;
+  }
+  if ( !max_number_blackbox_evaluations_is_set && delta_min < 0e0 ) {
 
+  }
+  if ( !noise_detection && noise_termination && verbose > 0 ) {
+    std::cout << "Warning : Noise termination requested, but noise detection is turned off." << std::endl;
+    std::cout << "          Turning on noise detection." << std::endl;
+    noise_detection = true;
+    //EXIT_FLAG = -4;
+  } 
+  if ( max_number_accepted_steps <= 0 ) {
+    std::cout << "Error   : Invalid parameter value for max_nb_accepted_steps (>= 1)." << std::endl;
+    EXIT_FLAG = -4;
+  }
+  if ( delta_min < 0e0 && !max_number_blackbox_evaluations_is_set && 
+       !max_number_accepted_steps_is_set ) {
+    std::cout << "Error   : No termination criterion is specified." << std::endl;
+    EXIT_FLAG = -4;
+  }
+  if ( delta <= delta_min ) {
+    std::cout << "Error   : Initial trust region radius has to be larger than the minimal trust region radius." << std::endl;
+    EXIT_FLAG = -4;
+  }
+  if ( delta > delta_max && delta_max_is_set ) {
+    std::cout << "Error   : Initial trust region radius has to be smaller or equal than the maximal trust region radius." << std::endl;
+    EXIT_FLAG = -4;
+  } else if ( delta > delta_max && !delta_max_is_set ) {
+    std::cout << "Warning : Setting maximal trust region radius to " << delta << "." << std::endl;
+    delta_max = delta;
+  }
+  if ( !lower_bound_constraints.empty() ) {
+    for ( int i = 0; i < dim; ++i ) {
+      if ( x[i] < lower_bound_constraints[i] ) {
+        std::cout << "Error   : Initial design violates lower bound constraints." << std::endl;
+        EXIT_FLAG = -4;       
+        break;
+      }
+    }
+  }
+  if ( !upper_bound_constraints.empty() ) {
+    for ( int i = 0; i < dim; ++i ) {
+      if ( x[i] > upper_bound_constraints[i] ) {
+        std::cout << "Error   : Initial design violates upper bound constraints." << std::endl;
+        EXIT_FLAG = -4;       
+        break;
+      }
+    }
+  }
+  if ( gamma <= 0.0 || gamma > 1.0 || gamma > gamma_inc ) {
+    std::cout << "Error   : Invalid parameter value for gamma: ]0, gamma_inc]" << std::endl;
+    EXIT_FLAG = -4;
+  }
+  if ( gamma <= 0.0 || gamma >= 1.0 ) {
+    std::cout << "Error   : Invalid parameter value for gamma (]0, 1[)" << std::endl;
+    EXIT_FLAG = -4;
+  }
+  if ( gamma_inc <= 1.0 ) {
+    std::cout << "Error   : Invalid parameter value for gamma_inc (> 1)." << std::endl;
+    EXIT_FLAG = -4;
+  }
+  if ( omega <= 0.0 || omega >= 1.0 ) {
+    std::cout << "Error   : Invalid parameter value for omega (]0, 1[)." << std::endl;
+    EXIT_FLAG = -4;
+  }
+  if ( theta <= 0.0 || theta >= 1.0 ) {
+    std::cout << "Error   : Invalid parameter value for theta (]0, 1[)." << std::endl;
+    EXIT_FLAG = -4;
+  }
+  if ( eta_0 <= 0.0 || eta_0 > eta_1 ) {
+    std::cout << "Error   : Invalid parameter value for eta_0 (]0, eta_1])." << std::endl;
+    EXIT_FLAG = -4;
+  }
+  if ( eta_1 <= 0.0 || eta_0 > eta_1 || eta_1 >= 1.0) {
+    std::cout << "Error   : Invalid parameter value for eta_1 ([eta_0, 1[)." << std::endl;
+    EXIT_FLAG = -4;
+  }
+  if ( mu <= 0.0 ) {
+    std::cout << "Error   : Invalid parameter value for mu (> 0)." << std::endl;
+    EXIT_FLAG = -4;
+  }
+  if ( eps_c <= 0.0 ) {
+    std::cout << "Error   : Invalid parameter value for eps_c (> 0)." << std::endl;
+    EXIT_FLAG = -4;
+  }
+  if ( nb_constraints > 0 ) {
+    for ( int i = 0; i < nb_constraints; ++i ) {
+      if ( inner_boundary_path_constants[i] <= 0.0 ) {
+        std::cout << "Error   : Invalid parameter value for inner boundary path constant (> 0)." << std::endl;
+        EXIT_FLAG = -4;
+        break;
+      }
+    }
+  }
+  if ( threshold_for_poisedness_constant <= 1.0 ) {
+    std::cout << "Error   : Invalid parameter value for geometry_threshold (> 1)." << std::endl;
+    EXIT_FLAG = -4;
+  } 
+  if ( verbose < 0 || verbose > 3 ) {
+    std::cout << "Error   : Invalid parameter value for statistics (0, 1, 2, 3)." << std::endl;
+    EXIT_FLAG = -4;
+  } 
+  if ( nb_allowed_noisy_iterations < 0 ) {
+    std::cout << "Error   : Invalid parameter value for allowed_noisy_iterations (>= 0)." << std::endl;
+    EXIT_FLAG = -4;
+  }
+  if ( noise_observation_span <= 1 ) {
+    std::cout << "Error   : Invalid parameter value for observation_span (>= 2)." << std::endl;
+    EXIT_FLAG = -4;
+  }
+  if ( update_interval_length < 0 ) {
+    std::cout << "Error   : Invalid parameter value for GP_update_interval_length (>= 0)." << std::endl;
+    EXIT_FLAG = -4;
+  }
+  if ( !update_at_evaluations.empty() ) {
+    for ( int i = 0; i < (int) update_at_evaluations.size(); ++i ) { 
+      if ( update_at_evaluations[i] < 0 ) {
+        std::cout << "Error   : Invalid parameter value for GP_apaption_steps (>= 0)." << std::endl;
+        EXIT_FLAG = -4;
+        break;
+      }
+    }
+  }
+
+  return;
+}
+//--------------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------------
 //XXX--------------------------------------------------------------------------------
@@ -892,16 +946,12 @@ template<class TSurrogateModel, class TBasisForSurrogateModel>
 int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize ( 
   std::vector<double> &x, double &val ) 
 {
-  
-  if ( nb_constraints == -1 ) {
-    EXIT_FLAG = -4;
-    std::cout << "No objective function has been specified" << std::endl;
+
+  check_parameter_consistency( x );  
+  if ( EXIT_FLAG != NOEXIT ) { 
+   std::cout << std::endl;
+   return EXIT_FLAG;
   }
-  if ( max_number_blackbox_evaluations < dim+1 ) {
-    std::cout << "Maximal number of blackbox evaluations to small" << std::endl;
-    EXIT_FLAG = -4;
-  }
-  if ( EXIT_FLAG != NOEXIT ) return EXIT_FLAG;
 
   std::cout.setf( std::ios::fixed, std:: ios::floatfield );
   std::cout << std::setprecision(8);
@@ -1217,14 +1267,10 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
 
     }
 
-
   } while ( EXIT_FLAG == NOEXIT );
 
   val = evaluations.values[0].at(evaluations.best_index);
   x = evaluations.nodes[ evaluations.best_index ];
-
-  //XX
-  //initialize_c_g_H( );
 
   if ( verbose >= 1 ) {
     std::cout << std::endl << "RESULTS OF OPTIMIZATION:" << std::endl;

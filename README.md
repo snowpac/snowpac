@@ -141,7 +141,7 @@ double eta_0 = 1e-1;
 #!c++
 double eta_1 = 7e-1;
 ```
-* Upper bound factor between trust-region radius and criticality measure (< 0)
+* Upper bound factor between trust-region radius and criticality measure (> 0)
 ```
 #!c++
 double mu = 1e0;
@@ -190,12 +190,12 @@ bool noise_termination = false;
 #!c++
 int allowed_noisy_iterations = 3;
 ```
-* Number of rejected iterations after which the noise detection starts (> 0)
+* Number of rejected iterations after which the noise detection starts (>= 2)
 ```
 #!c++
 int observation_span = 5;
 ```
-* Set maximal number of acceptable/successful iterations (default > 0)
+* Set maximal number of acceptable/successful iterations (>= 1)
 ```
 #!c++
 int max_nb_accepted_steps = inf;
@@ -213,7 +213,7 @@ std::vector<int> GP_adaption_steps;
 * Set after how many black-box evaluations the Gaussian process has to be updated (> 0)
 ```
 #!c++
-std::vector<int> GP_update_interval_length;
+int GP_update_interval_length;
 ```
 
 

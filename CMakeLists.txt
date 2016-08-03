@@ -7,18 +7,33 @@
 # Specification of include directory of Eigen          #
 # .................................................... #
 # -DNOWPAC_EIGEN_INCLUDE_PATH=/path/to/eigen/include   #
-# ++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+# ---------------------------------------------------- #
+# Compile shared library                               #
+# .................................................... #
+# -DNOWPAC_ENABLE_SHARED=ON                            #
+# ---------------------------------------------------- #
+# Set NOWPAC install directory                         #
+# .................................................... #
+# -DNOWPAC_INSTALL_PREFIX=/path/to/install/directory   #
+# ---------------------------------------------------- #
+# Enable and run tests                                 #
+# .................................................... #
+# -DNOWPAC_ENABLE_TESTS=ON                             #
+# ==================================================== #
+
+# ==================================================== #
 # Libraries will be automatically downloaded,          #
 # if the above directories are not specified           #
 # and the libraries are not found automatically.       #
 # ==================================================== #
+
 
 CMAKE_MINIMUM_REQUIRED (VERSION 2.8) 
  
 PROJECT(NOWPAC)
 
 IF ( NOT NOWPAC_INSTALL_PREFIX )
-  SET( NOWPAC_INSTALL_PREFIX ${NOWPAC_SOURCE_DIR} )
+  SET( NOWPAC_INSTALL_PREFIX ${NOWPAC_BINARY_DIR} )
 #  SET( NOWPAC_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX} )
 ENDIF ( )
 
@@ -44,6 +59,13 @@ ENDIF ()
 FIND_PACKAGE( NLOPT )
 IF ( NOT NLOPT_FOUND ) 
    INCLUDE ( buildNLOPT )
+ENDIF ()
+
+IF ( NOWPAC_ENABLE_TESTS STREQUAL "ON" ) 
+   FIND_PACKAGE( GTEST )
+   IF ( NOT GTEST_FOUND ) 
+      INCLUDE ( buildGTEST )
+   ENDIF ()
 ENDIF ()
 
 SET ( NOWPAC_SOURCE_FILES
@@ -83,6 +105,20 @@ SET ( NOWPAC_HEADER_FILES
     ${NOWPAC_SOURCE_DIR}/include/TriangularMatrixOperations.hpp
     ${NOWPAC_SOURCE_DIR}/include/VectorOperations.hpp
 )
+SET ( NOWPAC_GTEST_HEADER_FILES
+    ${NOWPAC_SOURCE_DIR}/test/include/gtest_basisforminimumfrobeniusnormmodel.hpp
+    ${NOWPAC_SOURCE_DIR}/test/include/gtest_blackboxdata.hpp
+    ${NOWPAC_SOURCE_DIR}/test/include/gtest_choleskyfactorization.hpp
+    ${NOWPAC_SOURCE_DIR}/test/include/gtest_improvepoisedness.hpp
+    ${NOWPAC_SOURCE_DIR}/test/include/gtest_minimumfrobeniusnormmodel.hpp
+    ${NOWPAC_SOURCE_DIR}/test/include/gtest_quadraticminimization.hpp
+    ${NOWPAC_SOURCE_DIR}/test/include/gtest_quadraticmonimial.hpp
+    ${NOWPAC_SOURCE_DIR}/test/include/gtest_triangularmatrixoperations.hpp
+    ${NOWPAC_SOURCE_DIR}/test/include/gtest_vectoroperations.hpp
+)
+SET ( NOWPAC_GTEST_SOURCE_FILES
+    ${NOWPAC_SOURCE_DIR}/test/src/gtest_main.cpp
+)
 
 INCLUDE_DIRECTORIES( ${NOWPAC_SOURCE_DIR}/include )
 INCLUDE_DIRECTORIES( ${NOWPAC_EIGEN_INCLUDE_PATH} )
@@ -101,12 +137,24 @@ ADD_LIBRARY(nowpac STATIC $<TARGET_OBJECTS:nowpacOlib>)
 ADD_DEPENDENCIES(nowpac nowpacOlib)
 
 IF ( NOWPAC_ENABLE_SHARED STREQUAL "ON" ) 
-    SET ( CMAKE_SKIP_RPATH "ON" )
-    SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${NOWPAC_INSTALL_PREFIX}/nowpac/lib)
-    ADD_LIBRARY(nowpacshared SHARED $<TARGET_OBJECTS:nowpacOlib>)
+   SET ( CMAKE_SKIP_RPATH "ON" )
+   SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${NOWPAC_INSTALL_PREFIX}/nowpac/lib)
+   ADD_LIBRARY(nowpacshared SHARED $<TARGET_OBJECTS:nowpacOlib>)
     
-    TARGET_LINK_LIBRARIES(nowpacshared ${NOWPAC_NLOPT_LIBRARY_PATH}/libnlopt.${NOWPAC_SHARED_LIBRARY_EXTENSION})
-    ADD_DEPENDENCIES(nowpacshared nowpacOlib)
+   TARGET_LINK_LIBRARIES(nowpacshared ${NOWPAC_NLOPT_LIBRARY_PATH}/libnlopt.${NOWPAC_SHARED_LIBRARY_EXTENSION})    ADD_DEPENDENCIES(nowpacshared nowpacOlib)
+ENDIF ()
+
+IF ( NOWPAC_ENABLE_TESTS STREQUAL "ON" ) 
+   ADD_EXECUTABLE(nowpac_test ${NOWPAC_GTEST_SOURCE_FILES} )
+   SET_TARGET_PROPERTIES( nowpac_test PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${NOWPAC_INSTALL_PREFIX}/nowpac/bin)
+   TARGET_INCLUDE_DIRECTORIES(nowpac_test PUBLIC ${NOWPAC_SOURCE_DIR}/include)
+   TARGET_INCLUDE_DIRECTORIES(nowpac_test PUBLIC ${NOWPAC_SOURCE_DIR}/test/include)
+   TARGET_INCLUDE_DIRECTORIES(nowpac_test PUBLIC ${NOWPAC_EIGEN_INCLUDE_PATH})
+   TARGET_INCLUDE_DIRECTORIES(nowpac_test PUBLIC ${NOWPAC_NLOPT_INCLUDE_PATH})
+   TARGET_INCLUDE_DIRECTORIES(nowpac_test PUBLIC ${NOWPAC_GTEST_INCLUDE_PATH})
+   TARGET_LINK_LIBRARIES(nowpac_test nowpac)
+   TARGET_LINK_LIBRARIES(nowpac_test ${NOWPAC_GTEST_LIBRARY_PATH}/libgtest.a)
+   ADD_DEPENDENCIES(nowpac_test nowpac)
 ENDIF ()
 
 SET ( NOWPAC_INCLUDE_PATH "${NOWPAC_INSTALL_PREFIX}/nowpac/include" CACHE PATH "NOWPAC include directory" FORCE)
@@ -116,6 +164,10 @@ SET ( NOWPAC_NLOPT_INCLUDE_PATH "${NOWPAC_NLOPT_INCLUDE_PATH}" CACHE PATH "Nlopt
 SET ( NOWPAC_NLOPT_LIBRARY_PATH "${NOWPAC_NLOPT_LIBRARY_PATH}" CACHE PATH "Nlopt library directory" FORCE)
 
 INSTALL(FILES ${NOWPAC_HEADER_FILES} DESTINATION "${NOWPAC_INCLUDE_PATH}")
+
+IF ( NOWPAC_ENABLE_TESTS STREQUAL "ON" ) 
+   ADD_CUSTOM_COMMAND(TARGET nowpac_test POST_BUILD COMMAND ${NOWPAC_INSTALL_PREFIX}/nowpac/bin/nowpac_test VERBATIM)
+ENDIF ()
 
 message(STATUS "**************************************************")
 message(STATUS "Final output will be written to:\n     ${NOWPAC_INSTALL_PREFIX}/nowpac/")

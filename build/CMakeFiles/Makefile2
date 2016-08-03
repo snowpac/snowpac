@@ -134,6 +134,80 @@ clean: CMakeFiles/nowpacOlib.dir/clean
 .PHONY : clean
 
 #=============================================================================
+# Target rules for target CMakeFiles/nowpac_test.dir
+
+# All Build rule for target.
+CMakeFiles/nowpac_test.dir/all: CMakeFiles/nowpac.dir/all
+	$(MAKE) -f CMakeFiles/nowpac_test.dir/build.make CMakeFiles/nowpac_test.dir/depend
+	$(MAKE) -f CMakeFiles/nowpac_test.dir/build.make CMakeFiles/nowpac_test.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/Users/Florian/home/developments/git/snowpac/build/CMakeFiles --progress-num=13,14 "Built target nowpac_test"
+.PHONY : CMakeFiles/nowpac_test.dir/all
+
+# Include target in all.
+all: CMakeFiles/nowpac_test.dir/all
+
+.PHONY : all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/nowpac_test.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/Florian/home/developments/git/snowpac/build/CMakeFiles 14
+	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/nowpac_test.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/Florian/home/developments/git/snowpac/build/CMakeFiles 0
+.PHONY : CMakeFiles/nowpac_test.dir/rule
+
+# Convenience name for target.
+nowpac_test: CMakeFiles/nowpac_test.dir/rule
+
+.PHONY : nowpac_test
+
+# clean rule for target.
+CMakeFiles/nowpac_test.dir/clean:
+	$(MAKE) -f CMakeFiles/nowpac_test.dir/build.make CMakeFiles/nowpac_test.dir/clean
+.PHONY : CMakeFiles/nowpac_test.dir/clean
+
+# clean rule for target.
+clean: CMakeFiles/nowpac_test.dir/clean
+
+.PHONY : clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/nowpacshared.dir
+
+# All Build rule for target.
+CMakeFiles/nowpacshared.dir/all: CMakeFiles/nowpacOlib.dir/all
+	$(MAKE) -f CMakeFiles/nowpacshared.dir/build.make CMakeFiles/nowpacshared.dir/depend
+	$(MAKE) -f CMakeFiles/nowpacshared.dir/build.make CMakeFiles/nowpacshared.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/Users/Florian/home/developments/git/snowpac/build/CMakeFiles --progress-num=15 "Built target nowpacshared"
+.PHONY : CMakeFiles/nowpacshared.dir/all
+
+# Include target in all.
+all: CMakeFiles/nowpacshared.dir/all
+
+.PHONY : all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/nowpacshared.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/Florian/home/developments/git/snowpac/build/CMakeFiles 12
+	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/nowpacshared.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/Florian/home/developments/git/snowpac/build/CMakeFiles 0
+.PHONY : CMakeFiles/nowpacshared.dir/rule
+
+# Convenience name for target.
+nowpacshared: CMakeFiles/nowpacshared.dir/rule
+
+.PHONY : nowpacshared
+
+# clean rule for target.
+CMakeFiles/nowpacshared.dir/clean:
+	$(MAKE) -f CMakeFiles/nowpacshared.dir/build.make CMakeFiles/nowpacshared.dir/clean
+.PHONY : CMakeFiles/nowpacshared.dir/clean
+
+# clean rule for target.
+clean: CMakeFiles/nowpacshared.dir/clean
+
+.PHONY : clean
+
+#=============================================================================
 # Special targets to cleanup operation of make.
 
 # Special rule to run CMake to check the build system integrity.

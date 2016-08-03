@@ -191,6 +191,18 @@ NOWPAC_EIGEN_INCLUDE_PATH:PATH=/usr/local/nowpac/external/eigen/include/eigen3
 //Path to a file.
 NOWPAC_EIGEN_INCLUDE_PATH_SEARCH:PATH=/usr/local/nowpac/external/eigen/include/eigen3
 
+//No help, variable specified on the command line.
+NOWPAC_ENABLE_SHARED:UNINITIALIZED=ON
+
+//Path to a file.
+NOWPAC_GTEST_INCLUDE_PATH:PATH=/usr/local/nowpac/external/gtest/src/GTEST/include
+
+//Path to a library.
+NOWPAC_GTEST_LIBRARY:FILEPATH=/usr/local/nowpac/external/gtest/src/GTEST-build/libgtest.a
+
+//Path to a file.
+NOWPAC_GTEST_LIBRARY_PATH:PATH=/usr/local/nowpac/external/gtest/src/GTEST-build
+
 //NOWPAC include directory
 NOWPAC_INCLUDE_PATH:PATH=/usr/local/nowpac/include
 
@@ -220,6 +232,9 @@ PKG_CONFIG_EXECUTABLE:FILEPATH=/usr/local/bin/pkg-config
 
 //Dependencies for target
 nowpac_LIB_DEPENDS:STATIC=
+
+//Dependencies for the target
+nowpacshared_LIB_DEPENDS:STATIC=general;/usr/local/nowpac/external/nlopt/lib/libnlopt.dylib;
 
 
 ########################
@@ -357,6 +372,8 @@ CMAKE_USE_RELATIVE_PATHS-ADVANCED:INTERNAL=1
 CMAKE_VERBOSE_MAKEFILE-ADVANCED:INTERNAL=1
 //Details about finding EIGEN
 FIND_PACKAGE_MESSAGE_DETAILS_EIGEN:INTERNAL=[/usr/local/nowpac/external/eigen/include/eigen3][v()]
+//Details about finding GTEST
+FIND_PACKAGE_MESSAGE_DETAILS_GTEST:INTERNAL=[/usr/local/nowpac/external/gtest/src/GTEST/include][/usr/local/nowpac/external/gtest/src/GTEST-build/libgtest.a][/usr/local/nowpac/external/gtest/src/GTEST-build][v()]
 //Details about finding NLOPT
 FIND_PACKAGE_MESSAGE_DETAILS_NLOPT:INTERNAL=[/usr/local/nowpac/external/nlopt/include][/usr/local/nowpac/external/nlopt/lib][v()]
 //Details about finding PkgConfig

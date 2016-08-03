@@ -56,17 +56,6 @@ CMAKE_BINARY_DIR = /Users/Florian/home/developments/git/snowpac/build
 #=============================================================================
 # Targets provided globally by CMake.
 
-# Special rule for the target edit_cache
-edit_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake cache editor..."
-	/usr/local/Cellar/cmake/3.3.2/bin/ccmake -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
-.PHONY : edit_cache
-
-# Special rule for the target edit_cache
-edit_cache/fast: edit_cache
-
-.PHONY : edit_cache/fast
-
 # Special rule for the target rebuild_cache
 rebuild_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake to regenerate build system..."
@@ -87,6 +76,28 @@ list_install_components:
 list_install_components/fast: list_install_components
 
 .PHONY : list_install_components/fast
+
+# Special rule for the target install/local
+install/local: preinstall
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing only the local directory..."
+	/usr/local/Cellar/cmake/3.3.2/bin/cmake -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
+.PHONY : install/local
+
+# Special rule for the target install/local
+install/local/fast: install/local
+
+.PHONY : install/local/fast
+
+# Special rule for the target edit_cache
+edit_cache:
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake cache editor..."
+	/usr/local/Cellar/cmake/3.3.2/bin/ccmake -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+.PHONY : edit_cache
+
+# Special rule for the target edit_cache
+edit_cache/fast: edit_cache
+
+.PHONY : edit_cache/fast
 
 # Special rule for the target install
 install: preinstall
@@ -110,17 +121,6 @@ install/strip: preinstall
 install/strip/fast: install/strip
 
 .PHONY : install/strip/fast
-
-# Special rule for the target install/local
-install/local: preinstall
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing only the local directory..."
-	/usr/local/Cellar/cmake/3.3.2/bin/cmake -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
-.PHONY : install/local
-
-# Special rule for the target install/local
-install/local/fast: install/local
-
-.PHONY : install/local/fast
 
 # The main all target
 all: cmake_check_build_system
@@ -179,6 +179,32 @@ nowpacOlib: cmake_check_build_system
 nowpacOlib/fast:
 	$(MAKE) -f CMakeFiles/nowpacOlib.dir/build.make CMakeFiles/nowpacOlib.dir/build
 .PHONY : nowpacOlib/fast
+
+#=============================================================================
+# Target rules for targets named nowpac_test
+
+# Build rule for target.
+nowpac_test: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 nowpac_test
+.PHONY : nowpac_test
+
+# fast build rule for target.
+nowpac_test/fast:
+	$(MAKE) -f CMakeFiles/nowpac_test.dir/build.make CMakeFiles/nowpac_test.dir/build
+.PHONY : nowpac_test/fast
+
+#=============================================================================
+# Target rules for targets named nowpacshared
+
+# Build rule for target.
+nowpacshared: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 nowpacshared
+.PHONY : nowpacshared
+
+# fast build rule for target.
+nowpacshared/fast:
+	$(MAKE) -f CMakeFiles/nowpacshared.dir/build.make CMakeFiles/nowpacshared.dir/build
+.PHONY : nowpacshared/fast
 
 src/BasisForMinimumFrobeniusNormModel.o: src/BasisForMinimumFrobeniusNormModel.cpp.o
 
@@ -477,20 +503,49 @@ src/VectorOperations.cpp.s:
 	$(MAKE) -f CMakeFiles/nowpacOlib.dir/build.make CMakeFiles/nowpacOlib.dir/src/VectorOperations.cpp.s
 .PHONY : src/VectorOperations.cpp.s
 
+test/src/gtest_main.o: test/src/gtest_main.cpp.o
+
+.PHONY : test/src/gtest_main.o
+
+# target to build an object file
+test/src/gtest_main.cpp.o:
+	$(MAKE) -f CMakeFiles/nowpac_test.dir/build.make CMakeFiles/nowpac_test.dir/test/src/gtest_main.cpp.o
+.PHONY : test/src/gtest_main.cpp.o
+
+test/src/gtest_main.i: test/src/gtest_main.cpp.i
+
+.PHONY : test/src/gtest_main.i
+
+# target to preprocess a source file
+test/src/gtest_main.cpp.i:
+	$(MAKE) -f CMakeFiles/nowpac_test.dir/build.make CMakeFiles/nowpac_test.dir/test/src/gtest_main.cpp.i
+.PHONY : test/src/gtest_main.cpp.i
+
+test/src/gtest_main.s: test/src/gtest_main.cpp.s
+
+.PHONY : test/src/gtest_main.s
+
+# target to generate assembly for a file
+test/src/gtest_main.cpp.s:
+	$(MAKE) -f CMakeFiles/nowpac_test.dir/build.make CMakeFiles/nowpac_test.dir/test/src/gtest_main.cpp.s
+.PHONY : test/src/gtest_main.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
 	@echo "... all (the default if no target is provided)"
 	@echo "... clean"
 	@echo "... depend"
-	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... list_install_components"
-	@echo "... nowpacOlib"
+	@echo "... nowpac"
+	@echo "... nowpac_test"
+	@echo "... install/local"
+	@echo "... edit_cache"
+	@echo "... nowpacshared"
 	@echo "... install"
 	@echo "... install/strip"
-	@echo "... install/local"
-	@echo "... nowpac"
+	@echo "... nowpacOlib"
 	@echo "... src/BasisForMinimumFrobeniusNormModel.o"
 	@echo "... src/BasisForMinimumFrobeniusNormModel.i"
 	@echo "... src/BasisForMinimumFrobeniusNormModel.s"
@@ -524,6 +579,9 @@ help:
 	@echo "... src/VectorOperations.o"
 	@echo "... src/VectorOperations.i"
 	@echo "... src/VectorOperations.s"
+	@echo "... test/src/gtest_main.o"
+	@echo "... test/src/gtest_main.i"
+	@echo "... test/src/gtest_main.s"
 .PHONY : help
 
 
