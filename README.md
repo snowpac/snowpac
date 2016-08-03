@@ -191,15 +191,15 @@ Usage of NOWPAC:
 ----------------
 ```
 // Initialize NOWAC
-NOWPAC::OPTIMIZER <objectname>((int) n);
+NOWPAC<> <objectname>((int) n);
 // alternatively if output to file is required: 
-// NOWPAC::OPTIMIZER <objectname>((int) n, (String) <name_of_output_file>);
+// NOWPAC<> <objectname>((int) n, (String) <name_of_output_file>);
 
 // Set blackbox evaluator ( without constraints )
-<objectname>.set_objective((BlackBoxBaseClass) <name of blackbox function>);
+<objectname>.set_blackbox((BlackBoxBaseClass) <name of blackbox function>);
 
 // Set blackbox evaluator ( with constraints, optional )
-<objectname>.set_objective((&BlackBoxBaseClass) <name of blackbox function>, (int) m);
+<objectname>.set_blackbox((&BlackBoxBaseClass) <name of blackbox function>, (int) m);
 
 // Set user parameters (optional)
 <objectname>.set_userdata(&<data_for_user_function>);
@@ -211,13 +211,13 @@ NOWPAC::OPTIMIZER <objectname>((int) n);
 // 1) Set initial and minimal trust-region radii 
 <objectname>.set_trustregion((double) delta_init, (double) delta_min);
 // 2) Set maximal number of black-box function evaluations
-<objectname>.set_max_number_black_box_evaluations((int) <max_number_of_evaluations>);
+<objectname>.set_max_number_evaluations((int) <max_number_of_evaluations>);
 
 // Set lower bound constraints (optional)
 <objectname>.set_lower_bounds(std::vector<double> <lower bounds, size (n)>);
 
 // Set upper bound constraints (optional)
-<objectname>.set_upper_bounds(std::vector<double> <upper bounds, size (n)>);
+<objectname>.set_upper_bounds(std::vector<double> <upper bounds, size (n)>);
 
 // Set options (optional)
 <objectname>.set_option((std::string) <option name>, (type from table above) <option value>);
