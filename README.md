@@ -6,7 +6,6 @@ Contact : nowpac (at) mit (dot) edu
 
 ## Derivative free optimizer for nonlinear constrained problems  ##
 ```
-#!tex
 min f(x)  subject to c(x) <= 0 
 ```
 where f denotes the objective function and c the constraints. 
@@ -22,7 +21,6 @@ Installation:
 -------------
 * **Automatic download and installation of dependencies**
 ```
-#!c++
 export CC=<c compiler>
 mkdir build
 cd build
@@ -35,7 +33,6 @@ make install -j4
 * Dependencies will be installed in `<install_dir>/nowpac/external/`
 * **Manual installation of dependencies**
 ```
-#!c++
 mkdir build
 cd build
 cmake -DCMAKE_C_COMPILER=<c++ compiler> 
@@ -58,12 +55,10 @@ Required inputs:
 ----------------
 * Number of design variables  
 ```
-#!c++
 int n;
 ```
 * Black box evaluator (see BlackBoxBaseClass.hpp) 
 ```
-#!c++
  void BlackBoxBaseClass::evaluate (std::vector<double> const &x, 
                                    std::vector<double> &vals, 
                                    void *<user parameter>);
@@ -71,17 +66,14 @@ int n;
 vals[0] is the objective value, vals[1] ... vals[m] are the constraint values
 * Initial trust-region radius
 ```
-#!c++
 double delta_init;
 ```
 * Minimal trust-region radius (or other stopping criteria)
 ```
-#!c++
 double delta_min;
 ```
 * Initial design
 ```
-#!c++
 std::vector<double> x(n);
 ```
 
