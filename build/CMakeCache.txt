@@ -15,7 +15,7 @@
 ########################
 
 //Path to a program.
-CMAKE_AR:FILEPATH=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ar
+CMAKE_AR:FILEPATH=/usr/bin/ar
 
 //Choose the type of build, options are: None(CMAKE_CXX_FLAGS or
 // CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel.
@@ -43,8 +43,8 @@ CMAKE_CXX_FLAGS_RELEASE:STRING=-O3 -DNDEBUG
 //Flags used by the compiler during release builds with debug info.
 CMAKE_CXX_FLAGS_RELWITHDEBINFO:STRING=-O2 -g -DNDEBUG
 
-//C compiler
-CMAKE_C_COMPILER:FILEPATH=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc
+//No help, variable specified on the command line.
+CMAKE_C_COMPILER:UNINITIALIZED=/usr/local/Cellar/gcc/5.3.0/bin/gcc-5
 
 //Flags used by the compiler during all build types.
 CMAKE_C_FLAGS:STRING=
@@ -87,7 +87,7 @@ CMAKE_INSTALL_NAME_TOOL:FILEPATH=/usr/bin/install_name_tool
 CMAKE_INSTALL_PREFIX:PATH=/usr/local
 
 //Path to a program.
-CMAKE_LINKER:FILEPATH=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld
+CMAKE_LINKER:FILEPATH=/usr/bin/ld
 
 //Path to a program.
 CMAKE_MAKE_PROGRAM:FILEPATH=/usr/bin/make
@@ -108,7 +108,7 @@ CMAKE_MODULE_LINKER_FLAGS_RELEASE:STRING=
 CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO:STRING=
 
 //Path to a program.
-CMAKE_NM:FILEPATH=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/nm
+CMAKE_NM:FILEPATH=/usr/bin/nm
 
 //Path to a program.
 CMAKE_OBJCOPY:FILEPATH=CMAKE_OBJCOPY-NOTFOUND
@@ -131,7 +131,7 @@ CMAKE_OSX_SYSROOT:STRING=
 CMAKE_PROJECT_NAME:STATIC=NOWPAC
 
 //Path to a program.
-CMAKE_RANLIB:FILEPATH=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ranlib
+CMAKE_RANLIB:FILEPATH=/usr/bin/ranlib
 
 //Flags used by the linker during the creation of dll's.
 CMAKE_SHARED_LINKER_FLAGS:STRING=
@@ -171,7 +171,7 @@ CMAKE_STATIC_LINKER_FLAGS_RELEASE:STRING=
 CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO:STRING=
 
 //Path to a program.
-CMAKE_STRIP:FILEPATH=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/strip
+CMAKE_STRIP:FILEPATH=/usr/bin/strip
 
 //If true, cmake will use relative paths in makefiles and projects.
 CMAKE_USE_RELATIVE_PATHS:BOOL=OFF
@@ -194,14 +194,17 @@ NOWPAC_EIGEN_INCLUDE_PATH_SEARCH:PATH=/usr/local/nowpac/external/eigen/include/e
 //No help, variable specified on the command line.
 NOWPAC_ENABLE_SHARED:UNINITIALIZED=ON
 
+//No help, variable specified on the command line.
+NOWPAC_ENABLE_TESTS:UNINITIALIZED=ON
+
 //Path to a file.
-NOWPAC_GTEST_INCLUDE_PATH:PATH=/usr/local/nowpac/external/gtest/src/GTEST/include
+NOWPAC_GTEST_INCLUDE_PATH:PATH=NOWPAC_GTEST_INCLUDE_PATH-NOTFOUND
 
 //Path to a library.
-NOWPAC_GTEST_LIBRARY:FILEPATH=/usr/local/nowpac/external/gtest/src/GTEST-build/libgtest.a
+NOWPAC_GTEST_LIBRARY:FILEPATH=NOWPAC_GTEST_LIBRARY-NOTFOUND
 
 //Path to a file.
-NOWPAC_GTEST_LIBRARY_PATH:PATH=/usr/local/nowpac/external/gtest/src/GTEST-build
+NOWPAC_GTEST_LIBRARY_PATH:PATH=NOWPAC_GTEST_LIBRARY_PATH-NOTFOUND
 
 //NOWPAC include directory
 NOWPAC_INCLUDE_PATH:PATH=/usr/local/nowpac/include
@@ -372,8 +375,6 @@ CMAKE_USE_RELATIVE_PATHS-ADVANCED:INTERNAL=1
 CMAKE_VERBOSE_MAKEFILE-ADVANCED:INTERNAL=1
 //Details about finding EIGEN
 FIND_PACKAGE_MESSAGE_DETAILS_EIGEN:INTERNAL=[/usr/local/nowpac/external/eigen/include/eigen3][v()]
-//Details about finding GTEST
-FIND_PACKAGE_MESSAGE_DETAILS_GTEST:INTERNAL=[/usr/local/nowpac/external/gtest/src/GTEST/include][/usr/local/nowpac/external/gtest/src/GTEST-build/libgtest.a][/usr/local/nowpac/external/gtest/src/GTEST-build][v()]
 //Details about finding NLOPT
 FIND_PACKAGE_MESSAGE_DETAILS_NLOPT:INTERNAL=[/usr/local/nowpac/external/nlopt/include][/usr/local/nowpac/external/nlopt/lib][v()]
 //Details about finding PkgConfig

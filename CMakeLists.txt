@@ -1,5 +1,5 @@
 # ==================================================== #
-# Specification of include directory of NLopt          #
+# Specification of include and lib directory of NLopt  #
 # .................................................... #
 # -DNOWPAC_NLOPT_INCLUDE_PATH=/path/to/nlopt/include   #
 # -DNOWPAC_NLOPT_LIBRARY_PATH=/path/to/nlopt/library   #
@@ -19,6 +19,11 @@
 # Enable and run tests                                 #
 # .................................................... #
 # -DNOWPAC_ENABLE_TESTS=ON                             #
+# ---------------------------------------------------- #
+# Specification of include and lib directory of Gtest  #
+# .................................................... #
+# -DNOWPAC_GTEST_INCLUDE_PATH=/path/to/gtest/include   #
+# -DNOWPAC_GTEST_LIBRARY_PATH=/path/to/gtest/library   #
 # ==================================================== #
 
 # ==================================================== #
@@ -140,8 +145,8 @@ IF ( NOWPAC_ENABLE_SHARED STREQUAL "ON" )
    SET ( CMAKE_SKIP_RPATH "ON" )
    SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${NOWPAC_INSTALL_PREFIX}/nowpac/lib)
    ADD_LIBRARY(nowpacshared SHARED $<TARGET_OBJECTS:nowpacOlib>)
-    
-   TARGET_LINK_LIBRARIES(nowpacshared ${NOWPAC_NLOPT_LIBRARY_PATH}/libnlopt.${NOWPAC_SHARED_LIBRARY_EXTENSION})    ADD_DEPENDENCIES(nowpacshared nowpacOlib)
+   TARGET_LINK_LIBRARIES(nowpacshared ${NOWPAC_NLOPT_LIBRARY_PATH}/libnlopt.${NOWPAC_SHARED_LIBRARY_EXTENSION})
+   ADD_DEPENDENCIES(nowpacshared nowpacOlib)
 ENDIF ()
 
 IF ( NOWPAC_ENABLE_TESTS STREQUAL "ON" ) 
@@ -154,6 +159,15 @@ IF ( NOWPAC_ENABLE_TESTS STREQUAL "ON" )
    TARGET_INCLUDE_DIRECTORIES(nowpac_test PUBLIC ${NOWPAC_GTEST_INCLUDE_PATH})
    TARGET_LINK_LIBRARIES(nowpac_test nowpac)
    TARGET_LINK_LIBRARIES(nowpac_test ${NOWPAC_GTEST_LIBRARY_PATH}/libgtest.a)
+   IF (NOT EIGEN_FOUND)
+      ADD_DEPENDENCIES(nowpac_test EIGEN)
+   ENDIF ()
+   IF (NOT NLOPT_FOUND)
+      ADD_DEPENDENCIES(nowpac_test NLOPT)
+   ENDIF ()
+   IF (NOT GTEST_FOUND)
+      ADD_DEPENDENCIES(nowpac_test GTEST)
+   ENDIF ()
    ADD_DEPENDENCIES(nowpac_test nowpac)
 ENDIF ()
 

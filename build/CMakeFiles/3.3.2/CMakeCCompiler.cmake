@@ -1,7 +1,7 @@
-set(CMAKE_C_COMPILER "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc")
+set(CMAKE_C_COMPILER "/usr/local/Cellar/gcc/5.3.0/bin/gcc-5")
 set(CMAKE_C_COMPILER_ARG1 "")
-set(CMAKE_C_COMPILER_ID "AppleClang")
-set(CMAKE_C_COMPILER_VERSION "7.3.0.7030031")
+set(CMAKE_C_COMPILER_ID "GNU")
+set(CMAKE_C_COMPILER_VERSION "5.3.0")
 set(CMAKE_C_COMPILE_FEATURES "c_function_prototypes;c_restrict;c_variadic_macros;c_static_assert")
 set(CMAKE_C90_COMPILE_FEATURES "c_function_prototypes")
 set(CMAKE_C99_COMPILE_FEATURES "c_restrict;c_variadic_macros")
@@ -11,10 +11,10 @@ set(CMAKE_C_PLATFORM_ID "Darwin")
 set(CMAKE_C_SIMULATE_ID "")
 set(CMAKE_C_SIMULATE_VERSION "")
 
-set(CMAKE_AR "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ar")
-set(CMAKE_RANLIB "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ranlib")
-set(CMAKE_LINKER "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld")
-set(CMAKE_COMPILER_IS_GNUCC )
+set(CMAKE_AR "/usr/bin/ar")
+set(CMAKE_RANLIB "/usr/bin/ranlib")
+set(CMAKE_LINKER "/usr/bin/ld")
+set(CMAKE_COMPILER_IS_GNUCC 1)
 set(CMAKE_C_COMPILER_LOADED 1)
 set(CMAKE_C_COMPILER_WORKS TRUE)
 set(CMAKE_C_ABI_COMPILED TRUE)
@@ -52,11 +52,11 @@ if(CMAKE_C_LIBRARY_ARCHITECTURE)
   set(CMAKE_LIBRARY_ARCHITECTURE "")
 endif()
 
+set(CMAKE_C_SYSROOT_FLAG "-isysroot")
+set(CMAKE_C_OSX_DEPLOYMENT_TARGET_FLAG "-mmacosx-version-min=")
 
-
-
-set(CMAKE_C_IMPLICIT_LINK_LIBRARIES "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/7.3.0/lib/darwin/libclang_rt.osx.a")
-set(CMAKE_C_IMPLICIT_LINK_DIRECTORIES "/usr/lib;/usr/local/lib")
+set(CMAKE_C_IMPLICIT_LINK_LIBRARIES "")
+set(CMAKE_C_IMPLICIT_LINK_DIRECTORIES "/usr/local/Cellar/gcc/5.3.0/lib/gcc/5/gcc/x86_64-apple-darwin15.0.0/5.3.0;/usr/local/Cellar/gcc/5.3.0/lib/gcc/5;/usr/lib;/usr/local/lib")
 set(CMAKE_C_IMPLICIT_LINK_FRAMEWORK_DIRECTORIES "/Library/Frameworks;/System/Library/Frameworks")
 
 

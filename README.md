@@ -14,7 +14,8 @@ where f denotes the objective function and c the constraints.
 External dependencies:
 ----------------------
 - Eigen (linear algebra library, eigen.tuxfamily.org)
-- NLOPT (optimization library, ab-initio.mit.edu/wiki/index.php/NLopt)
+- NLopt (optimization library, ab-initio.mit.edu/wiki/index.php/NLopt)
+- Gtest (google test library, optional)
 - Compiler with C++11 standard support
 
 Installation:
@@ -27,9 +28,11 @@ cd build
 cmake -DCMAKE_CXX_COMPILER=<c++ compiler> 
       -DNOWPAC_INSTALL_PREFIX=<install_dir> 
       -DNOWPAC_ENABLE_SHARED=<ON|OFF>
-      ../ 
+      -DNOWPAC_ENABLE_TESTS=<ON|OFF>
+../ 
 make install -j4
 ```
+* Default: NOWPAC_INSTALL_PREFIX = CMAKE_BINARY_DIRECTORY 
 * Dependencies will be installed in `<install_dir>/nowpac/external/`
 * **Manual installation of dependencies**
 ```
@@ -40,13 +43,18 @@ cmake -DCMAKE_C_COMPILER=<c++ compiler>
       -DNOWPAC_EIGEN_INCLUDE_PATH=</path/to/eigen/include>
       -DNOWPAC_NLOPT_INCLUDE_PATH=</path/to/nlopt/include> 
       -DNOWPAC_NLOPT_LIBRARY_PATH=</path/to/nlopt/library>
+      -DNOWPAC_GTEST_INCLUDE_PATH=</path/to/gtest/include> 
+      -DNOWPAC_GTEST_LIBRARY_PATH=</path/to/gtest/library>
       -DNOWPAC_ENABLE_SHARED=<ON|OFF> 
+      -DNOWPAC_ENABLE_TESTS=<ON|OFF>
       ../ 
 make install -j4
 ```
 * Expected directory structure for Eigen: `</path/to/eigen/include>/Eigen/Dense`
-* Expected directory structure for NLOPT: `</path/to/nlopt/include>/nlopt.h`
-* Expected directory structure for NLOPT: `</path/to/nlopt/library>/libnlopt.dylib/so`
+* Expected directory structure for NLopt: `</path/to/nlopt/include>/nlopt.h`
+* Expected directory structure for NLopt: `</path/to/nlopt/library>/libnlopt.dylib/so/a`
+* Expected directory structure for Gtest: `</path/to/gtest/include>/gtest/gtest.h`
+* Expected directory structure for Gtest: `</path/to/gtest/library>/libgtest.a`
 * Libraries `libnowpac` / `libnowpacshared` will be built in `<install_dir>/nowpac/lib`
 * Header files are contained in `<install_dir>/nowpac/include`
 

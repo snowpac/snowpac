@@ -17,8 +17,8 @@ ExternalProject_Add( NLOPT
 
 )
 
-#SET_PROPERTY( TARGET NLOPT PROPERTY FOLDER "nowpac/external")
-SET(NOWPAC_NLOPT_INCLUDE_PATH "${NOWPAC_INSTALL_PREFIX}/nowpac/external/nlopt/include")
-SET(NOWPAC_NLOPT_LIBRARY_PATH "${NOWPAC_INSTALL_PREFIX}/nowpac/external/nlopt/lib")
+#SET_PROPERTY( TARGET NLOPT PROPERTY FOLDER nowpac/external)
+SET(NOWPAC_NLOPT_INCLUDE_PATH ${NOWPAC_INSTALL_PREFIX}/nowpac/external/nlopt/include)
+SET(NOWPAC_NLOPT_LIBRARY_PATH ${NOWPAC_INSTALL_PREFIX}/nowpac/external/nlopt/lib)
 
 

@@ -155,6 +155,19 @@ depend:
 .PHONY : depend
 
 #=============================================================================
+# Target rules for targets named GTEST
+
+# Build rule for target.
+GTEST: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 GTEST
+.PHONY : GTEST
+
+# fast build rule for target.
+GTEST/fast:
+	$(MAKE) -f CMakeFiles/GTEST.dir/build.make CMakeFiles/GTEST.dir/build
+.PHONY : GTEST/fast
+
+#=============================================================================
 # Target rules for targets named nowpac
 
 # Build rule for target.
@@ -538,14 +551,15 @@ help:
 	@echo "... depend"
 	@echo "... rebuild_cache"
 	@echo "... list_install_components"
+	@echo "... install/local"
 	@echo "... nowpac"
 	@echo "... nowpac_test"
-	@echo "... install/local"
 	@echo "... edit_cache"
 	@echo "... nowpacshared"
 	@echo "... install"
 	@echo "... install/strip"
 	@echo "... nowpacOlib"
+	@echo "... GTEST"
 	@echo "... src/BasisForMinimumFrobeniusNormModel.o"
 	@echo "... src/BasisForMinimumFrobeniusNormModel.i"
 	@echo "... src/BasisForMinimumFrobeniusNormModel.s"
