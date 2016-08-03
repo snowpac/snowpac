@@ -173,7 +173,7 @@ bool noise_termination = false;
 ```
 int allowed_noisy_iterations = 3;
 ```
-* Number of rejected iterations after which the noise detection starts (>= 2)
+* Number of rejected iterations after which the noise detection starts (>= 2)
 ```
 int observation_span = 5;
 ```
@@ -192,7 +192,7 @@ std::vector<int> GP_adaption_steps;
 ```
 * Set after how many black-box evaluations the Gaussian process has to be updated (> 0)
 ```
-int GP_update_interval_length;
+int GP_update_interval_length;
 ```
 
 
@@ -245,7 +245,7 @@ Column range  | Entry in output file
 [2, 1+n] | current point 
 2+n | current objective value
 3+n | current trust region radius
-[5+n, 4+n+m] | current constraint values
+[4+n, 3+n+m] | current constraint values
 
 Return values:
 --------------------
