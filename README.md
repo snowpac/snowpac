@@ -26,6 +26,7 @@ export CC=<c compiler>
 mkdir build
 cd build
 cmake -DCMAKE_CXX_COMPILER=<c++ compiler> 
+      -DCMAKE_C_COMPILER=<c compiler>
       -DNOWPAC_INSTALL_PREFIX=<install_dir> 
       -DNOWPAC_ENABLE_SHARED=<ON|OFF>
       -DNOWPAC_ENABLE_TESTS=<ON|OFF>
@@ -38,7 +39,7 @@ make install -j4
 ```
 mkdir build
 cd build
-cmake -DCMAKE_C_COMPILER=<c++ compiler> 
+cmake -DCMAKE_CXX_COMPILER=<c++ compiler> 
       -DCMAKE_INSTALL_PREFIX=<install_dir>
       -DNOWPAC_EIGEN_INCLUDE_PATH=</path/to/eigen/include>
       -DNOWPAC_NLOPT_INCLUDE_PATH=</path/to/nlopt/include> 
