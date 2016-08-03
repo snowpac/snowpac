@@ -81,12 +81,10 @@ Optional inputs:
 ----------------
 * Number of constraints
 ```
-#!c++
 int m;
 ```
 * Black box evaluator for noisy evaluations (see BlackBoxBaseClass.hpp) 
 ```
-#!c++
 void BlackBoxBaseClass::evaluate (std::vector<double> const &x, 
                                   std::vector<double> &vals, 
                                   std::vector<double> &noise, 
@@ -96,7 +94,6 @@ noise[0] is the magnitude of the noise (e.g. Monte Carlo standard error) in the 
 
 * Structure for user data
 ```
-#!c++
 typedef struct { ... ; } <data_for_user_function>;
 ```
 
@@ -105,86 +102,70 @@ Internal parameters:
 --------------------
 * Reduction factor for trust-region in rejected steps (in ]0, 1[)
 ```
-#!c++
 double gamma = 8e-1;
 ```
 * Enlargement factor for trust-region in successful steps (> 1)
 ```
-#!c++
 double gamma_inc = 1.4e0;
 ```
 * Reduction factor for trust-region in model improvement (in ]0, 1[)
 ```
-#!c++
 double omega = 6e-1;
 ```
 * Reduction factor for trust-region if feasibility is violated (in ]0, 1[)
 ```
-#!c++
 double theta = 5e-1;
 ```
 * Threshold for step rejection (in [0, eta_1])
 ```
-#!c++
 double eta_0 = 1e-1;
 ```
 * Threshold for step acceptance (in [eta_0, 1[)
 ```
-#!c++
 double eta_1 = 7e-1;
 ```
 * Upper bound factor between trust-region radius and criticality measure (> 0)
 ```
-#!c++
 double mu = 1e0;
 ```
 * Threshold for trusting the criticality measure (> 0)
 ```
-#!c++
 double eps_c = 1e-6;
 ```
 * Inner boundary-path constant (> 0)
 ```
-#!c++
 double eps_b = 1e1;
 ```
 or, to set inner boundary-path constants for each constraint individually,
-#!c++
+```
 std::vector<double> eps_b(m);
 ```
 * Maximal allowed trust-region radius (> delta_init)
 ```
-#!c++
 double max_trust_region_radius = 1e0;
 ```
 * Geometry threshold to control poisedness of trust-region nodes (> 1)
 ```
-#!c++
 double geometry_threshold = 5e2;
 ```
 * Output: no output (0), output final result (1), reduced output (2), detailed output (3)
 ```
-#!c++
 int statistics = 1;
 ```
 * Switch to turn noise detection on (true, false)
 ```
-#!c++
 bool noise_detection = false;
 ```
 * Termination of code due to detected noise (true, false)
 ```
-#!c++
 bool noise_termination = false;
 ```
 * Number of allowed noisy iterations (>= 0)
 ```
-#!c++
 int allowed_noisy_iterations = 3;
 ```
 * Number of rejected iterations after which the noise detection starts (>= 2)
 ```
-#!c++
 int observation_span = 5;
 ```
 * Set maximal number of acceptable/successful iterations (>= 1)
@@ -194,17 +175,14 @@ int max_nb_accepted_steps = inf;
 ```
 * Allow stochastic optimization mode (true, false)
 ```
-#!c++
 bool stochastic_optimization = false;
 ```
-* Set after how many black-box evaluations the Gaussian process has to be updated (> 0, strictly monotonic increasing)
+* Set after how many black-box evaluations the Gaussian process has to be updated (> 0)
 ```
-#!c++
 std::vector<int> GP_adaption_steps;
 ```
 * Set after how many black-box evaluations the Gaussian process has to be updated (> 0)
 ```
-#!c++
 int GP_update_interval_length;
 ```
 
@@ -212,7 +190,6 @@ int GP_update_interval_length;
 Usage of NOWPAC:
 ----------------
 ```
-#!c++
 // Initialize NOWAC
 NOWPAC::OPTIMIZER <objectname>((int) n);
 // alternatively if output to file is required: 
