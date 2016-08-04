@@ -242,10 +242,10 @@ Output file:
 Column range  | Entry in output file
 ------------- | -------------
 1  | number of evaluations
-[2, 1+n] | current point 
-2+n | current objective value
+[2, 1+n] | current best point 
+2+n | current objective best value
 3+n | current trust region radius
-[4+n, 3+n+m] | current constraint values
+[4+n, 3+n+m] | current constraint values at best point
 
 Return values:
 --------------------
