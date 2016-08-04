@@ -22,7 +22,6 @@ Installation:
 -------------
 * **Automatic download and installation of dependencies**
 ```
-export CC=<c compiler>
 mkdir build
 cd build
 cmake -DCMAKE_CXX_COMPILER=<c++ compiler> 
@@ -221,6 +220,7 @@ NOWPAC<> <objectname>((int) n);
 <objectname>.set_trustregion((double) delta_init, (double) delta_min);
 // 2) Set maximal number of black-box function evaluations
 <objectname>.set_max_number_evaluations((int) <max_number_of_evaluations>);
+// 3) Set maximal number of acceptable/successful iterations
 
 // Set lower bound constraints (optional)
 <objectname>.set_lower_bounds(std::vector<double> <lower bounds, size (n)>);
