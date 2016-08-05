@@ -75,20 +75,21 @@ IF ( NOWPAC_ENABLE_TESTS STREQUAL "ON" )
 ENDIF ()
 
 SET ( NOWPAC_SOURCE_FILES
-    ${NOWPAC_SOURCE_DIR}/src/BasisForMinimumFrobeniusNormModel.cpp
     ${NOWPAC_SOURCE_DIR}/src/BlackBoxData.cpp
     ${NOWPAC_SOURCE_DIR}/src/CholeskyFactorization.cpp
     ${NOWPAC_SOURCE_DIR}/src/GaussianProcess.cpp
     ${NOWPAC_SOURCE_DIR}/src/GaussianProcessSupport.cpp
     ${NOWPAC_SOURCE_DIR}/src/ImprovePoisedness.cpp
+    ${NOWPAC_SOURCE_DIR}/src/LegendreBasisForMinimumFrobeniusNormModel.cpp
+    ${NOWPAC_SOURCE_DIR}/src/MonomialBasisForMinimumFrobeniusNormModel.cpp
     ${NOWPAC_SOURCE_DIR}/src/MinimumFrobeniusNormModel.cpp
     ${NOWPAC_SOURCE_DIR}/src/QuadraticMinimization.cpp
     ${NOWPAC_SOURCE_DIR}/src/QuadraticMonomial.cpp
+    ${NOWPAC_SOURCE_DIR}/src/QuadraticLegendre.cpp
     ${NOWPAC_SOURCE_DIR}/src/TriangularMatrixOperations.cpp
     ${NOWPAC_SOURCE_DIR}/src/VectorOperations.cpp
 )
 SET ( NOWPAC_HEADER_FILES
-    ${NOWPAC_SOURCE_DIR}/include/BasisForMinimumFrobeniusNormModel.hpp
     ${NOWPAC_SOURCE_DIR}/include/BasisForSurrogateModelBaseClass.hpp
     ${NOWPAC_SOURCE_DIR}/include/BlackBoxBaseClass.hpp
     ${NOWPAC_SOURCE_DIR}/include/BlackBoxData.hpp
@@ -99,11 +100,14 @@ SET ( NOWPAC_HEADER_FILES
     ${NOWPAC_SOURCE_DIR}/include/GaussianProcessSupport.hpp
     ${NOWPAC_SOURCE_DIR}/include/ImprovePoisedness.hpp
     ${NOWPAC_SOURCE_DIR}/include/ImprovePoisednessBaseClass.hpp
+    ${NOWPAC_SOURCE_DIR}/include/LegendreBasisForMinimumFrobeniusNormModel.hpp
     ${NOWPAC_SOURCE_DIR}/include/MinimumFrobeniusNormModel.hpp
+    ${NOWPAC_SOURCE_DIR}/include/MonomialBasisForMinimumFrobeniusNormModel.hpp
     ${NOWPAC_SOURCE_DIR}/include/NoiseDetection.hpp
     ${NOWPAC_SOURCE_DIR}/include/NOWPAC.hpp
     ${NOWPAC_SOURCE_DIR}/include/QuadraticMinimization.hpp
     ${NOWPAC_SOURCE_DIR}/include/QuadraticMonomial.hpp
+    ${NOWPAC_SOURCE_DIR}/include/QuadraticLegendre.hpp
     ${NOWPAC_SOURCE_DIR}/include/SubproblemDefinitions.hpp
     ${NOWPAC_SOURCE_DIR}/include/SubproblemOptimization.hpp
     ${NOWPAC_SOURCE_DIR}/include/SurrogateModelBaseClass.hpp

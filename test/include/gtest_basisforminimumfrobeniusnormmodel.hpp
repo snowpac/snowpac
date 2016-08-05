@@ -1,14 +1,14 @@
 #include "gtest/gtest.h"
-#include "BasisForMinimumFrobeniusNormModel.hpp"
+#include "MonomialBasisForMinimumFrobeniusNormModel.hpp"
 
 
 //--------------------------------------------------------------------------------
-class Wrapper_BasisForMinimumFrobeniusNormModel {
+class Wrapper_MonomialBasisForMinimumFrobeniusNormModel {
   public:
     int basisformfnmodel_test1 ( ) {
  
       int dim = 2;
-      BasisForMinimumFrobeniusNormModel basis( dim );
+      MonomialBasisForMinimumFrobeniusNormModel basis( dim );
       std::vector<double> node( dim );
       std::vector< std::vector<double> > nodes;
       for ( int j = 0; j < dim; ++j )
@@ -60,9 +60,9 @@ class Wrapper_BasisForMinimumFrobeniusNormModel {
 
 
 //--------------------------------------------------------------------------------
-TEST ( BasisForMinimumFrobeniusNormModelTest, basisformfnmodel_test1 ) 
+TEST ( MonomialBasisForMinimumFrobeniusNormModelTest, basisformfnmodel_test1 ) 
 {
-  Wrapper_BasisForMinimumFrobeniusNormModel W;
+  Wrapper_MonomialBasisForMinimumFrobeniusNormModel W;
   EXPECT_EQ( 1, W.basisformfnmodel_test1() );
 }
 //--------------------------------------------------------------------------------

@@ -26,7 +26,7 @@ class BasisForSurrogateModelBaseClass {
     //! Constructor
     /*! 
      Constructor to set number of arguments (dimension) of the basis
-     \param dim_input Number of arguments (dimension)
+     \param n Number of arguments (dimension)
     */
     BasisForSurrogateModelBaseClass ( int n ) : dim ( n ) { };
     //! Destructor

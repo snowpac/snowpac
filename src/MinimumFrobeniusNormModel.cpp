@@ -3,7 +3,7 @@
 
 //--------------------------------------------------------------------------------
 MinimumFrobeniusNormModel::MinimumFrobeniusNormModel ( 
-                           BasisForMinimumFrobeniusNormModel &basis_input) :
+                           BasisForSurrogateModelBaseClass &basis_input) :
                            SurrogateModelBaseClass ( basis_input )
 {
   dim = basis_input.dimension();

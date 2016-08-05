@@ -1,7 +1,7 @@
 #ifndef HMinimumFrobeniusNormModel
 #define HMinimumFrobeniusNormModel
 
-#include "BasisForMinimumFrobeniusNormModel.hpp"
+#include "BasisForSurrogateModelBaseClass.hpp"
 #include "SurrogateModelBaseClass.hpp"
 #include "VectorOperations.hpp"
 #include <Eigen/Dense>
@@ -14,7 +14,7 @@ class MinimumFrobeniusNormModel : public SurrogateModelBaseClass,
     int dim;
     std::vector<double> matvecproduct;
   public:
-    MinimumFrobeniusNormModel ( BasisForMinimumFrobeniusNormModel& );
+    MinimumFrobeniusNormModel ( BasisForSurrogateModelBaseClass& );
     double evaluate ( std::vector<double> const& );
     std::vector<double> &gradient ( );
     std::vector< std::vector<double> > &hessian ( );

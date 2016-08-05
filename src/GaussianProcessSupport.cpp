@@ -14,6 +14,7 @@ void GaussianProcessSupport::initialize ( const int dim, const int number_proces
   update_interval_length = update_interval_length_input;
   for (size_t i = 0; i < update_at_evaluations_input.size(); i++ )
     update_at_evaluations.push_back( update_at_evaluations_input.at( i ) );
+  std::sort(update_at_evaluations.begin(), update_at_evaluations.end());
   GaussianProcess gp ( dim, *delta );
   gaussian_process_nodes.resize( 0 );
   values.resize( number_processes );

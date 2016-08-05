@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include "BasisForMinimumFrobeniusNormModel.hpp"
+#include "MonomialBasisForMinimumFrobeniusNormModel.hpp"
 #include "MinimumFrobeniusNormModel.hpp"
 #include <math.h>
 
@@ -30,7 +30,7 @@ class Wrapper_MinimumFrobeniusNormModel {
       int test_passed = 1; 
 
       int dim = 2;
-      BasisForMinimumFrobeniusNormModel basis( dim );
+      MonomialBasisForMinimumFrobeniusNormModel basis( dim );
       std::vector<double> node( dim );
       std::vector< std::vector<double> > nodes;
       for ( int j = 0; j < dim; ++j )
@@ -105,7 +105,7 @@ class Wrapper_MinimumFrobeniusNormModel {
       int test_passed = 1; 
 
       int dim = 2;
-      BasisForMinimumFrobeniusNormModel basis( dim );
+      MonomialBasisForMinimumFrobeniusNormModel basis( dim );
       std::vector<double> node( dim );
       std::vector< std::vector<double> > nodes;
       for ( int j = 0; j < dim; ++j )
@@ -169,7 +169,7 @@ class Wrapper_MinimumFrobeniusNormModel {
       int test_passed = 1; 
 
       int dim = 2;
-      BasisForMinimumFrobeniusNormModel basis( dim );
+      MonomialBasisForMinimumFrobeniusNormModel basis( dim );
       std::vector<double> node( dim );
       std::vector< std::vector<double> > nodes;
       for ( int j = 0; j < dim; ++j )

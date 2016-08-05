@@ -1,18 +1,18 @@
-#ifndef HBasisForMinimumFrobeniusNormModel
-#define HBasisForMinimumFrobeniusNormModel
+#ifndef HLegendreBasisForMinimumFrobeniusNormModel
+#define HLegendreBasisForMinimumFrobeniusNormModel
 
 //#include "BlackBoxData.hpp"
 #include "BasisForSurrogateModelBaseClass.hpp"
-#include "QuadraticMonomial.hpp"
+#include "QuadraticLegendre.hpp"
 #include "VectorOperations.hpp"
 #include <Eigen/Dense>
 #include <vector>
 #include "math.h"
 
 
-class BasisForMinimumFrobeniusNormModel : public BasisForSurrogateModelBaseClass, 
-                                          public QuadraticMonomial,
-                                          protected VectorOperations {
+class LegendreBasisForMinimumFrobeniusNormModel : public BasisForSurrogateModelBaseClass, 
+                                                  public QuadraticLegendre,
+                                                  protected VectorOperations {
   private:
     int nb_nodes;
     Eigen::MatrixXd A_sysmat;
@@ -25,7 +25,7 @@ class BasisForMinimumFrobeniusNormModel : public BasisForSurrogateModelBaseClass
     std::vector< std::vector<double> > basis_gradients; 
     std::vector< std::vector< std::vector<double> > > basis_Hessians;   
   public:
-    BasisForMinimumFrobeniusNormModel ( int );
+    LegendreBasisForMinimumFrobeniusNormModel ( int );
     void set_nb_nodes ( int );
     std::vector<double> &evaluate ( std::vector<double> const& );    
     double evaluate ( std::vector<double> const&, int);

@@ -1,13 +1,14 @@
-#include "BasisForMinimumFrobeniusNormModel.hpp"
+#include "MonomialBasisForMinimumFrobeniusNormModel.hpp"
 #include <iostream>
 #include <fstream>
 #include <iomanip>
 
 
 //--------------------------------------------------------------------------------
-BasisForMinimumFrobeniusNormModel::BasisForMinimumFrobeniusNormModel ( int dim_input ) :
-                                   BasisForSurrogateModelBaseClass ( dim_input ),
-                                   QuadraticMonomial ( dim_input ) 
+MonomialBasisForMinimumFrobeniusNormModel::MonomialBasisForMinimumFrobeniusNormModel 
+  ( int dim_input ) :
+  BasisForSurrogateModelBaseClass ( dim_input ),
+  QuadraticMonomial ( dim_input ) 
 {
   nb_basis_functions = ( dim_input * ( dim_input + 3 ) + 2 ) / 2;
   nb_nodes = 0;
@@ -15,7 +16,8 @@ BasisForMinimumFrobeniusNormModel::BasisForMinimumFrobeniusNormModel ( int dim_i
 //--------------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------------
-void BasisForMinimumFrobeniusNormModel::set_nb_nodes( int nb_nodes_input ) {
+void MonomialBasisForMinimumFrobeniusNormModel::set_nb_nodes( int nb_nodes_input ) 
+{
   if ( nb_nodes == nb_nodes_input ) return;
   nb_nodes = nb_nodes_input;
 
@@ -57,8 +59,8 @@ void BasisForMinimumFrobeniusNormModel::set_nb_nodes( int nb_nodes_input ) {
 
 
 //--------------------------------------------------------------------------------
-void BasisForMinimumFrobeniusNormModel::compute_basis_coefficients ( 
-  std::vector< std::vector<double> > const &nodes )
+void MonomialBasisForMinimumFrobeniusNormModel::compute_basis_coefficients 
+  ( std::vector< std::vector<double> > const &nodes )
 {
 
   set_nb_nodes ( nodes.size( ) );
@@ -67,7 +69,7 @@ void BasisForMinimumFrobeniusNormModel::compute_basis_coefficients (
   // system matrix for computing coeffs of Lagrange interpolation models
   for ( int i = 0; i < nb_basis_functions; ++i ) {    
     for ( int j = 0; j < nb_nodes; ++j ) {
-      A_sysmat(i, j+nb_basis_functions) = evaluate_monomial( i, nodes[j] );
+      A_sysmat(i, j+nb_basis_functions) = evaluate_basis( i, nodes[j] );
       A_sysmat(j+nb_basis_functions, i) = A_sysmat(i, j+nb_basis_functions);
     }
   }    
@@ -128,7 +130,7 @@ void BasisForMinimumFrobeniusNormModel::compute_basis_coefficients (
 //  S_coeffsolve = A_sysmat.colPivHouseholderQr().solve(F_rhsmat);
   for ( int i = 0; i < nb_nodes; ++i ) {
     basis_coefficients[i] = S_coeffsolve.block(0,0,nb_basis_functions, nb_nodes).col(i);  
-    basis_constants[i] = basis_coefficients[i][0];
+    basis_constants[i] = basis_coefficients[i](0);
     compute_mat_vec_representation ( i );
   } 
 
@@ -182,21 +184,21 @@ void BasisForMinimumFrobeniusNormModel::compute_basis_coefficients (
 
 
 //--------------------------------------------------------------------------------
-double &BasisForMinimumFrobeniusNormModel::value ( int basis_number ) 
+double &MonomialBasisForMinimumFrobeniusNormModel::value ( int basis_number ) 
 {
   return basis_constants[ basis_number ];
 }
 //--------------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------------
-std::vector<double> &BasisForMinimumFrobeniusNormModel::gradient (int basis_number)
+std::vector<double> &MonomialBasisForMinimumFrobeniusNormModel::gradient (int basis_number)
 { 
   return basis_gradients.at( basis_number );
 }
 //--------------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------------
-std::vector< std::vector<double> > &BasisForMinimumFrobeniusNormModel::hessian ( 
+std::vector< std::vector<double> > &MonomialBasisForMinimumFrobeniusNormModel::hessian ( 
   int basis_number ) 
 {
   return basis_Hessians[ basis_number ];
@@ -205,7 +207,7 @@ std::vector< std::vector<double> > &BasisForMinimumFrobeniusNormModel::hessian (
 
 
 //--------------------------------------------------------------------------------
-void BasisForMinimumFrobeniusNormModel::compute_mat_vec_representation ( int basis_number )
+void MonomialBasisForMinimumFrobeniusNormModel::compute_mat_vec_representation ( int basis_number )
 // computes the representation m(x) = c + g.dot(x) + 0.5*x.dot(H*x) in scaled form
 // x_best = 0 and delta = 1;
 {
@@ -229,7 +231,7 @@ void BasisForMinimumFrobeniusNormModel::compute_mat_vec_representation ( int bas
 
 
 //--------------------------------------------------------------------------------
-std::vector<double> &BasisForMinimumFrobeniusNormModel::evaluate ( 
+std::vector<double> &MonomialBasisForMinimumFrobeniusNormModel::evaluate ( 
   std::vector<double> const &x ) 
 {  
  
@@ -238,7 +240,7 @@ std::vector<double> &BasisForMinimumFrobeniusNormModel::evaluate (
   for ( int i = 0; i < nb_nodes; ++i ) {
     basis_values.at( i ) = 0e0;
     for ( int j = 0; j < nb_basis_functions; ++j ) {
-      basis_values.at( i ) += basis_coefficients[ i ]( j ) * evaluate_monomial ( j, x );
+      basis_values.at( i ) += basis_coefficients[ i ]( j ) * evaluate_basis ( j, x );
     }
   }
 
@@ -248,14 +250,14 @@ std::vector<double> &BasisForMinimumFrobeniusNormModel::evaluate (
 
 
 //--------------------------------------------------------------------------------
-double BasisForMinimumFrobeniusNormModel::evaluate (
+double MonomialBasisForMinimumFrobeniusNormModel::evaluate (
   std::vector<double> const &x, int basis_number)
 { 
 
   double basis_value = 0e0;
   for ( int j = 0; j < nb_basis_functions; ++j ) {
     basis_value += basis_coefficients[ basis_number ]( j ) * 
-                   evaluate_monomial ( j, x );
+                   evaluate_basis ( j, x );
   }
   return basis_value;
 }

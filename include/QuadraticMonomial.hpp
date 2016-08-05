@@ -25,7 +25,7 @@ class QuadraticMonomial {
      \param x Point where monomial is evaluated
      \see QuadraticMonomial
     */
-    double evaluate_monomial ( int, std::vector<double> const& );
+    double evaluate_basis ( int, std::vector<double> const& );
   public:
     //! Constructor
     /*!

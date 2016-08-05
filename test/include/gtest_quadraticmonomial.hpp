@@ -14,19 +14,19 @@ class Wrapper_QuadraticMonomial : public QuadraticMonomial
       std::vector<double> x(1);
 
       x.at(0) = 0e0;
-      if ( fabs( evaluate_monomial(0, x) - 1e0 ) > 1e-6 ) return 0;
-      if ( fabs( evaluate_monomial(1, x)       ) > 1e-6 ) return 0;
-      if ( fabs( evaluate_monomial(2, x)       ) > 1e-6 ) return 0;
+      if ( fabs( evaluate_basis(0, x) - 1e0 ) > 1e-6 ) return 0;
+      if ( fabs( evaluate_basis(1, x)       ) > 1e-6 ) return 0;
+      if ( fabs( evaluate_basis(2, x)       ) > 1e-6 ) return 0;
 
       x.at(0) = 1e0;
-      if ( fabs( evaluate_monomial(0, x) - 1e0  ) > 1e-6 ) return 0;
-      if ( fabs( evaluate_monomial(1, x) - 1e0  ) > 1e-6 ) return 0;
-      if ( fabs( evaluate_monomial(2, x) - 5e-1 ) > 1e-6 ) return 0;
+      if ( fabs( evaluate_basis(0, x) - 1e0  ) > 1e-6 ) return 0;
+      if ( fabs( evaluate_basis(1, x) - 1e0  ) > 1e-6 ) return 0;
+      if ( fabs( evaluate_basis(2, x) - 5e-1 ) > 1e-6 ) return 0;
 
       x.at(0) = 2e0;
-      if ( fabs( evaluate_monomial(0, x) - 1e0 ) > 1e-6 ) return 0;
-      if ( fabs( evaluate_monomial(1, x) - 2e0 ) > 1e-6 ) return 0;
-      if ( fabs( evaluate_monomial(2, x) - 2e0 ) > 1e-6 ) return 0;
+      if ( fabs( evaluate_basis(0, x) - 1e0 ) > 1e-6 ) return 0;
+      if ( fabs( evaluate_basis(1, x) - 2e0 ) > 1e-6 ) return 0;
+      if ( fabs( evaluate_basis(2, x) - 2e0 ) > 1e-6 ) return 0;
 
       return 1;
     }
@@ -39,37 +39,37 @@ class Wrapper_QuadraticMonomial : public QuadraticMonomial
       x.at(0) = 0e0; x.at(1) = 0e0;
       solution = { 1e0, 0e0, 0e0, 0e0, 0e0, 0e0 };
       for ( int i = 0; i < 6; ++i )
-        if ( fabs( evaluate_monomial(i, x) - solution.at(i) ) > 1e-6 ) return 0;
+        if ( fabs( evaluate_basis(i, x) - solution.at(i) ) > 1e-6 ) return 0;
 
       x.at(0) = 1e0;  x.at(1) = 0e0;
       solution = { 1e0, 1e0, 0e0, 5e-1, 0e0, 0e0 };
       for ( int i = 0; i < 6; ++i )
-        if ( fabs( evaluate_monomial(i, x) - solution.at(i) ) > 1e-6 ) return -1;
+        if ( fabs( evaluate_basis(i, x) - solution.at(i) ) > 1e-6 ) return -1;
 
       x.at(0) = 0e0;  x.at(1) = 1e0;
       solution = { 1e0, 0e0, 1e0, 0e0, 5e-1, 0e0 };
       for ( int i = 0; i < 6; ++i )
-        if ( fabs( evaluate_monomial(i, x) - solution.at(i) ) > 1e-6 ) return -2;
+        if ( fabs( evaluate_basis(i, x) - solution.at(i) ) > 1e-6 ) return -2;
 
       x.at(0) = 1e0;  x.at(1) = 1e0;
       solution = { 1e0, 1e0, 1e0, 5e-1, 5e-1, 1e0 };
       for ( int i = 0; i < 6; ++i )
-        if ( fabs( evaluate_monomial(i, x) - solution.at(i) ) > 1e-6 ) return -3;
+        if ( fabs( evaluate_basis(i, x) - solution.at(i) ) > 1e-6 ) return -3;
 
       x.at(0) = 2e0;  x.at(1) = 0e0;
       solution = { 1e0, 2e0, 0e0, 2e0, 0e0, 0e0 };
       for ( int i = 0; i < 6; ++i )
-        if ( fabs( evaluate_monomial(i, x) - solution.at(i) ) > 1e-6 ) return -4;
+        if ( fabs( evaluate_basis(i, x) - solution.at(i) ) > 1e-6 ) return -4;
 
       x.at(0) = 0e0;  x.at(1) = 2e0;
       solution = { 1e0, 0e0, 2e0, 0e0, 2e0, 0e0 };
       for ( int i = 0; i < 6; ++i )
-        if ( fabs( evaluate_monomial(i, x) - solution.at(i) ) > 1e-6 ) return -5;
+        if ( fabs( evaluate_basis(i, x) - solution.at(i) ) > 1e-6 ) return -5;
 
       x.at(0) = 2e0;  x.at(1) = 2e0;
       solution = { 1e0, 2e0, 2e0, 2e0, 2e0, 4e0 };
       for ( int i = 0; i < 6; ++i )
-        if ( fabs( evaluate_monomial(i, x) - solution.at(i) ) > 1e-6 ) return -6;
+        if ( fabs( evaluate_basis(i, x) - solution.at(i) ) > 1e-6 ) return -6;
 
       return 1;
     }
@@ -82,57 +82,57 @@ class Wrapper_QuadraticMonomial : public QuadraticMonomial
       x.at(0) = 0e0; x.at(1) = 0e0; x.at(2) = 0e0;
       solution = { 1e0, 0e0, 0e0, 0e0, 0e0, 0e0, 0e0, 0e0, 0e0, 0e0 };
       for ( int i = 0; i < 10; ++i )
-        if ( fabs( evaluate_monomial(i, x) - solution.at(i) ) > 1e-6 ) return 0;
+        if ( fabs( evaluate_basis(i, x) - solution.at(i) ) > 1e-6 ) return 0;
 
       x.at(0) = 1e0; x.at(1) = 0e0; x.at(2) = 0e0;
       solution = { 1e0, 1e0, 0e0, 0e0, 5e-1, 0e0, 0e0, 0e0, 0e0, 0e0 };
       for ( int i = 0; i < 10; ++i )
-        if ( fabs( evaluate_monomial(i, x) - solution.at(i) ) > 1e-6 ) return 0;
+        if ( fabs( evaluate_basis(i, x) - solution.at(i) ) > 1e-6 ) return 0;
 
       x.at(0) = 0e0; x.at(1) = 1e0; x.at(2) = 0e0;
       solution = { 1e0, 0e0, 1e0, 0e0, 0e0, 5e-1, 0e0, 0e0, 0e0, 0e0 };
       for ( int i = 0; i < 10; ++i )
-        if ( fabs( evaluate_monomial(i, x) - solution.at(i) ) > 1e-6 ) return 0;
+        if ( fabs( evaluate_basis(i, x) - solution.at(i) ) > 1e-6 ) return 0;
 
       x.at(0) = 0e0; x.at(1) = 0e0; x.at(2) = 1e0;
       solution = { 1e0, 0e0, 0e0, 1e0, 0e0, 0e0, 5e-1, 0e0, 0e0, 0e0 };
       for ( int i = 0; i < 10; ++i )
-        if ( fabs( evaluate_monomial(i, x) - solution.at(i) ) > 1e-6 ) return 0;
+        if ( fabs( evaluate_basis(i, x) - solution.at(i) ) > 1e-6 ) return 0;
 
       x.at(0) = 1e0; x.at(1) = 1e0; x.at(2) = 0e0;
       solution = { 1e0, 1e0, 1e0, 0e0, 5e-1, 5e-1, 0e0, 1e0, 0e0, 0e0 };
       for ( int i = 0; i < 10; ++i )
-        if ( fabs( evaluate_monomial(i, x) - solution.at(i) ) > 1e-6 ) return 0;
+        if ( fabs( evaluate_basis(i, x) - solution.at(i) ) > 1e-6 ) return 0;
 
       x.at(0) = 1e0; x.at(1) = 0e0; x.at(2) = 1e0;
       solution = { 1e0, 1e0, 0e0, 1e0, 5e-1, 0e0, 5e-1, 0e0, 1e0, 0e0 };
       for ( int i = 0; i < 10; ++i )
-        if ( fabs( evaluate_monomial(i, x) - solution.at(i) ) > 1e-6 ) return 0;
+        if ( fabs( evaluate_basis(i, x) - solution.at(i) ) > 1e-6 ) return 0;
 
       x.at(0) = 0e0; x.at(1) = 1e0; x.at(2) = 1e0;
       solution = { 1e0, 0e0, 1e0, 1e0, 0e0, 5e-1, 5e-1, 0e0, 0e0, 1e0 };
       for ( int i = 0; i < 10; ++i )
-        if ( fabs( evaluate_monomial(i, x) - solution.at(i) ) > 1e-6 ) return 0;
+        if ( fabs( evaluate_basis(i, x) - solution.at(i) ) > 1e-6 ) return 0;
 
       x.at(0) = 2e0; x.at(1) = 2e0; x.at(2) = 0e0;
       solution = { 1e0, 2e0, 2e0, 0e0, 2e0, 2e0, 0e0, 4e0, 0e0, 0e0 };
       for ( int i = 0; i < 10; ++i )
-        if ( fabs( evaluate_monomial(i, x) - solution.at(i) ) > 1e-6 ) return 0;
+        if ( fabs( evaluate_basis(i, x) - solution.at(i) ) > 1e-6 ) return 0;
 
       x.at(0) = 2e0; x.at(1) = 0e0; x.at(2) = 2e0;
       solution = { 1e0, 2e0, 0e0, 2e0, 2e0, 0e0, 2e0, 0e0, 4e0, 0e0 };
       for ( int i = 0; i < 10; ++i )
-        if ( fabs( evaluate_monomial(i, x) - solution.at(i) ) > 1e-6 ) return 0;
+        if ( fabs( evaluate_basis(i, x) - solution.at(i) ) > 1e-6 ) return 0;
 
       x.at(0) = 0e0; x.at(1) = 2e0; x.at(2) = 2e0;
       solution = { 1e0, 0e0, 2e0, 2e0, 0e0, 2e0, 2e0, 0e0, 0e0, 4e0 };
       for ( int i = 0; i < 10; ++i )
-        if ( fabs( evaluate_monomial(i, x) - solution.at(i) ) > 1e-6 ) return 0;
+        if ( fabs( evaluate_basis(i, x) - solution.at(i) ) > 1e-6 ) return 0;
 
       x.at(0) = 2e0; x.at(1) = 2e0; x.at(2) = 2e0;
       solution = { 1e0, 2e0, 2e0, 2e0, 2e0, 2e0, 2e0, 4e0, 4e0, 4e0 };
       for ( int i = 0; i < 10; ++i )
-        if ( fabs( evaluate_monomial(i, x) - solution.at(i) ) > 1e-6 ) return 0;
+        if ( fabs( evaluate_basis(i, x) - solution.at(i) ) > 1e-6 ) return 0;
 
       return 1;
     }

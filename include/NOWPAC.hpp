@@ -29,7 +29,8 @@
 //#define HNOWPAC
 
 #include "BlackBoxData.hpp"
-#include "BasisForMinimumFrobeniusNormModel.hpp"
+//#include "BasisForMinimumFrobeniusNormModel.hpp"
+#include "LegendreBasisForMinimumFrobeniusNormModel.hpp"
 #include "SubproblemOptimization.hpp"
 #include "MinimumFrobeniusNormModel.hpp"
 #include "ImprovePoisedness.hpp"
@@ -48,7 +49,7 @@
 #include <cassert>
 
 template<class TSurrogateModel = MinimumFrobeniusNormModel, 
-         class TBasisForSurrogateModel = BasisForMinimumFrobeniusNormModel>
+         class TBasisForSurrogateModel = LegendreBasisForMinimumFrobeniusNormModel>
 class NOWPAC : protected NoiseDetection<TSurrogateModel> {
   private:
     int dim;

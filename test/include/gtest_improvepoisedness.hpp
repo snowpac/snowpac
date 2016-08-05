@@ -1,5 +1,5 @@
 #include "ImprovePoisedness.hpp"
-#include "BasisForMinimumFrobeniusNormModel.hpp"
+#include "MonomialBasisForMinimumFrobeniusNormModel.hpp"
 #include "BlackBoxData.hpp"
 #include <iomanip>
 
@@ -10,7 +10,7 @@ public:
     double delta;
     Wrapper_ImprovePoisedness ( double threshold_for_poisedness_constant_input,
                                 int max_nb_nodes_input, double &delta_input,
-                                BasisForMinimumFrobeniusNormModel &basis_input,
+                                MonomialBasisForMinimumFrobeniusNormModel &basis_input,
                                 int print_output_input ) :
      ImprovePoisedness ( basis_input, threshold_for_poisedness_constant_input,
                           max_nb_nodes_input, delta_input,
@@ -308,7 +308,7 @@ TEST ( ImprovePoisednessTest, improvepoisedness_test1 )
   double delta_loc = 1.0;
   int print_output = 0;
   int dim = 2;
-  BasisForMinimumFrobeniusNormModel basis( dim );
+  MonomialBasisForMinimumFrobeniusNormModel basis( dim );
 
   Wrapper_ImprovePoisedness W( threshold_for_poisedness_constant, max_nb_nodes,
                               delta_loc, basis, print_output );
@@ -324,7 +324,7 @@ TEST ( ImprovePoisednessTest, improvepoisedness_test2 )
   double delta_loc = 0.1;
   int print_output = 0;
   int dim = 2;
-  BasisForMinimumFrobeniusNormModel basis( dim );
+  MonomialBasisForMinimumFrobeniusNormModel basis( dim );
 
   Wrapper_ImprovePoisedness W( threshold_for_poisedness_constant, max_nb_nodes,
                               delta_loc, basis, print_output );
@@ -340,7 +340,7 @@ TEST ( ImprovePoisednessTest, improvepoisedness_test3 )
   double delta_loc = 0.5;
   int print_output = 0;
   int dim = 2;
-  BasisForMinimumFrobeniusNormModel basis( dim );
+  MonomialBasisForMinimumFrobeniusNormModel basis( dim );
 
   Wrapper_ImprovePoisedness W( threshold_for_poisedness_constant, max_nb_nodes,
                               delta_loc, basis, print_output );
@@ -356,7 +356,7 @@ TEST ( ImprovePoisednessTest, improvepoisedness_test4_1 )
   double delta_loc = 1.0;
   int print_output = 0;
   int dim = 2;
-  BasisForMinimumFrobeniusNormModel basis( dim );
+  MonomialBasisForMinimumFrobeniusNormModel basis( dim );
 
   Wrapper_ImprovePoisedness W( threshold_for_poisedness_constant, max_nb_nodes,
                               delta_loc, basis, print_output );
@@ -372,7 +372,7 @@ TEST ( ImprovePoisednessTest, improvepoisedness_test4_2 )
   double delta_loc = 1.0;
   int print_output = 0;
   int dim = 2;
-  BasisForMinimumFrobeniusNormModel basis( dim );
+  MonomialBasisForMinimumFrobeniusNormModel basis( dim );
 
   Wrapper_ImprovePoisedness W( threshold_for_poisedness_constant, max_nb_nodes,
                               delta_loc, basis, print_output );
