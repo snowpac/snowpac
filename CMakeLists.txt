@@ -24,6 +24,10 @@
 # .................................................... #
 # -DNOWPAC_GTEST_INCLUDE_PATH=/path/to/gtest/include   #
 # -DNOWPAC_GTEST_LIBRARY_PATH=/path/to/gtest/library   #
+# ---------------------------------------------------- #
+# Create documentation using Oxygen                    #
+# .................................................... #
+# -DNOWPAC_ENABLE_DOXYGEN=ON                           #
 # ==================================================== #
 
 # ==================================================== #
@@ -65,6 +69,18 @@ FIND_PACKAGE( NLOPT )
 IF ( NOT NLOPT_FOUND ) 
    INCLUDE ( buildNLOPT )
  ENDIF ()
+
+IF ( NOWPAC_ENABLE_DOXYGEN STREQUAL "ON" )
+   FIND_PACKAGE( DOXYGEN REQUIRED )
+   IF ( DOXYGEN_FOUND ) 
+      CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in 
+                     ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
+      ADD_CUSTOM_TARGET(doc ${DOXYGEN_EXECUTABLE} 
+                            ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+                            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                       )
+   ENDIF ()
+ENDIF ()
 
 IF ( NOWPAC_ENABLE_TESTS STREQUAL "ON" ) 
    FIND_PACKAGE( Threads REQUIRED )
@@ -141,6 +157,9 @@ ENDIF ()
 IF (NOT NLOPT_FOUND)
    ADD_DEPENDENCIES(nowpacOlib NLOPT)
 ENDIF ()
+
+   ADD_DEPENDENCIES(nowpacOlib DOXYGEN_DOC)
+
 
 SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${NOWPAC_INSTALL_PREFIX}/nowpac/lib)
 ADD_LIBRARY(nowpac STATIC $<TARGET_OBJECTS:nowpacOlib>)

@@ -178,7 +178,6 @@ int observation_span = 5;
 ```
 * Set maximal number of acceptable/successful iterations (>= 1)
 ```
-#!c++
 int max_nb_accepted_steps = inf;
 ```
 * Allow stochastic optimization mode (true, false)

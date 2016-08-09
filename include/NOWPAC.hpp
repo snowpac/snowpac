@@ -48,6 +48,7 @@
 #include <fstream>
 #include <cassert>
 
+//! NOWPAC
 template<class TSurrogateModel = MinimumFrobeniusNormModel, 
          class TBasisForSurrogateModel = LegendreBasisForMinimumFrobeniusNormModel>
 class NOWPAC : protected NoiseDetection<TSurrogateModel> {
@@ -78,7 +79,7 @@ class NOWPAC : protected NoiseDetection<TSurrogateModel> {
     const char *int_format    = "  %d  ";
     const char* output_filename = NULL;
     std::FILE *output_file;
-    void *user_data = NULL;
+    void *user_data_pointer = NULL;
     BlackBoxData evaluations;
     std::vector<double> x_trial;
     bool delta_max_is_set;
@@ -113,24 +114,156 @@ class NOWPAC : protected NoiseDetection<TSurrogateModel> {
     int NOEXIT;
     double tmp_dbl1;
   public:
-    ~NOWPAC ( ); 
+    //! Constructor
+    /*!
+     Constructor to set number of design parameters
+     \param n number of design parameters
+    */
     NOWPAC ( int ); 
+    //! Constructor
+    /*!
+     Constructor to set number of design parameters and output file name
+     \param n number of design parameters
+     \param fn_output name of output file
+    */
     NOWPAC ( int, const char* ); 
+    //! Destructor
+    ~NOWPAC ( ); 
+    //! Set black box evaluator (with constraints)
+    /*!
+     Function to set black box
+     \param bb user implemenation of black box \see BlackBoxBaseClass
+     \param m number of constraints
+    */
     void set_blackbox ( BlackBoxBaseClass&, int );
+    //! Set black box evaluator (without constraints)
+    /*!
+     Function to set black box
+     \param bb user implemenation of black box \see BlackBoxBaseClass
+    */
     void set_blackbox ( BlackBoxBaseClass& );
+    //! Function to start optimization (without restart option)
+    /*!
+     Function to start optimization
+     \param x initial starting point (input) and optimal solution (output)
+     \param val optimal value of objective function on output
+    */
     int optimize ( std::vector<double>&, double& );
+    //! Function to start optimization (with restart option)
+    /*!
+     Function to start optimization. If this function is called with bb_data with
+     a new instance of BlackBoxData, the optimization is started from the initial point.
+     Otherwise, if BlackBoxData stems from a previous optimization run, then the optimization
+     will be continued where the previous optimization has been terminated.
+     \see BlackBoxData
+     \param x initial starting point (input) and optimal solution (output)
+     \param val optimal value of objective function on output
+     \param bb_data container to store data for restart 
+    */
     int optimize ( std::vector<double>&, double&, BlackBoxData& );
+    //! Function to set option for optimizer
+    /*!
+     Function to set option for optimizer:
+      - "verbose" [no output (0), 
+                   output of final result (1), 
+                   output of intermediate steps (2), 
+                   full verbosity (3)]
+      - "GP_adaption_factor" [ no default | > 0 ]
+      - "observation span" [ default : 5 |  >= 2 ]
+      - "allowed_noisy_iterations" [ default : 3 | >= 0 ]
+      - "max_nb_accepted_steps" [ no default | >= 1]
+     \param option_name name of the option to be set (see documentation)
+     \param option_value value of the option to be set
+    */
     void set_option ( std::string const&, int const& );
+    //! Function to set option for optimizer
+    /*!
+     Function to set option for optimizer:
+      - "gamma"
+      - "gamma_inc"
+      - "omega"
+      - "theta"
+      - "eta_0"
+      - "eta_1"
+      - "eps_c"
+      - "mu"
+      - "geometry_threshold"
+      - "eps_b"
+     \param option_name name of the option to be set (see documentation)
+     \param option_value value of the option to be set
+    */
     void set_option ( std::string const&, double const& );
+    //! Function to set option for optimizer
+    /*!
+     Function to set option for optimizer:
+      - "stochastic_optimization" [ default : false ]
+      - "noise_detection" [ default : false ]
+      - "noise_termination" [ default : false ]
+     \param option_name name of the option to be set (see documentation)
+     \param option_value value of the option to be set
+    */
     void set_option ( std::string const&, bool const& );
+    //! Function to set option for optimizer
+    /*!
+     Function to set option for optimizer:
+      - "eps_b"
+     \param option_name name of the option to be set (see documentation)
+     \param option_value value of the option to be set
+    */
     void set_option ( std::string const&, std::vector<double> const& );
+    //! Function to set option for optimizer
+    /*!
+     Function to set option for optimizer:
+      - "GP_adaption_steps"
+     \param option_name name of the option to be set (see documentation)
+     \param option_value value of the option to be set
+    */
     void set_option ( std::string const&, std::vector<int> const& );
-    void void_user_data ( void* );
+    //! Function to set user data for black box evaluator 
+    /*!
+     Function to set user data for black box evaluator. The optimizer does not have 
+     access to this data, it is passed to the black box.
+        \see BlackBoxBaseClase 
+     \param data data to be passed to the black box function provided by the user
+    */
+    void user_data ( void* );
+    //! Function to set lower bound constraints on designs
+    /*!
+     Function to set lower bound constraints on designs
+     \param bounds lower bounds on the design variables 
+    */ 
     void set_lower_bounds ( std::vector<double> const& );
+    //! Function to set upper bound constraints on designs
+    /*!
+     Function to set upper bound constraints on designs
+     \param bounds upper bounds on the design variables 
+    */ 
     void set_upper_bounds ( std::vector<double> const& );
+    //! Function to set initial trust region radius
+    /*!
+     Function to set initial trust region radius
+     \param init_delta initial trust region radius
+    */
     void set_trustregion ( double const& );
+    //! Function to set initial and final trust region radius
+    /*!
+     Function to set initial and final trust region radius. The optimization is stopped
+     whenever the trust region radius falls below the final trust region radius
+     \param init_delta initial trust region radius
+     \param min_delta final trust region radius
+    */
     void set_trustregion ( double const&, double const& );
+    //! Function to set maximal trust region radius
+    /*! 
+     Function to set maximal trust region radius
+     \param max_delta maximal trust region radius
+    */
     void set_max_trustregion ( double const& );
+    //! Function to set maximal number of black box evaluations
+    /*!
+     Function to set maximal number of black box evaluations
+     \param max_number_evaluations maximal number of black box evaluations
+    */
     void set_max_number_evaluations ( int const& );
 
 };
@@ -140,10 +273,10 @@ class NOWPAC : protected NoiseDetection<TSurrogateModel> {
 //--------------------------------------------------------------------------------    
 template<class TSurrogateModel, class TBasisForSurrogateModel>
 NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::NOWPAC ( 
-  int dim_input, const char *output_filename_input ) : 
-    NOWPAC ( dim_input )
+  int n, const char *fn_output ) : 
+    NOWPAC ( n )
 {
-  output_filename = output_filename_input;
+  output_filename = fn_output;
   output_file = fopen(output_filename, "w");
 }
 //--------------------------------------------------------------------------------
@@ -157,9 +290,9 @@ NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::~NOWPAC ( ) {
 
 //--------------------------------------------------------------------------------    
 template<class TSurrogateModel, class TBasisForSurrogateModel>
-NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::NOWPAC ( int dim_input ) :
-  dim ( dim_input ),
-  surrogate_basis ( dim_input ),
+NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::NOWPAC ( int n ) :
+  dim ( n ),
+  surrogate_basis ( n ),
   surrogate_model_prototype( surrogate_basis ),
   NoiseDetection<TSurrogateModel>( surrogate_models, delta )
 { 
@@ -365,10 +498,10 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_upper_bounds (
 //--------------------------------------------------------------------------------
 template<class TSurrogateModel, class TBasisForSurrogateModel>
 void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_trustregion ( 
-  double const &delta_init_input, double const &delta_min_input )
+  double const &init_delta, double const &min_delta )
 {
-  delta = delta_init_input;
-  delta_min = delta_min_input;
+  delta = init_delta;
+  delta_min = min_delta;
   return;
 }
 //--------------------------------------------------------------------------------
@@ -379,9 +512,9 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_trustregion (
 //--------------------------------------------------------------------------------
 template<class TSurrogateModel, class TBasisForSurrogateModel>
 void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_trustregion ( 
-  double const &delta_init_input )
+  double const &init_delta )
 {
-  set_trustregion ( delta_init_input, -1.0 );
+  set_trustregion ( init_delta, -1.0 );
   return;
 }
 //--------------------------------------------------------------------------------
@@ -391,10 +524,10 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_trustregion (
 //--------------------------------------------------------------------------------
 template<class TSurrogateModel, class TBasisForSurrogateModel>
 void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_max_trustregion ( 
-  double const &delta_max_input )
+  double const &max_delta )
 {
   delta_max_is_set = true;
-  delta_max = delta_max_input;
+  delta_max = max_delta;
   return;
 }
 //--------------------------------------------------------------------------------
@@ -404,9 +537,9 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_max_trustregion (
 //--------------------------------------------------------------------------------
 template<class TSurrogateModel, class TBasisForSurrogateModel>
 void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_max_number_evaluations ( 
-  int const &max_number_blackbox_evaluations_input )
+  int const &max_number_evaluations )
 {
-  max_number_blackbox_evaluations = max_number_blackbox_evaluations_input;
+  max_number_blackbox_evaluations = max_number_evaluations;
   max_number_blackbox_evaluations_is_set = true;
   return;
 }
@@ -417,10 +550,10 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_max_number_evaluation
 //--------------------------------------------------------------------------------
 template<class TSurrogateModel, class TBasisForSurrogateModel>
 void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_blackbox ( 
-  BlackBoxBaseClass &blackbox_input, int nb_constraints_input )
+  BlackBoxBaseClass &bb, int m )
 {
-  blackbox = &blackbox_input;
-  nb_constraints = nb_constraints_input;
+  blackbox = &bb;
+  nb_constraints = m;
   blackbox_values.resize( (nb_constraints+1) );
   evaluations.initialize ( nb_constraints+1, dim );
   if ( stochastic_optimization ) {
@@ -441,9 +574,9 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_blackbox (
 //--------------------------------------------------------------------------------
 template<class TSurrogateModel, class TBasisForSurrogateModel>
 void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_blackbox ( 
-  BlackBoxBaseClass &blackbox_input )
+  BlackBoxBaseClass &bb )
 {
-  set_blackbox ( blackbox_input, 0 );
+  set_blackbox ( bb, 0 );
   return;
 }
 //--------------------------------------------------------------------------------
@@ -472,9 +605,9 @@ double NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::compute_acceptance_rati
 // sets user data that is passed through (S)NOWPAC to the black box function
 //--------------------------------------------------------------------------------
 template<class TSurrogateModel, class TBasisForSurrogateModel>
-void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::void_user_data ( void *user_data_input ) 
+void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::user_data ( void *data ) 
 { 
-  user_data = user_data_input; 
+  user_data_pointer = data; 
   return; 
 }
 //--------------------------------------------------------------------------------
@@ -490,9 +623,9 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::blackbox_evaluator (
   }
   // evaluate blackbox  
   if ( stochastic_optimization )
-    blackbox->evaluate( x, blackbox_values, blackbox_noise, user_data );
+    blackbox->evaluate( x, blackbox_values, blackbox_noise, user_data_pointer );
   else
-    blackbox->evaluate( x, blackbox_values, user_data ); 
+    blackbox->evaluate( x, blackbox_values, user_data_pointer ); 
 
 
   // add evaluations to blackbox data
@@ -532,10 +665,10 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::blackbox_evaluator ( )
     // evaluate blackbox
     if ( stochastic_optimization )
       blackbox->evaluate( evaluations.nodes[ i ], blackbox_values, 
-                          blackbox_noise, user_data );
+                          blackbox_noise, user_data_pointer );
     else
       blackbox->evaluate( evaluations.nodes[ i ], blackbox_values, 
-                          user_data ); 
+                          user_data_pointer ); 
 
     // add evaluations to blackbox data
     for (int j = 0; j < nb_constraints+1; ++j) {
@@ -924,12 +1057,12 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::output_for_plotting ( )
 //--------------------------------------------------------------------------------
 template<class TSurrogateModel, class TBasisForSurrogateModel>
 int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize ( 
-  std::vector<double> &x, double &val, BlackBoxData &evaluations_input ) 
+  std::vector<double> &x, double &val, BlackBoxData &bb_data ) 
 {
 
 
   if ( evaluations.nodes.size() > 0 ) { 
-    evaluations = evaluations_input;
+    evaluations = bb_data;
     EXIT_FLAG = NOEXIT;
     delta = evaluations.get_scaling( );
   }
