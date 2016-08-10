@@ -706,8 +706,8 @@ bool NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::last_point_is_feasible ( 
     }
   }
 
-      tmp_dbl = pow( this->diff_norm( x_trial, evaluations.nodes[ evaluations.best_index ] ) / 
-                     delta, 1e0 );
+//      tmp_dbl = pow( this->diff_norm( x_trial, evaluations.nodes[ evaluations.best_index ] ) / 
+//                     delta, 1e0 );
 //      std::cout << " step size scale = " << sqrt(tmp_dbl) << std::endl; 
 
 /*
@@ -1070,7 +1070,7 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
 //  if ( stochastic_optimization ) 
 //    assert ( evaluations.noise[0].size() == evaluations.nodes.size() );
   EXIT_FLAG = optimize(x, val);  
-  evaluations_input = evaluations;
+  bb_data = evaluations;
   return EXIT_FLAG;
 }
 //--------------------------------------------------------------------------------
@@ -1209,6 +1209,8 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
         }
         x_trial = evaluations.nodes[ evaluations.best_index ];
         criticality_value = surrogate_optimization->compute_criticality_measure( x_trial );
+
+        // TODO: check if while should be exited on infeasible points...
 
         output_for_plotting( ) ;
         if (verbose == 3) {
