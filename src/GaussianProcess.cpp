@@ -83,6 +83,7 @@ void GaussianProcess::build ( std::vector< std::vector<double> > const &nodes,
       gp_nodes.push_back ( nodes.at(i) );
     }
 
+
 //    auto minmax = std::minmax_element(values.begin(), values.end());
 //    min_function_value = values.at((minmax.first - values.begin()));
 //    max_function_value = values.at((minmax.second - values.begin()));
@@ -129,6 +130,7 @@ void GaussianProcess::update ( std::vector<double> const &x,
 //  scaled_function_values.push_back ( ( value -  min_function_value ) / 
 //                                     ( 5e-1*( max_function_value-min_function_value ) ) - 1e0 );
 
+  
    
   for (int i = 0; i < nb_gp_nodes-1; i++) 
     K0.at(i) = evaluate_kernel( gp_nodes[i], x );
@@ -136,6 +138,7 @@ void GaussianProcess::update ( std::vector<double> const &x,
   forward_substitution( L, K0 );
 
   L.push_back ( K0 );
+
   L.at(L.size()-1).push_back(
     sqrt( evaluate_kernel( x, x ) + pow( noise / 2e0 + noise_regularization, 2e0 ) - 
           VectorOperations::dot_product(K0, K0) ) );
@@ -254,8 +257,7 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
   //perform optimization to get correction factors
   
   try {
-    int exitflag = opt.optimize(gp_parameters, optval);
-    
+    int exitflag = opt.optimize(gp_parameters, optval);  
   } catch (...) {
     gp_parameters[0] = lb[0]*5e-1 + 5e-1*ub[0];
     for (int i = 1; i < dim+1; ++i) {

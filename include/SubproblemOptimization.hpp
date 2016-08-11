@@ -300,29 +300,15 @@ double SubproblemOptimization<TSurrogateModel>::compute_trial_point (
   set_feasibility_thresholds ( x );
 
   if ( !point_is_feasible ) {
-    std::cout << "1 point not feasible " << std::endl << std::flush;
-    
     opt_restore_feasibility.optimize ( x, optimization_result );
-    std::cout << "2 point not feasible " << std::endl << std::flush;
     set_feasibility_thresholds ( x );    
-    std::cout << "3 point not feasible " << std::endl << std::fflush;
     if ( point_is_feasible ) {
-      for ( int i = 0; i < dim; ++i ) 
-        std::cout << " x["<<i<<"] = " << x[i] << std::endl << std::flush;
-      for ( int i = 0; i < dim; ++i ) 
-        std::cout << " lb["<<i<<"] = " << lb[i] << std::endl << std::flush;
-      for ( int i = 0; i < dim; ++i ) 
-        std::cout << " ub["<<i<<"] = " << ub[i] << std::endl << std::flush;
-      for ( int i = 0; i < dim; ++i ) 
-        std::cout << " ub["<<i<<"] = " << ub[i]-x[i] << std::endl << std::flush;
       opt_trial_point.optimize ( x, optimization_result );
     }
    // assert( false );
-    std::cout << "4 point not feasible " << std::endl << std::flush;
   } else {
-    std::cout << " point feasible " << std::endl;
     try{
-    errmess = opt_trial_point.optimize ( x, optimization_result );
+      errmess = opt_trial_point.optimize ( x, optimization_result );
     } catch ( ... ) { };
   }
 

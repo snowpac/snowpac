@@ -621,11 +621,28 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::blackbox_evaluator (
     EXIT_FLAG = 1;
     return;
   }
-  // evaluate blackbox  
-  if ( stochastic_optimization )
+
+  // evaluate blackbox and check results for consistency
+  if ( stochastic_optimization ) {
     blackbox->evaluate( x, blackbox_values, blackbox_noise, user_data_pointer );
-  else
+    if ( blackbox_noise.size() != (unsigned) (nb_constraints+1) ) EXIT_FLAG = -5;
+    for ( int i = 0; i < nb_constraints+1; ++i ) {
+      if ( blackbox_noise[i] < 0.0 || blackbox_noise[i] != blackbox_noise[i] ) {
+        EXIT_FLAG = -5;
+        return;
+      }
+    }
+  } else {
     blackbox->evaluate( x, blackbox_values, user_data_pointer ); 
+  }
+
+  if ( blackbox_values.size() != (unsigned) (nb_constraints+1) ) EXIT_FLAG = -5;
+  for ( int i = 0; i < nb_constraints+1; ++i ) {
+    if ( blackbox_values[i] != blackbox_values[i] ) {
+      EXIT_FLAG = -5;
+      return;
+    }
+  }
 
 
   // add evaluations to blackbox data
@@ -662,13 +679,29 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::blackbox_evaluator ( )
   }
 
   for ( int i = nb_vals_tmp; i < nb_nodes_tmp; ++i ) {
-    // evaluate blackbox
-    if ( stochastic_optimization )
+    // evaluate blackbox and check results for consistency
+    if ( stochastic_optimization ) {
       blackbox->evaluate( evaluations.nodes[ i ], blackbox_values, 
                           blackbox_noise, user_data_pointer );
-    else
+      if ( blackbox_noise.size() != (unsigned) (nb_constraints+1) ) EXIT_FLAG = -5;
+      for ( int i = 0; i < nb_constraints+1; ++i ) {
+        if ( blackbox_noise[i] < 0.0 || blackbox_noise[i] != blackbox_noise[i] ) {
+          EXIT_FLAG = -5;
+          return;
+        }
+      }
+    } else {
       blackbox->evaluate( evaluations.nodes[ i ], blackbox_values, 
                           user_data_pointer ); 
+    }
+
+    if ( blackbox_values.size() != (unsigned) (nb_constraints+1) ) EXIT_FLAG = -5;
+    for ( int i = 0; i < nb_constraints+1; ++i ) {
+      if ( blackbox_values[i] != blackbox_values[i] ) {
+        EXIT_FLAG = -5;
+        return;
+      }
+    }
 
     // add evaluations to blackbox data
     for (int j = 0; j < nb_constraints+1; ++j) {
@@ -1123,6 +1156,10 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
     // initial evaluations 
     evaluations.best_index = 0;
     blackbox_evaluator( x, true );   
+    if ( EXIT_FLAG != NOEXIT ){
+      std::cout << "ERROR   : Black box returned invalid value" << std::endl << std::fflush; 
+      return EXIT_FLAG;
+    }
     if ( !last_point_is_feasible ( ) ) {
       if ( verbose >= 1 ) 
         std::cout << "Initial point is not feasibile" << std::endl;
@@ -1133,12 +1170,20 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
       x_trial = x;
       x_trial.at(i) += delta;
       blackbox_evaluator( x_trial, true );
+      if ( EXIT_FLAG != NOEXIT ){
+        std::cout << "ERROR   : Black box returned invalid value" << std::endl << std::fflush; 
+        return EXIT_FLAG;
+      }
     }
 
   } else {
     if ( evaluations.values[0].size() == 0 )
     if ( verbose >= 2 ) { std::cout << "Evaluating initial nodes .. "; }
     blackbox_evaluator ( ); 
+    if ( EXIT_FLAG != NOEXIT ){
+      std::cout << "ERROR   : Black box returned invalid value" << std::endl << std::fflush; 
+      return EXIT_FLAG;
+    }
     if ( verbose >= 2 ) { std::cout << "done" << std::endl;; }
   }
 
@@ -1244,9 +1289,14 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
       if ( EXIT_FLAG == NOEXIT ) {
         if ( verbose == 3 ) { std::cout << "done" << std::endl; }
       } else {
-        if ( verbose == 3 ) { 
-          std::cout << "failed" << std::endl; 
+        if ( verbose == 3 && EXIT_FLAG == 1) { 
+          std::cout << "canceled" << std::endl; 
+          std::cout << std::endl;
           std::cout << "Maximum number of black box evaluations reached" << std::endl;
+        } else if ( EXIT_FLAG == -5 ) {
+          if ( verbose == 3 ) std::cout << "canceled" << std::endl; 
+          std::cout << std::endl;
+          std::cout << "ERROR   : Black box returned invalid value" << std::endl << std::flush; 
         }
         break;
       }
@@ -1295,7 +1345,6 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
       }
     }
  
-
     /*----------------------------------------------------------------------------------*/
     /*- STEP 4 - STEP 4 - STEP 4 - STEP 4 - STEP 4 - STEP 4 - STEP 4 - STEP 4 - STEP 4 -*/
     /*----------------------------------------------------------------------------------*/
@@ -1316,7 +1365,7 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
       if ( verbose >= 2 ) { 
         std::cout << "*****************************************" << std::endl; 
       }
-      fflush(stdout);
+      std::cout << std::flush; 
       if ( acceptance_ratio >= eta_1 && acceptance_ratio < 2e0 ) {
         if ( verbose >= 2 ) { std::cout << " Step successful" << std::endl << std::flush; }
         update_trustregion( gamma_inc );
@@ -1374,6 +1423,10 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
           }
         } else {
           std::cout << "*****************************************" << std::endl << std::flush;
+          if ( EXIT_FLAG == -5 ) {
+            std::cout << std::endl;
+            std::cout << "ERROR   : Black box returned invalid value" << std::endl << std::fflush; 
+          }
           break;
         }
       }
@@ -1405,8 +1458,9 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
 
   } while ( EXIT_FLAG == NOEXIT );
 
+
   val = evaluations.values[0].at(evaluations.best_index);
-  x = evaluations.nodes[ evaluations.best_index ];
+  x   = evaluations.nodes[ evaluations.best_index ];
 
   if ( verbose >= 1 ) {
     std::cout << std::endl << "RESULTS OF OPTIMIZATION:" << std::endl;
@@ -1423,7 +1477,10 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
     std::cout << "  Best value            :  " << std::setprecision(12) << evaluations.values[0].at( evaluations.best_index ) << std::endl;
     std::cout << "---------------------------------------------" << std::endl;
     std::cout << "  Trust-region radius   :  " << delta << std::endl;
-    std::cout << "  Number of evaluations :  " << evaluations.values[0].size() << std::endl;
+    if ( EXIT_FLAG != -5 ) 
+      std::cout << "  Number of evaluations :  " << evaluations.values[0].size() << std::endl;
+    else
+      std::cout << "  Number of evaluations :  " << evaluations.values[0].size()+1 << std::endl;
     std::cout << "---------------------------------------------" << std::endl;
     if ( this->noise_has_been_detected )
       std::cout << " Noise detected" << std::endl;
@@ -1435,6 +1492,8 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
       std::cout << " Termination due to Noise" << std::endl;
     if ( EXIT_FLAG == -4 )
       std::cout << " Inconsistent parameter" << std::endl;
+    if ( EXIT_FLAG == -5 )
+      std::cout << " Black box returned invalid value" << std::endl;
     if ( EXIT_FLAG == -6 )
       std::cout << " Other termination reason" << std::endl;
     std::cout << "*********************************************" << std::endl << std::endl << std::flush;

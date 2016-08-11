@@ -172,6 +172,7 @@ void GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
     for ( int j = 0; j < number_processes; ++j ) {
 //      gaussian_processes[j].evaluate( rescaled_node, mean, variance );
       gaussian_processes[j].evaluate( evaluations.nodes[evaluations.active_index[i]], mean, variance );
+
       assert ( variance >= 0e0 );
 
       weight = exp( - 2e0*sqrt(variance) );
