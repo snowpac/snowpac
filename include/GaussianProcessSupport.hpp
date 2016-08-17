@@ -26,7 +26,7 @@ class GaussianProcessSupport : protected VectorOperations {
     std::vector<int> gaussian_process_active_index; 
     std::vector< std::vector<double> > values;
     std::vector< std::vector<double> > noise;
-    std::vector<GaussianProcess> gaussian_processes;
+    std::vector<std::shared_ptr<GaussianProcess>> gaussian_processes;
     std::vector<double> rescaled_node;
     void update_data ( BlackBoxData& );
     void update_gaussian_processes ( BlackBoxData& );

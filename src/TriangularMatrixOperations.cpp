@@ -21,10 +21,10 @@ void TriangularMatrixOperations::forward_substitution (
   // and stores the solution y in x 
   dim = x.size();
   for (int i = 0; i < dim; ++i) {
-    tmp = x[i];
+    tmp = x.at(i);
     for (int j = 0; j <= i-1; ++j)
-      tmp -= L[i][j]*x[j];
-    x[i] = tmp / L[i][i];
+      tmp -= L.at(i).at(j)*x.at(j);
+    x.at(i) = tmp / L.at(i).at(i);
   }
 
   return;

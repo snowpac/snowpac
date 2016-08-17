@@ -24,7 +24,7 @@ GaussianProcess::GaussianProcess ( int n, double &delta_input ) :
 
 
 //--------------------------------------------------------------------------------
-double GaussianProcess::evaluate_kernel ( std::vector<double> const &x, 
+double GaussianProcess::evaluate_kernel ( std::vector<double> const &x,
                                           std::vector<double> const &y )
 {
   return evaluate_kernel ( x, y, gp_parameters );
@@ -39,7 +39,7 @@ double GaussianProcess::evaluate_kernel ( std::vector<double> const &x,
 }
 //--------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------
-double GaussianProcess::evaluate_kernel ( std::vector<double> const &x, 
+double GaussianProcess::evaluate_kernel ( std::vector<double> const &x,
                                           std::vector<double> const &y,
                                           std::vector<double> const &p )
 {
@@ -53,7 +53,7 @@ double GaussianProcess::evaluate_kernel ( std::vector<double> const &x,
 //--------------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------------
-double GaussianProcess::d_evaluate_kernel ( std::vector<double> const &x, 
+double GaussianProcess::d_evaluate_kernel ( std::vector<double> const &x,
                                             std::vector<double> const &y, 
                                             std::vector<double> const &p, int j )
 {

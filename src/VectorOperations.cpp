@@ -131,6 +131,18 @@ double VectorOperations::dot_product( std::vector<double> const &v1,
 }
 //--------------------------------------------------------------------------------
 
+
+//--------------------------------------------------------------------------------
+void VectorOperations::mat_transpose(std::vector<std::vector<double> > const & V, std::vector<std::vector<double> > & V_T) {
+  for(int i = 0; i < V.size(); ++i){
+    for(int j = 0; j < V_T.size(); ++j){
+      V_T[j][i] = V[i][j];
+    }
+  }
+  return ;
+}
+//--------------------------------------------------------------------------------
+
 //--------------------------------------------------------------------------------
 void VectorOperations::mat_product( std::vector< std::vector<double> > const &V1, 
                                     std::vector< std::vector<double> > const &V2,
@@ -140,11 +152,11 @@ void VectorOperations::mat_product( std::vector< std::vector<double> > const &V1
   size  = V1[0].size();
   size1 = V1.size();
   size2 = V2.size();
-  for ( int i = 0; i < size1; ++i ) {
-    for ( int j = 0; j < size2; ++j ) {
-      W[i][j] = 0e0;
-      for ( int k = 0; k < size; ++k )
-        W[i][j] += V1[i][k] * V2[k][j];
+  for ( int i = 0; i < V1.size(); ++i ) {
+    for ( int j = 0; j < V2.at(0).size(); ++j ) {
+      W.at(i).at(j) = 0e0;
+      for ( int k = 0; k < V1.at(0).size(); ++k )
+        W.at(i).at(j) += V1.at(i).at(k) * V2.at(k).at(j);
     }
   }
   return;
@@ -159,10 +171,10 @@ void VectorOperations::mat_vec_product( std::vector< std::vector<double> > const
   // computes w = V1 * v2
   size1 = V1.size();
   size2 = v2.size();
-  for ( int i = 0; i < size1; ++i ) {
-    w[i] = 0e0;
-    for ( int j = 0; j < size2; ++j ) 
-        w[i] += V1[i][j] * v2[j];
+  for ( int i = 0; i < V1.size(); ++i ) {
+    w.at(i) = 0e0;
+    for ( int j = 0; j < V1.at(i).size(); ++j )
+        w.at(i) += V1.at(i).at(j) * v2.at(j);
   }
   return;
 }

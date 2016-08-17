@@ -91,6 +91,7 @@ IF ( NOWPAC_ENABLE_TESTS STREQUAL "ON" )
 ENDIF ()
 
 SET ( NOWPAC_SOURCE_FILES
+    ${NOWPAC_SOURCE_DIR}/src/ApproximatedGaussianProcess.cpp
     ${NOWPAC_SOURCE_DIR}/src/BlackBoxData.cpp
     ${NOWPAC_SOURCE_DIR}/src/CholeskyFactorization.cpp
     ${NOWPAC_SOURCE_DIR}/src/GaussianProcess.cpp
@@ -103,9 +104,9 @@ SET ( NOWPAC_SOURCE_FILES
     ${NOWPAC_SOURCE_DIR}/src/QuadraticMonomial.cpp
     ${NOWPAC_SOURCE_DIR}/src/QuadraticLegendre.cpp
     ${NOWPAC_SOURCE_DIR}/src/TriangularMatrixOperations.cpp
-    ${NOWPAC_SOURCE_DIR}/src/VectorOperations.cpp
-)
+    ${NOWPAC_SOURCE_DIR}/src/VectorOperations.cpp)
 SET ( NOWPAC_HEADER_FILES
+    ${NOWPAC_SOURCE_DIR}/include/ApproximatedGaussianProcess.hpp
     ${NOWPAC_SOURCE_DIR}/include/BasisForSurrogateModelBaseClass.hpp
     ${NOWPAC_SOURCE_DIR}/include/BlackBoxBaseClass.hpp
     ${NOWPAC_SOURCE_DIR}/include/BlackBoxData.hpp
@@ -143,8 +144,7 @@ SET ( NOWPAC_GTEST_HEADER_FILES
     ${NOWPAC_SOURCE_DIR}/test/include/gtest_vectoroperations.hpp
 )
 SET ( NOWPAC_GTEST_SOURCE_FILES
-    ${NOWPAC_SOURCE_DIR}/test/src/gtest_main.cpp
-)
+    ${NOWPAC_SOURCE_DIR}/test/src/gtest_main.cpp)
 
 INCLUDE_DIRECTORIES( ${NOWPAC_SOURCE_DIR}/include )
 INCLUDE_DIRECTORIES( ${NOWPAC_EIGEN_INCLUDE_PATH} )

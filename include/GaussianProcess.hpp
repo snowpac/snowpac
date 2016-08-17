@@ -20,7 +20,7 @@ class GaussianProcess : public GaussianProcessBaseClass,
                         protected TriangularMatrixOperations,
                         protected VectorOperations {
 
-  private:
+  protected:
     //auxiliary variables
     int pos;
     double rho;
@@ -49,16 +49,16 @@ class GaussianProcess : public GaussianProcessBaseClass,
 
     static double parameter_estimation_objective(std::vector<double> const&, 
                                                  std::vector<double>&, void*);
-  protected:
+
     //! Evaluation of Gaussian process kernel
     /*!
      Evaluates the square exponential kernel.
     */
-    double evaluate_kernel ( std::vector<double> const&, std::vector<double> const& );
-    double evaluate_kernel ( std::vector<double> const&, std::vector<double> const&,
+    virtual double evaluate_kernel ( std::vector<double> const&, std::vector<double> const& );
+    virtual double evaluate_kernel ( std::vector<double> const&, std::vector<double> const&,
                              std::vector<double> const& );
     //! Evaluation of the derivative of the Gaussina process kernel
-    double d_evaluate_kernel ( std::vector<double> const&, std::vector<double> const&, 
+    virtual double d_evaluate_kernel ( std::vector<double> const&, std::vector<double> const&,
                                std::vector<double> const&, int );
   public:
     //! Constructor

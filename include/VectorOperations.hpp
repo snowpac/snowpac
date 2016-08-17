@@ -95,6 +95,14 @@ class VectorOperations {
      \return dot product of v1 and v2
     */
     double dot_product ( std::vector<double> const&, std::vector<double> const& );
+    //! Transpose of matrix
+    /*!
+     Computes the product of two matrices
+     \param V input matrix
+     \param V_t transposed matrix
+     \return V_t output matrix
+    */
+    void mat_transpose ( std::vector< std::vector<double> > const&, std::vector< std::vector<double> > &);
     //! Product of two matrices
     /*!
      Computes the product of two matrices
