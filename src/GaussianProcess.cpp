@@ -190,9 +190,11 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
 
   gp_pointer = this;
 
-//  auto minmax = std::minmax_element(values.begin(), values.end());
-//  min_function_value = values.at((minmax.first - values.begin()));
-//  max_function_value = values.at((minmax.second - values.begin()));
+  auto minmax = std::minmax_element(values.begin(), values.end());
+  min_function_value = values.at((minmax.first - values.begin()));
+  max_function_value = fabs(values.at((minmax.second - values.begin())));
+  if ( fabs(min_function_value) > max_function_value )
+    max_function_value = fabs( min_function_value );
 
   L.clear();
   L.resize( nb_gp_nodes );
@@ -216,16 +218,19 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
 //      max_noise = gp_noise.at( i );
 //  }
   lb[0] = 1e-1; // * pow(1000e0 * max_noise / 2e0, 2e0);
-  ub[0] = 1e1;// * pow(1000e0 * max_noise / 2e0, 2e0);
+  ub[0] = 1e4;//1e1// * pow(1000e0 * max_noise / 2e0, 2e0);
+  lb[0] = max_function_value - 1e2;
+  if ( lb[0] < 1e-2 ) lb[0] = 1e-2;
+  ub[0] = max_function_value + 1e2;
   double delta_threshold = *delta;
   if (delta_threshold < 1e-2) delta_threshold = 1e-2;
   for (int i = 0; i < dim; ++i) {
-      lb[i+1] = 1e1 * delta_threshold;
-      ub[i+1] = 1e2 * delta_threshold;
+      lb[i+1] = 1e-2 * delta_threshold; // 1e1
+      ub[i+1] = 2.0 * delta_threshold; // 1e2
   }
 
   if (gp_parameters[0] < 0e0) {
-    gp_parameters[0] = lb[0]*5e-1 + 5e-1*ub[0];
+    gp_parameters[0] = max_function_value;//lb[0]*5e-1 + 5e-1*ub[0];
     for (int i = 1; i < dim+1; ++i) {
       gp_parameters[i] = (lb[i]*5e-1 + 5e-1*ub[i]);
     }

@@ -1,4 +1,5 @@
 #include "BlackBoxData.hpp"
+#include <sys/stat.h>
 
 //--------------------------------------------------------------------------------
 void BlackBoxData::initialize ( int n, int dim ) { 
@@ -51,6 +52,214 @@ void BlackBoxData::delete_history () {
   assert( active_index.size() == 0 );
   for ( int i = 0; i < nb_nodes; ++i ) 
     active_index.push_back( i );
+}
+//--------------------------------------------------------------------------------
+
+//--------------------------------------------------------------------------------
+int BlackBoxData::write_to_file ( const char *filename) {
+  int EXIT_FLAG = 1; //success
+  struct stat buffer;   
+  // check if file exists
+  if ( stat (filename, &buffer) == 0 ) {
+    // do not overwrite file if it exists 
+    std::cout << "Error   : Output file already exists." << std::endl;    
+    EXIT_FLAG = -1; // fail
+    return EXIT_FLAG;
+  }
+  std::fstream output_file;
+  output_file.open( filename, std::fstream::out );
+  output_file.precision(16);
+  output_file << scaling << " ; ";
+  output_file << best_index << " ; ";
+  output_file << max_nb_nodes << " ; ";
+  output_file << nodes.size() << " ; ";
+  output_file << nodes.at(0).size() << " ; ";
+  output_file << values.size() << " ; ";
+  output_file << values[0].size() << " ; ";
+  output_file << active_index.size() << std::endl;
+
+  for ( unsigned int i = 0; i < active_index.size()-1; ++i )
+    output_file << active_index[i] << " ; ";
+  output_file <<  active_index.back() << std::endl;  
+  for ( unsigned int i = 0; i < nodes.size(); ++i ) {
+    for ( unsigned int j = 0; j < nodes[i].size()-1; ++j )
+      output_file << nodes[i][j] << " ; ";
+    output_file <<  nodes[i].back() << std::endl;  
+  }
+  for ( unsigned int i = 0; i < values.size(); ++i ) {
+    for ( unsigned int j = 0; j < values[i].size()-1; ++j )
+       output_file << values[i][j] << " ; ";
+    output_file << values[i].back() << std::endl;  
+  }
+  for ( unsigned int i = 0; i < noise.size(); ++i ) {
+    for ( unsigned int j = 0; j < noise[i].size()-1; ++j )
+       output_file << noise[i][j] << " ; ";
+    output_file << noise[i].back() << std::endl;  
+  }
+
+  return EXIT_FLAG;
+}
+//--------------------------------------------------------------------------------
+
+//--------------------------------------------------------------------------------
+int BlackBoxData::read_from_file ( const char *filename) {
+  int EXIT_FLAG = 1; //success
+  struct stat buffer;   
+  // check if file exists
+  if ( stat (filename, &buffer) != 0 ) {
+    // do not overwrite file if it exists 
+    std::cout << "Error   : Input file does not exist." << std::endl;    
+    EXIT_FLAG = -1; // fail
+    return EXIT_FLAG;
+  }
+
+  std::ifstream file( filename );
+  std::string line_in_file; 
+  std::string delimiter = " ; ";
+  std::string str_value;
+  int end_position;
+  std::getline(file, line_in_file);
+
+  // read scaling
+  end_position = line_in_file.find(delimiter);
+  str_value = line_in_file.substr( 0, end_position );
+  line_in_file.erase(0, end_position + delimiter.length());
+  int scaling_loc = std::stod( str_value );
+
+  // best node
+  end_position = line_in_file.find(delimiter);
+  str_value = line_in_file.substr( 0, end_position );
+  line_in_file.erase(0, end_position + delimiter.length());
+  best_index = std::stoi( str_value );
+
+  // max number of active nodes  
+  end_position = line_in_file.find(delimiter);
+  str_value = line_in_file.substr( 0, end_position );
+  line_in_file.erase(0, end_position + delimiter.length());
+  max_nb_nodes = std::stoi( str_value );
+
+  // read number of nodes  
+  end_position = line_in_file.find(delimiter);
+  str_value = line_in_file.substr( 0, end_position );
+  line_in_file.erase(0, end_position + delimiter.length());
+  int nb_nodes = std::stoi( str_value );
+
+  // read dimension 
+  end_position = line_in_file.find(delimiter);
+  str_value = line_in_file.substr( 0, end_position );
+  line_in_file.erase(0, end_position + delimiter.length());
+  int dim = std::stoi( str_value );
+
+  // read nb_values
+  end_position = line_in_file.find(delimiter);
+  str_value = line_in_file.substr( 0, end_position );
+  line_in_file.erase(0, end_position + delimiter.length());
+  int nb_models = std::stoi( str_value );
+
+  // read nb_noise
+  end_position = line_in_file.find(delimiter);
+  str_value = line_in_file.substr( 0, end_position );
+  line_in_file.erase(0, end_position + delimiter.length());
+  int nb_values = std::stoi( str_value );
+
+  // read nb_active_nodes
+  end_position = line_in_file.find(delimiter);
+  str_value = line_in_file.substr( 0, end_position );
+  line_in_file.erase(0, end_position + delimiter.length());
+  int nb_active_nodes = std::stoi( str_value );
+
+  initialize( nb_models, dim );
+  scaling = scaling_loc;
+
+
+  std::cout << scaling << " ; ";
+  std::cout << best_index << " ; ";
+  std::cout << max_nb_nodes << " ; ";
+  std::cout << nb_nodes << " ; ";
+  std::cout << dim << " ; ";
+  std::cout << values.size() << " ; ";
+  std::cout << noise.size() << std::endl;
+
+
+
+  ///
+  int line_counter = 0;
+  double tmp_dbl;
+  std::vector<double> node( dim );
+
+  // read active_index
+  std::getline(file, line_in_file);
+  while ( ( end_position = line_in_file.find(delimiter) ) != std::string::npos ) { 
+    str_value = line_in_file.substr( 0, end_position );
+    line_in_file.erase(0, end_position + delimiter.length());
+    active_index.push_back( std::stoi( str_value ) ); 
+  }
+  active_index.push_back( std::stoi( line_in_file ) ); 
+
+  while ( std::getline(file, line_in_file) )
+  {
+    if ( line_counter < nb_nodes ) {
+      for ( int i = 0; i < dim; ++i ) {
+        end_position = line_in_file.find(delimiter);
+        str_value = line_in_file.substr( 0, end_position );
+        line_in_file.erase(0, end_position + delimiter.length());
+        node[i] = std::stod( str_value );        
+      }
+      nodes.push_back( node );
+    }
+    if ( line_counter >= nb_nodes && line_counter < nb_nodes + nb_models ) {
+    std::cout << " ++++ " << std::endl << std::flush;
+      while ( ( end_position = line_in_file.find(delimiter) ) != std::string::npos ) { 
+        str_value = line_in_file.substr( 0, end_position );
+        line_in_file.erase(0, end_position + delimiter.length());
+        values[line_counter-nb_nodes].push_back( std::stod( str_value ) ); 
+      }
+      values[line_counter-nb_nodes].push_back( std::stod( line_in_file ) ); 
+    }
+    if ( line_counter >= nb_nodes+nb_models && line_counter < nb_nodes+2*nb_models) {
+    std::cout << " ----- " << std::endl << std::flush;
+      while ( ( end_position = line_in_file.find(delimiter) ) != std::string::npos ) { 
+        str_value = line_in_file.substr( 0, end_position );
+        line_in_file.erase(0, end_position + delimiter.length());
+        noise[line_counter-nb_nodes-nb_models].push_back( std::stod( str_value ) ); 
+      }
+      noise[line_counter-nb_nodes-nb_models].push_back( std::stod( line_in_file ) ); 
+    }
+    line_counter++;
+  }
+
+//XXX
+  std::cout << scaling << " ; ";
+  std::cout << best_index << " ; ";
+  std::cout << max_nb_nodes << " ; ";
+  std::cout << nodes.size() << " ; ";
+  std::cout << nodes.at(0).size() << " ; ";
+  std::cout << values.size() << " ; ";
+  std::cout << values[0].size() << " ; ";
+  std::cout << active_index.size() << std::endl;
+
+  for ( unsigned int i = 0; i < active_index.size()-1; ++i )
+    std::cout << active_index[i] << " ; ";
+  std::cout <<  active_index.back() << std::endl;  
+  for ( unsigned int i = 0; i < nodes.size(); ++i ) {
+    for ( unsigned int j = 0; j < nodes[i].size()-1; ++j )
+      std::cout << nodes[i][j] << " ; ";
+    std::cout <<  nodes[i].back() << std::endl;  
+  }
+  for ( unsigned int i = 0; i < values.size(); ++i ) {
+    for ( unsigned int j = 0; j < values[i].size()-1; ++j )
+       std::cout << values[i][j] << " ; ";
+    std::cout << values[i].back() << std::endl;  
+  }
+  for ( unsigned int i = 0; i < noise.size(); ++i ) {
+    for ( unsigned int j = 0; j < noise[i].size()-1; ++j )
+       std::cout << noise[i][j] << " ; ";
+    std::cout << noise[i].back() << std::endl;  
+  }
+//XXX
+
+
+  return EXIT_FLAG;
 }
 //--------------------------------------------------------------------------------
 

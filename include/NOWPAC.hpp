@@ -47,6 +47,7 @@
 #include <iomanip>
 #include <fstream>
 #include <cassert>
+#include <sys/stat.h>
 
 //! NOWPAC
 template<class TSurrogateModel = MinimumFrobeniusNormModel, 
@@ -276,8 +277,16 @@ NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::NOWPAC (
   int n, const char *fn_output ) : 
     NOWPAC ( n )
 {
-  output_filename = fn_output;
-  output_file = fopen(output_filename, "w");
+  struct stat buffer;   
+  // check if file exists
+  if ( stat (fn_output, &buffer) == 0 && false) {
+    // do not overwrite file if it exists
+    std::cout << "Error   : Output file already exists." << std::endl;
+    EXIT_FLAG = -4;
+  } else {
+    output_filename = fn_output;
+    output_file = fopen(output_filename, "w");
+  }
 }
 //--------------------------------------------------------------------------------
 
@@ -621,7 +630,6 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::blackbox_evaluator (
     EXIT_FLAG = 1;
     return;
   }
-
   // evaluate blackbox and check results for consistency
   if ( stochastic_optimization ) {
     blackbox->evaluate( x, blackbox_values, blackbox_noise, user_data_pointer );
@@ -635,7 +643,6 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::blackbox_evaluator (
   } else {
     blackbox->evaluate( x, blackbox_values, user_data_pointer ); 
   }
-
   if ( blackbox_values.size() != (unsigned) (nb_constraints+1) ) EXIT_FLAG = -5;
   for ( int i = 0; i < nb_constraints+1; ++i ) {
     if ( blackbox_values[i] != blackbox_values[i] ) {
@@ -656,8 +663,10 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::blackbox_evaluator (
   if ( set_node_active )
     evaluations.active_index.push_back( (evaluations.nodes).size()-1 );    
 
+
   if ( stochastic_optimization && evaluations.nodes.size() > dim ) 
     gaussian_processes.smooth_data ( evaluations );
+
 
   write_to_file();
 
@@ -1162,7 +1171,7 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
     }
     if ( !last_point_is_feasible ( ) ) {
       if ( verbose >= 1 ) 
-        std::cout << "Initial point is not feasibile" << std::endl;
+        std::cout << "Initial point is not feasibile" << std::endl << std::flush;
 //      EXIT_FLAG = -3;
 //      return EXIT_FLAG;
     }
@@ -1171,25 +1180,25 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
       x_trial.at(i) += delta;
       blackbox_evaluator( x_trial, true );
       if ( EXIT_FLAG != NOEXIT ){
-        std::cout << "ERROR   : Black box returned invalid value" << std::endl << std::fflush; 
+        std::cout << "ERROR   : Black box returned invalid value" << std::endl << std::flush; 
         return EXIT_FLAG;
       }
     }
 
   } else {
     if ( evaluations.values[0].size() == 0 )
-    if ( verbose >= 2 ) { std::cout << "Evaluating initial nodes .. "; }
+    if ( verbose >= 2 ) { std::cout << "Evaluating initial nodes .. " << std::flush; }
     blackbox_evaluator ( ); 
     if ( EXIT_FLAG != NOEXIT ){
-      std::cout << "ERROR   : Black box returned invalid value" << std::endl << std::fflush; 
+      std::cout << "ERROR   : Black box returned invalid value" << std::endl << std::flush; 
       return EXIT_FLAG;
     }
-    if ( verbose >= 2 ) { std::cout << "done" << std::endl;; }
+    if ( verbose >= 2 ) { std::cout << "done" << std::endl << std::flush; }
   }
 
-  if ( verbose == 3 ) { std::cout << "Building initial models ... "; }
+  if ( verbose == 3 ) { std::cout << "Building initial models ... " << std::flush; }
   update_surrogate_models( );
-  if ( verbose == 3 ) { std::cout << "done" << std::endl; }
+  if ( verbose == 3 ) { std::cout << "done" << std::endl << std::flush; }
 
    
 /*

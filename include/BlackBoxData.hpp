@@ -5,6 +5,8 @@
 #include <vector>
 #include <cassert>
 #include <iostream>
+#include <fstream>
+#include <string>
 
 class BlackBoxData : public VectorOperations{
   private:
@@ -16,6 +18,7 @@ class BlackBoxData : public VectorOperations{
 
   public:
     BlackBoxData ( int n, int dim ) { initialize (n, dim); } 
+    BlackBoxData ( const char *filename ) { read_from_file(filename); }
     BlackBoxData ( ) { }
     int max_nb_nodes;
     int best_index;
@@ -26,8 +29,9 @@ class BlackBoxData : public VectorOperations{
 
     void initialize( int, int );
     void delete_history();
+    int write_to_file( const char* );
+    int read_from_file( const char* );
     double get_scaling () { return scaling; } 
-//    void set_scaling ( double scaling_input ) { scaling = scaling_input; return; } 
     std::vector<double> &transform( std::vector<double> const& );
     std::vector< std::vector<double> > &get_scaled_active_nodes( double );
     std::vector<double> &get_active_values( int );
