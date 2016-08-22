@@ -35,6 +35,8 @@ class GaussianProcessSupport : protected VectorOperations {
                       std::vector<double> const&, int );
     void smooth_data ( BlackBoxData& );
     double evaluate_objective ( BlackBoxData const& );
+
+    void evaluate_gaussian_process_at(const int&, std::vector<double> const&, double&, double&);
 };
 
 #endif

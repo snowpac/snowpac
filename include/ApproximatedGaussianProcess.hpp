@@ -12,7 +12,7 @@ private:
     std::vector< std::vector<double> > K_u_f;
     std::vector< std::vector<double> > K_f_u;
     std::vector< std::vector<double> > K_u_u;
-    std::vector< std::vector<double> > u;
+    std::vector< int > u_idx;
     std::vector< double > gp_noise;
     double u_ratio = 0.1;
 

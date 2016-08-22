@@ -255,9 +255,10 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
 //set timeout to NLOPT_TIMEOUT seconds
   opt.set_maxtime(1.0);
   //perform optimization to get correction factors
-  
+
+    int exitflag=-20;
   try {
-    int exitflag = opt.optimize(gp_parameters, optval);  
+    exitflag = opt.optimize(gp_parameters, optval);
   } catch (...) {
     gp_parameters[0] = lb[0]*5e-1 + 5e-1*ub[0];
     for (int i = 1; i < dim+1; ++i) {
@@ -265,11 +266,11 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
     }
   }
 
-  //std::cout << "exitflag = "<< exitflag<<std::endl;
-//  std::cout << "OPTVAL .... " << optval << std::endl;
-//  for ( int i = 0; i < gp_parameters.size(); ++i )
-//    std::cout << "gp_param = " << gp_parameters[i] << std::endl;
-//  std::cout << std::endl;
+  std::cout << "exitflag = "<< exitflag<<std::endl;
+  std::cout << "OPTVAL .... " << optval << std::endl;
+  for ( int i = 0; i < gp_parameters.size(); ++i )
+    std::cout << "gp_param = " << gp_parameters[i] << std::endl;
+  std::cout << std::endl;
  
       
   return;

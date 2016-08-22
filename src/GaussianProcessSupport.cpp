@@ -231,4 +231,9 @@ double GaussianProcessSupport::evaluate_objective ( BlackBoxData const &evaluati
   return mean;
 }
 
+void GaussianProcessSupport::evaluate_gaussian_process_at(const int &idx, std::vector<double> const &loc, double &mean, double &var) {
+  gaussian_processes.at(idx)->evaluate(loc, mean, var);
+  return;
+}
+
 //--------------------------------------------------------------------------------

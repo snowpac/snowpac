@@ -24,6 +24,7 @@ void ApproximatedGaussianProcess::build ( std::vector< std::vector<double> > con
         nb_gp_nodes = nodes.size();
         gp_nodes.clear();
         gp_noise.clear();
+        u_idx.clear();
         for ( int i = 0; i < nb_gp_nodes; ++i ) {
             gp_nodes.push_back(nodes.at(i));
             gp_noise.push_back(noise.at(i));
@@ -32,19 +33,19 @@ void ApproximatedGaussianProcess::build ( std::vector< std::vector<double> > con
         std::cout << "APPROXIMATING GAUSSIAN WITH " << nb_u_nodes << " POINTS!! Total points: "<< nb_gp_nodes << std::endl;
         //Set distribution for sampling the indices for the u samples
         std::random_device rd;
-        int random_seed = rd(); //rd();
+        int random_seed = rd();
         std::mt19937 random_generator(random_seed);
         std::vector<double> nodes_weights_vector;
-        //equal weights : double nodes_weights = 100.0 / nodes.size();
-        //std::fill(nodes_weights_vector.begin(), nodes_weights_vector.end(), nodes_weights);
-        double prefactor = 200.0/( (nb_gp_nodes + 1)*nb_gp_nodes);
+        nodes_weights_vector.resize(nodes.size());
+        double nodes_weights = 100.0 / nodes.size();
+        std::fill(nodes_weights_vector.begin(), nodes_weights_vector.end(), nodes_weights);
+        /*double prefactor = 200.0/( (nb_gp_nodes + 1)*nb_gp_nodes);
         for(int i = 1; i <= nb_gp_nodes; ++i){
             nodes_weights_vector.push_back(prefactor * i);
-        }
+        }*/
         std::discrete_distribution<> d(nodes_weights_vector.begin(), nodes_weights_vector.end());
 
         //Sample the indices
-        std::vector<int> u_idx;
         int random_draw = -1;
         std::vector<int>::iterator it;
         random_draw = d(random_generator);
@@ -67,6 +68,7 @@ void ApproximatedGaussianProcess::build ( std::vector< std::vector<double> > con
         std::cout << std::endl;
 
         //Create u vector
+        std::vector< std::vector<double> > u;
         u.resize(nb_u_nodes);
         for (int i = 0; i < nb_u_nodes; ++i) {
             for (int j = 0; j < nodes.at(u_idx.at(i)).size(); ++j) {
@@ -91,6 +93,15 @@ void ApproximatedGaussianProcess::build ( std::vector< std::vector<double> > con
         VectorOperations::mat_transpose(K_u_f, K_f_u);
         std::cout << "K_u_f and K_f_u done!" << std::endl;
 
+        //Multiply K_u_f and K_f_u
+        std::vector<std::vector<double> > K_u_f_f_u;
+        K_u_f_f_u.resize(nb_u_nodes);
+        for (int i = 0; i < nb_u_nodes; ++i) {
+            K_u_f_f_u.at(i).resize(nb_u_nodes);
+        }
+        VectorOperations::mat_product(K_u_f, K_f_u, K_u_f_f_u);
+        std::cout << "K_u_f*K_f_u done!" << std::endl;
+
         //Set up matrix K_u_u
         K_u_u.clear();
         K_u_u.resize(nb_u_nodes);
@@ -104,41 +115,31 @@ void ApproximatedGaussianProcess::build ( std::vector< std::vector<double> > con
         //Pick noise values from noise vector using u_idx
         std::vector<double> noise_u_minus_squared(u_idx.size());
         for (int i = 0; i < u_idx.size(); ++i) {
-            noise_u_minus_squared[i] = 1;//1 / (pow(noise.at(u_idx[i]) / 2e0 + noise_regularization, 2e0));
+            noise_u_minus_squared[i] = (pow(0.02 / 2e0 + noise_regularization, 2e0)); //TODO this is not correct!
         }
         std::cout << "Set up Noise done!" << std::endl;
 
-        //Multiply K_u_f and K_f_u
-        std::vector<std::vector<double> > K_u_f_f_u;
-        K_u_f_f_u.resize(nb_u_nodes);
-        for (int i = 0; i < nb_u_nodes; ++i) {
-            K_u_f_f_u.at(i).resize(nb_u_nodes);
-        }
-        VectorOperations::mat_product(K_u_f, K_f_u, K_u_f_f_u);
-        std::cout << "K_u_f*K_f_u done!" << std::endl;
-
         //Multiply noise to K_u_f_f_u
         for (int i = 0; i < nb_u_nodes; ++i) {
-            K_u_f_f_u[i][i] *= noise_u_minus_squared.at(i);
+            K_u_u[i][i] *= noise_u_minus_squared.at(i);
         }
         std::cout << "sigma*K_u_f_f_u done!" << std::endl;
 
-        //Add K_u_u to K_u_f_f_u which is L
-        //for(int i = 0; i < L.size(); ++i){
-        //    for(int j = 0; j < L.at(i).size(); ++j){
-        //        std::cout <<  "[" << i << "," << j << "]" << ":" << L[i][j];
-        //    }
-        //    std::cout << std::endl;
-        //}
         L.clear();
         L.resize(nb_u_nodes);
         std::cout << "Resize L done!" << std::endl;
         for (int i = 0; i < nb_u_nodes; ++i) {
             for (int j = 0; j <= i; ++j) {
-                L.at(i).push_back(K_u_f_f_u.at(i).at(j) + K_u_u.at(i).at(j));
+                if(i==j) {
+                    L.at(i).push_back(K_u_f_f_u.at(i).at(j) + K_u_u.at(i).at(j) + 1e-4*nb_u_nodes);
+                }else{
+                    L.at(i).push_back(K_u_f_f_u.at(i).at(j) + K_u_u.at(i).at(j));
+                }
+
             }
         }
         std::cout << " L = K_u_u + K_u_f_f_u done!" << std::endl;
+
 
         for (int i = 0; i < L.size(); ++i) {
             for (int j = 0; j < L.at(i).size(); ++j) {
@@ -183,7 +184,7 @@ void ApproximatedGaussianProcess::update ( std::vector<double> const &x,
                                double &value,
                                double &noise )
 {
-    if(u.size() > 0) {
+    if(u_idx.size() > 0) {
         std::vector< std::vector<double> > temp_nodes;
         temp_nodes.resize(gp_nodes.size());
         std::vector< double > temp_values;
@@ -211,22 +212,29 @@ void ApproximatedGaussianProcess::update ( std::vector<double> const &x,
 void ApproximatedGaussianProcess::evaluate ( std::vector<double> const &x,
                                  double &mean, double &variance )
 {
-    if(u.size()>0){
-        int no_u_nodes = u.size();
+    if(u_idx.size()>0){
+        int no_u_nodes = u_idx.size();
+        K0.clear();
         K0.resize( no_u_nodes );
 
         for (int i = 0; i < no_u_nodes; i++)
-            K0.at(i) = evaluate_kernel( x, u[i] );
+            K0.at(i) = evaluate_kernel( x, gp_nodes[u_idx[i]] );
 
-        double noise = 0.02; //TODO this is not correct!
-        mean = 1/noise * VectorOperations::dot_product(K0, alpha);
+        mean = VectorOperations::dot_product(K0, alpha);
     //  mean = VectorOperations::dot_product(K0, alpha) + 1e0;
     //  mean *= 5e-1*( max_function_value-min_function_value );
     //  mean += min_function_value;
-
         forward_substitution( L, K0 );
 
-        variance = VectorOperations::dot_product(K0, K0);
+        double noise_norm = 0.0; //TODO this is not correct!
+        for(int i = 0; i < no_u_nodes; i++){
+            noise_norm += (pow(gp_noise.at(u_idx[i]) / 2e0 + noise_regularization, 2e0));
+        }
+        noise_norm = sqrt(noise_norm);
+        std::cout << "Noise: " << noise_norm << std::endl;
+
+        double noise = 0.02;
+        variance = noise * VectorOperations::dot_product(K0, K0);
     }else{
         GaussianProcess::evaluate(x, mean, variance);
     }
