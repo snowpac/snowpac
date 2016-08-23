@@ -1077,6 +1077,37 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::output_for_plotting ( con
         }
         outputfile.close();
   } else std::cout << "Unable to open file." << std::endl;
+    outputfile.open( "gp_points_" + std::to_string(evaluation_step) + "_" + std::to_string(sub_index) + ".dat" );
+    if ( outputfile.is_open( ) ) {
+        std::vector<std::vector<double>> gp_nodes = gaussian_processes.get_nodes_at(0);
+        for ( int i = 0; i < gp_nodes.size(); ++i) {
+            for (int j = 0; j < gp_nodes[i].size(); ++j){
+                outputfile << gp_nodes[i][j] << " ";
+            }
+            outputfile << std::endl;
+        }
+        outputfile.close();
+    } else std::cout << "Unable to open file." << std::endl;
+
+    bool approximated_gaussians = false;
+    if(approximated_gaussians) {
+        outputfile.open(
+                "gp_induced_points_" + std::to_string(evaluation_step) + "_" + std::to_string(sub_index) + ".dat");
+        if (outputfile.is_open()) {
+            //fvals.at(0) = surrogate_models[0].evaluate( x_loc );
+            std::cout << "###" << evaluation_step << "U_indices: ";
+            std::vector<int> u_indices = gaussian_processes.getU_idx_at(0);
+            for (int i = 0; i < u_indices.size(); ++i) {
+                std::cout << u_indices[i] << ",";
+            }
+            std::cout << std::endl;
+            for (int i = 0; i < u_indices.size(); ++i) {
+                outputfile << u_indices[i] << std::endl;
+            }
+            outputfile.close();
+        } else std::cout << "Unable to open file." << std::endl;
+    }
+  /*
   outputfile.open ( "surrogate_data_" + std::to_string(evaluation_step) + "_" + std::to_string(sub_index) + ".dat" );
   if ( outputfile.is_open( ) ) {
       for (int i = 0; i < dim; ++i)
@@ -1098,6 +1129,9 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::output_for_plotting ( con
       }
       outputfile.close();
   }else std::cout << "Unable to open file." << std::endl;
+   */
+
+
   /*outputfile.open ( "data_" + std::to_string(evaluation_step) + ".dat" );
   if ( outputfile.is_open( ) ) {
     std::vector< std::vector<double> > outputnodes;

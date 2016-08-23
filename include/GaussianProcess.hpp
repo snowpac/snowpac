@@ -109,6 +109,8 @@ class GaussianProcess : public GaussianProcessBaseClass,
      \see build
     */
     void evaluate ( std::vector<double> const&, double&, double& );
+
+    const std::vector<std::vector<double>> &getGp_nodes() const;
 };
 
 #endif

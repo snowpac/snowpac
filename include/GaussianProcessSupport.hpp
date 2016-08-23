@@ -37,6 +37,10 @@ class GaussianProcessSupport : protected VectorOperations {
     double evaluate_objective ( BlackBoxData const& );
 
     void evaluate_gaussian_process_at(const int&, std::vector<double> const&, double&, double&);
+
+    const std::vector<int> &getU_idx_at(const int&) const;
+
+    const std::vector<std::vector<double>> &get_nodes_at(const int&) const;
 };
 
 #endif

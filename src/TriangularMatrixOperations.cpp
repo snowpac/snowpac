@@ -31,6 +31,23 @@ void TriangularMatrixOperations::forward_substitution (
 }
 //--------------------------------------------------------------------------------
 
+//--------------------------------------------------------------------------------
+void TriangularMatrixOperations::forward_substitution_not_inplace (
+        std::vector< std::vector<double> > const &L, std::vector<double> const &b, std::vector<double> &x )
+{
+    // solves the system L * y = x for a lower triangular nonsingular matrix L
+    // and stores the solution y in x
+    dim = x.size();
+    for (int i = 0; i < dim; ++i) {
+        tmp = b.at(i);
+        for (int j = 0; j <= i-1; ++j)
+            tmp -= L.at(i).at(j)*x.at(j);
+        x.at(i) = tmp / L.at(i).at(i);
+    }
+
+    return;
+}
+//--------------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------------
 void TriangularMatrixOperations::backward_substitution (
@@ -49,7 +66,21 @@ void TriangularMatrixOperations::backward_substitution (
 }
 //--------------------------------------------------------------------------------
 
+void TriangularMatrixOperations::backward_substitution_not_inplace(std::vector<std::vector<double> > const &L,
+                                                                   std::vector<double> const &b, std::vector<double> &x)
+{
+    // solves the system L' * y = x for a lower triangular nonsingular matrix L
+    // and stores the solution y in x
+    dim = x.size();
+    for (int i = dim-1; i >= 0; --i) {
+        tmp = b.at(i);
+        for (int j = i+1; j < dim; ++j)
+            tmp -= L[j][i]*x[j];
+        x[i] = tmp / L[i][i];
+    }
+    return;
 
+}
 
 //--------------------------------------------------------------------------------
 void TriangularMatrixOperations::compute_large_norm_solution ( 

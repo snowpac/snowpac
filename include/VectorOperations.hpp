@@ -125,6 +125,17 @@ class VectorOperations {
     void mat_vec_product ( std::vector< std::vector<double> > const&, 
                            std::vector<double> const&,
                            std::vector<double> & );
+    //! Product of vector^T with matrix
+    /*!
+     Computes the product of vector^T with matrix
+     \param V1 input matrix
+     \param v2 input vector
+     \param w output vector
+     \return product of V1 and v2
+    */
+    void vec_mat_product ( std::vector< std::vector<double> > const&,
+                           std::vector<double> const&,
+                           std::vector<double> & );
     //! Product of matrix with its transpose V'*V
     /*!
      Computes the product of two matrices
@@ -148,6 +159,10 @@ class VectorOperations {
      \return norm of V
     */
     double norm ( std::vector< std::vector<double> > const& );
+
+    void print_matrix( std::vector< std::vector<double> > const&);
+
+    void print_vector(std::vector<double> const &);
 };
 //--------------------------------------------------------------------------------
 

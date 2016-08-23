@@ -12,11 +12,14 @@ private:
     std::vector< std::vector<double> > K_u_f;
     std::vector< std::vector<double> > K_f_u;
     std::vector< std::vector<double> > K_u_u;
+    std::vector< std::vector<double> > L_inv_T_L_inv_K_u_f;
     std::vector< int > u_idx;
-    std::vector< double > gp_noise;
+    //std::vector< double > gp_noise;
     double u_ratio = 0.1;
+    int min_nb_u_nodes = 1;
 
 public:
+    const std::vector<int> &getU_idx() const;
     //! Constructor
     /*!
      Class constructor.

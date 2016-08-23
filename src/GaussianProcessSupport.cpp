@@ -23,7 +23,7 @@ void GaussianProcessSupport::initialize ( const int dim, const int number_proces
   noise.resize( number_processes );
   for ( int i = 0; i < number_processes; i++) {
     //GaussianProcess* gp = new ApproximatedGaussianProcess(dim, *delta);
-    gaussian_processes.push_back ( std::shared_ptr<GaussianProcess>(new ApproximatedGaussianProcess(dim, *delta)) );
+    gaussian_processes.push_back ( std::shared_ptr<GaussianProcess> (new GaussianProcess(dim, *delta)) );
   }
   rescaled_node.resize( dim );
   return;
@@ -93,6 +93,7 @@ void GaussianProcessSupport::update_gaussian_processes ( BlackBoxData &evaluatio
       gaussian_processes[j]->estimate_hyper_parameters( gaussian_process_nodes,
                                                        gaussian_process_values,
                                                        gaussian_process_noise );
+        //std::cout << "Update Gaussian Process: " << j << std::endl;
       gaussian_processes[j]->build( gaussian_process_nodes,
                                    gaussian_process_values,
                                    gaussian_process_noise );
@@ -132,25 +133,21 @@ void GaussianProcessSupport::update_gaussian_processes ( BlackBoxData &evaluatio
 
       
   } else {
-    for ( unsigned int i = last_included; i < values[0].size(); ++i ) {
-      gaussian_process_active_index.push_back ( i );
+      for (unsigned int i = last_included; i < values[0].size(); ++i) {
+          gaussian_process_active_index.push_back(i);
 //      rescale ( 1e0/(delta_tmp), evaluations.nodes[i], evaluations.nodes[best_index],
 //                rescaled_node);
-      for ( int j = 0; j < number_processes; ++j ) {
-        gaussian_processes[j]->update( evaluations.nodes[ i ],
-                                      values[ j ].at( i ),
-                                      noise[ j ].at( i ) );
+          for (int j = 0; j < number_processes; ++j) {
+              gaussian_processes[j]->update(evaluations.nodes[i],
+                                            values[j].at(i),
+                                            noise[j].at(i));
 //        gaussian_processes[j].update( rescaled_node,
 //                                      values[ j ].at( i ),
 //                                      noise[ j ].at( i ) );
+          }
       }
-    }
 
   }
-    
-    
-   
-    
 
   last_included = evaluations.nodes.size();
   return;
@@ -174,6 +171,8 @@ void GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
 //              evaluations.nodes[best_index], rescaled_node );
     for ( int j = 0; j < number_processes; ++j ) {
 //      gaussian_processes[j].evaluate( rescaled_node, mean, variance );
+
+       // std::cout << "Smooth Gaussian Process: " << j << std::endl;
       gaussian_processes[j]->evaluate( evaluations.nodes[evaluations.active_index[i]], mean, variance );
 
       assert ( variance >= 0e0 );
@@ -234,6 +233,15 @@ double GaussianProcessSupport::evaluate_objective ( BlackBoxData const &evaluati
 void GaussianProcessSupport::evaluate_gaussian_process_at(const int &idx, std::vector<double> const &loc, double &mean, double &var) {
   gaussian_processes.at(idx)->evaluate(loc, mean, var);
   return;
+}
+
+const std::vector<int> &GaussianProcessSupport::getU_idx_at(const int &idx) const {
+    std::shared_ptr<ApproximatedGaussianProcess> agp = std::dynamic_pointer_cast<ApproximatedGaussianProcess>(gaussian_processes.at(idx));
+    return agp->getU_idx();
+}
+
+const std::vector<std::vector<double>> &GaussianProcessSupport::get_nodes_at(const int &idx) const {
+    return gaussian_processes.at(idx)->getGp_nodes();
 }
 
 //--------------------------------------------------------------------------------

@@ -1,6 +1,7 @@
 #include "VectorOperations.hpp"
 #include <math.h>
 #include <cassert>
+#include <iostream>
 
 //--------------------------------------------------------------------------------
 void VectorOperations::set_zero( std::vector<double> &v ) 
@@ -222,5 +223,39 @@ double VectorOperations::norm( std::vector< std::vector<double> > const &V )
       dbl += pow( V[i][j], 2e0 );
   }
   return sqrt(dbl);
+}
+
+void VectorOperations::vec_mat_product(std::vector<std::vector<double> > const &V1, std::vector<double> const &v2,
+                                       std::vector<double> &w)
+{
+  // computes w = v2^T * V1
+  size1 = V1.size();
+  size2 = v2.size();
+  for ( int j = 0; j < w.size(); ++j ) {
+    w.at(j) = 0e0;
+    for ( int i = 0; i < size1; ++i )
+      w.at(j) += v2.at(i) * V1.at(i).at(j);
+  }
+  return;
+
+}
+
+void VectorOperations::print_matrix(std::vector<std::vector<double> > const & M) {
+    std::cout << "[";
+    for(int i = 0; i < M.size(); ++i){
+        for(int j = 0; j < M.at(i).size(); ++j){
+            std::cout << M.at(i).at(j) << " ";
+        }
+        std::cout << ";" << std::endl;
+    }
+    std::cout << "]" << std::endl;
+}
+
+void VectorOperations::print_vector(std::vector<double> const & v) {
+    std::cout << "[";
+    for(int i = 0; i < v.size(); ++i){
+        std::cout << v.at(i) << " ";
+    }
+    std::cout << "]" << std::endl;
 }
 //--------------------------------------------------------------------------------

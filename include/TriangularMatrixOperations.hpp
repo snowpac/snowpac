@@ -38,16 +38,32 @@ class TriangularMatrixOperations {
         \param L Lower triangular matrix
         \param x Vector of right-hand side on input, solution vector on output
     */
-    void forward_substitution ( std::vector< std::vector<double> > const&, 
+    void forward_substitution ( std::vector< std::vector<double> > const&,
                                 std::vector<double> & );
+    //! Forward substituion
+    /*! Solves the linear system Ly = x for a lower triangular matrix L
+        The input vextor x contains the right-hand side on input and the solution on output
+        \param L Lower triangular matrix
+        \param x Vector of right-hand side on input, solution vector on output
+    */
+    void forward_substitution_not_inplace ( std::vector< std::vector<double> > const&,
+                                std::vector<double> const& , std::vector<double> &);
     //! Backward substituion
     /*! Solves the linear system L'y = x for a lower triangular matrix L
         The input vextor x contains the right-hand side on input and the solution on output
         \param L Lower triangular matrix
         \param x Vector of right-hand side on input, solution vector on output
     */
-    void backward_substitution ( std::vector< std::vector<double> > const&, 
+    void backward_substitution ( std::vector< std::vector<double> > const&,
                                  std::vector<double>& );
+    //! Backward substituion
+    /*! Solves the linear system L'y = x for a lower triangular matrix L
+        The input vextor x contains the right-hand side on input and the solution on output
+        \param L Lower triangular matrix
+        \param x Vector of right-hand side on input, solution vector on output
+    */
+    void backward_substitution_not_inplace ( std::vector< std::vector<double> > const&,
+                                         std::vector<double> const&, std::vector<double>& );
     //! Look behind algorithm (Cline et al. 1982)
     /*!
      Computes an approximation of the largest norm solution y of the linear system Ly = p

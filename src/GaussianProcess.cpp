@@ -79,8 +79,10 @@ void GaussianProcess::build ( std::vector< std::vector<double> > const &nodes,
 {
     nb_gp_nodes = nodes.size();
     gp_nodes.clear();
+    gp_noise.clear();
     for ( int i = 0; i < nb_gp_nodes; ++i ) {
       gp_nodes.push_back ( nodes.at(i) );
+      gp_noise.push_back( noise.at(i) );
     }
 
 
@@ -126,6 +128,7 @@ void GaussianProcess::update ( std::vector<double> const &x,
   K0.resize( nb_gp_nodes );
   nb_gp_nodes += 1;
   gp_nodes.push_back( x );
+  gp_noise.push_back( noise );
   scaled_function_values.push_back ( value );
 //  scaled_function_values.push_back ( ( value -  min_function_value ) / 
 //                                     ( 5e-1*( max_function_value-min_function_value ) ) - 1e0 );
@@ -335,5 +338,9 @@ double GaussianProcess::parameter_estimation_objective(std::vector<double> const
 */
   return result;
     
+}
+
+const std::vector<std::vector<double>> &GaussianProcess::getGp_nodes() const {
+    return gp_nodes;
 }
 //--------------------------------------------------------------------------------
