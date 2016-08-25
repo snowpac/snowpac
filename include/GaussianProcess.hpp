@@ -6,6 +6,7 @@
 #include "TriangularMatrixOperations.hpp"
 #include "VectorOperations.hpp"
 #include "nlopt.hpp"
+#include "BlackBoxData.hpp"
 #include <memory>
 
 //! Gaussian process regression
@@ -41,6 +42,8 @@ class GaussianProcess : public GaussianProcessBaseClass,
     int dim, nb_gp_nodes;
     double *delta;
     double noise_regularization = 1e-6;
+
+protected:
 
     //for gradient based estimation
 //    Eigen::MatrixXd dK;
@@ -111,6 +114,10 @@ class GaussianProcess : public GaussianProcessBaseClass,
     void evaluate ( std::vector<double> const&, double&, double& );
 
     const std::vector<std::vector<double>> &getGp_nodes() const;
+
+    virtual void get_induced_nodes(std::vector< std::vector<double> >&) const;
+
+    virtual const std::vector< int > get_induced_indices() const ;
 };
 
 #endif

@@ -343,4 +343,13 @@ double GaussianProcess::parameter_estimation_objective(std::vector<double> const
 const std::vector<std::vector<double>> &GaussianProcess::getGp_nodes() const {
     return gp_nodes;
 }
+
+void GaussianProcess::get_induced_nodes(std::vector<std::vector<double> > &) const {
+    return;
+}
+
+const std::vector<int> GaussianProcess::get_induced_indices() const {
+    return std::vector<int>();
+}
+
 //--------------------------------------------------------------------------------

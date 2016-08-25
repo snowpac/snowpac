@@ -91,7 +91,8 @@ IF ( NOWPAC_ENABLE_TESTS STREQUAL "ON" )
 ENDIF ()
 
 SET ( NOWPAC_SOURCE_FILES
-    ${NOWPAC_SOURCE_DIR}/src/ApproximatedGaussianProcess.cpp
+    ${NOWPAC_SOURCE_DIR}/src/ApproxGaussianProcessAugmentedSoR.cpp
+    ${NOWPAC_SOURCE_DIR}/src/ApproxGaussianProcessSoR.cpp
     ${NOWPAC_SOURCE_DIR}/src/BlackBoxData.cpp
     ${NOWPAC_SOURCE_DIR}/src/CholeskyFactorization.cpp
     ${NOWPAC_SOURCE_DIR}/src/GaussianProcess.cpp
@@ -106,7 +107,8 @@ SET ( NOWPAC_SOURCE_FILES
     ${NOWPAC_SOURCE_DIR}/src/TriangularMatrixOperations.cpp
     ${NOWPAC_SOURCE_DIR}/src/VectorOperations.cpp)
 SET ( NOWPAC_HEADER_FILES
-    ${NOWPAC_SOURCE_DIR}/include/ApproximatedGaussianProcess.hpp
+    ${NOWPAC_SOURCE_DIR}/include/ApproxGaussianProcessAugmentedSoR.hpp
+    ${NOWPAC_SOURCE_DIR}/include/ApproxGaussianProcessSoR.hpp
     ${NOWPAC_SOURCE_DIR}/include/BasisForSurrogateModelBaseClass.hpp
     ${NOWPAC_SOURCE_DIR}/include/BlackBoxBaseClass.hpp
     ${NOWPAC_SOURCE_DIR}/include/BlackBoxData.hpp

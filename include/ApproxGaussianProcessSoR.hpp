@@ -2,33 +2,33 @@
 // Created by friedrich on 16.08.16.
 //
 
-#ifndef NOWPAC_APPROXIMATEDGAUSSIANPROCESS_H
-#define NOWPAC_APPROXIMATEDGAUSSIANPROCESS_H
+#ifndef NOWPAC_APPROXGAUSSIANPROCESSSOR_H
+#define NOWPAC_APPROXGAUSSIANPROCESSSOR_H
 
 #include "GaussianProcess.hpp"
 
-class ApproximatedGaussianProcess : public GaussianProcess{
-private:
+class ApproxGaussianProcessSoR : public GaussianProcess{
+
+protected:
     std::vector< std::vector<double> > K_u_f;
     std::vector< std::vector<double> > K_f_u;
-    std::vector< std::vector<double> > K_u_u;
-    std::vector< std::vector<double> > L_inv_T_L_inv_K_u_f;
     std::vector< int > u_idx;
-    //std::vector< double > gp_noise;
     double u_ratio = 0.1;
     int min_nb_u_nodes = 1;
 
 public:
-    const std::vector<int> &getU_idx() const;
+    const std::vector< int > get_induced_indices() const;
+
+    void get_induced_nodes(std::vector< std::vector<double> >&) const;
     //! Constructor
     /*!
      Class constructor.
      \param n dimension of the Approximated Gaussian process.
     */
-    ApproximatedGaussianProcess( int, double& );
+    ApproxGaussianProcessSoR( int, double& );
 
     //! Destructor
-    ~ApproximatedGaussianProcess() { };
+    ~ApproxGaussianProcessSoR() { };
 
     //! Build the approximated Gaussian process
     /*!

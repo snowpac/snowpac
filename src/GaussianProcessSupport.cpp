@@ -2,7 +2,8 @@
 #include <iostream>
 #include <cassert>
 #include <fstream>
-#include <ApproximatedGaussianProcess.hpp>
+#include <ApproxGaussianProcessSoR.hpp>
+#include <ApproxGaussianProcessAugmentedSoR.hpp>
 #include <algorithm>
 
 //--------------------------------------------------------------------------------
@@ -22,8 +23,8 @@ void GaussianProcessSupport::initialize ( const int dim, const int number_proces
   values.resize( number_processes );
   noise.resize( number_processes );
   for ( int i = 0; i < number_processes; i++) {
-    //GaussianProcess* gp = new ApproximatedGaussianProcess(dim, *delta);
-    gaussian_processes.push_back ( std::shared_ptr<GaussianProcess> (new GaussianProcess(dim, *delta)) );
+    //GaussianProcess* gp = new ApproxGaussianProcessSoR(dim, *delta);
+    gaussian_processes.push_back ( std::shared_ptr<ApproxGaussianProcessSoR> (new ApproxGaussianProcessSoR(dim, *delta)) );
   }
   rescaled_node.resize( dim );
   return;
@@ -157,8 +158,7 @@ void GaussianProcessSupport::update_gaussian_processes ( BlackBoxData &evaluatio
 
 //--------------------------------------------------------------------------------
 void GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
-{  
-
+{
 
   update_data( evaluations );
 
@@ -235,13 +235,17 @@ void GaussianProcessSupport::evaluate_gaussian_process_at(const int &idx, std::v
   return;
 }
 
-const std::vector<int> &GaussianProcessSupport::getU_idx_at(const int &idx) const {
-    std::shared_ptr<ApproximatedGaussianProcess> agp = std::dynamic_pointer_cast<ApproximatedGaussianProcess>(gaussian_processes.at(idx));
-    return agp->getU_idx();
+const std::vector<int> GaussianProcessSupport::get_induced_indices_at(const int &idx) const {
+    return gaussian_processes.at(idx)->get_induced_indices();
 }
 
 const std::vector<std::vector<double>> &GaussianProcessSupport::get_nodes_at(const int &idx) const {
     return gaussian_processes.at(idx)->getGp_nodes();
+}
+
+void GaussianProcessSupport::get_induced_nodes_at(const int idx, std::vector<std::vector<double>> &induced_nodes) {
+    gaussian_processes.at(idx)->get_induced_nodes(induced_nodes);
+    return;
 }
 
 //--------------------------------------------------------------------------------

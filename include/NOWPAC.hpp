@@ -1035,14 +1035,16 @@ template<class TSurrogateModel, class TBasisForSurrogateModel>
 void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::output_for_plotting ( const int& evaluation_step, const int& sub_index, std::vector< double > const& best_node )
 {
   //return;
+    std::cout << "Writing Output..." << std::endl;
   std::vector<double> x_loc(dim);
   std::vector<double> fvals(nb_constraints+1);
-  std::ofstream outputfile ( "gp_data_" + std::to_string(evaluation_step) + "_" + std::to_string(sub_index) + ".dat" );
+  std::vector<double> fvar(nb_constraints+1);
   int xcoord = 0;
   int ycoord = 1;
   double var = 0;
   double upper_bound = 5;
   double lower_bound = -1;
+  std::ofstream outputfile ( "gp_data_" + std::to_string(evaluation_step) + "_" + std::to_string(sub_index) + ".dat" );
   if ( outputfile.is_open( ) ) {
     for ( int i = 0; i < dim; ++i)
       x_loc.at(i) = 0e0;
@@ -1053,11 +1055,11 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::output_for_plotting ( con
         //x_loc.at(ycoord) = j;
         x_loc.at(ycoord) = ( (j+1)/(2) * (upper_bound-lower_bound) + lower_bound);
         //fvals.at(0) = surrogate_models[0].evaluate( x_loc );
-        gaussian_processes.evaluate_gaussian_process_at(0, x_loc, fvals.at(0), var);
-        outputfile << x_loc.at(xcoord) << "; " << x_loc.at(ycoord) << "; " << fvals.at(0)<<"; ";
+        gaussian_processes.evaluate_gaussian_process_at(0, x_loc, fvals.at(0), fvar.at(0));
+        outputfile << x_loc.at(xcoord) << "; " << x_loc.at(ycoord) << "; " << fvals.at(0)<<"; " << fvar.at(0) << ";";
         for ( int k = 0; k < nb_constraints; ++k) {
           //fvals.at(k+1) = surrogate_models[k+1].evaluate( x_loc );
-          gaussian_processes.evaluate_gaussian_process_at(k+1, x_loc, fvals.at(k+1), var);
+          gaussian_processes.evaluate_gaussian_process_at(k+1, x_loc, fvals.at(k+1), fvar.at(0));
           outputfile << fvals.at(k+1) << "; ";
         }
         outputfile << std::endl;
@@ -1078,8 +1080,9 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::output_for_plotting ( con
         outputfile.close();
   } else std::cout << "Unable to open file." << std::endl;
     outputfile.open( "gp_points_" + std::to_string(evaluation_step) + "_" + std::to_string(sub_index) + ".dat" );
+    std::vector<std::vector<double>> gp_nodes;
     if ( outputfile.is_open( ) ) {
-        std::vector<std::vector<double>> gp_nodes = gaussian_processes.get_nodes_at(0);
+        gp_nodes = gaussian_processes.get_nodes_at(0);
         for ( int i = 0; i < gp_nodes.size(); ++i) {
             for (int j = 0; j < gp_nodes[i].size(); ++j){
                 outputfile << gp_nodes[i][j] << " ";
@@ -1095,14 +1098,20 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::output_for_plotting ( con
                 "gp_induced_points_" + std::to_string(evaluation_step) + "_" + std::to_string(sub_index) + ".dat");
         if (outputfile.is_open()) {
             //fvals.at(0) = surrogate_models[0].evaluate( x_loc );
-            std::cout << "###" << evaluation_step << "U_indices: ";
-            std::vector<int> u_indices = gaussian_processes.getU_idx_at(0);
-            for (int i = 0; i < u_indices.size(); ++i) {
-                std::cout << u_indices[i] << ",";
-            }
-            std::cout << std::endl;
-            for (int i = 0; i < u_indices.size(); ++i) {
-                outputfile << u_indices[i] << std::endl;
+            gaussian_processes.evaluate_gaussian_process_at(0, best_node, fvals.at(0), var); //reset u_indices and augmented_u
+            std::vector< int > u_indices = gaussian_processes.get_induced_indices_at(0);
+            std::vector< std::vector<double> > u_nodes;
+            /*for(int i = 0; i < u_indices.size(); ++i){
+                u_nodes.push_back(gp_nodes[u_indices[i]]);
+            }*/
+            gaussian_processes.get_induced_nodes_at(0, u_nodes);
+            std::cout << "U_matrix: " << std::endl;
+            VectorOperations::print_matrix(u_nodes);
+            for (int i = 0; i < u_nodes.size(); ++i) {
+                for (int j = 0; j < u_nodes[i].size(); ++j){
+                    outputfile << u_nodes[i][j] << " ";
+                }
+                outputfile << std::endl;
             }
             outputfile.close();
         } else std::cout << "Unable to open file." << std::endl;
@@ -1170,6 +1179,7 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::output_for_plotting ( con
   //std::cout << "Press Enter to Continue";
   //std::cin.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
   //system("read -n1 -r -p \"Press any key to continue...\"");
+    std::cout << "...Done!" << std::endl;
   return;
 }
 //XXX--------------------------------------------------------------------------------
