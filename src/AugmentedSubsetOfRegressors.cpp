@@ -2,26 +2,41 @@
 // Created by friedrich on 16.08.16.
 //
 
-#include <ApproxGaussianProcessSoR.hpp>
+#include <AugmentedSubsetOfRegressors.hpp>
 #include <assert.h>
 #include <random>
 #include <algorithm>
 #include <iostream>
 
 //--------------------------------------------------------------------------------
-ApproxGaussianProcessSoR::ApproxGaussianProcessSoR(int n, double &delta_input):GaussianProcess(n, delta_input) {}
+AugmentedSubsetOfRegressors::AugmentedSubsetOfRegressors(int n, double &delta_input):SubsetOfRegressors(n, delta_input) {}
 //--------------------------------------------------------------------------------
 
-//--------------------------------------------------------------------------------
-void ApproxGaussianProcessSoR::build ( std::vector< std::vector<double> > const &nodes,
-                              std::vector<double> const &values,
-                              std::vector<double> const &noise )
-{
+void AugmentedSubsetOfRegressors::build ( std::vector< std::vector<double> > const &nodes,
+             std::vector<double> const &values, std::vector<double> const &noise){
 
     int nb_u_nodes = nodes.size()*u_ratio;
-    std::cout << "In Build Gaussian with [" << nodes.size() << "," << nb_u_nodes <<"]" << std::endl;
+    std::cout << "In ApproxGaussianProcessAugmentedSoR_build Gaussian with [" << nodes.size() << "," << nb_u_nodes <<"]" << std::endl;
+
     if(nb_u_nodes >= min_nb_u_nodes) {
-        nb_u_nodes++;
+        this->sample_u(nb_u_nodes);
+        //std::cout << "U created: ";
+        //VectorOperations::print_matrix(u);
+
+        this->build_with_u(nodes, values, noise);
+    }else{
+        GaussianProcess::build(nodes, values, noise);
+    }
+}
+//--------------------------------------------------------------------------------
+void AugmentedSubsetOfRegressors::build_with_u ( std::vector< std::vector<double> > const &nodes,
+                              std::vector<double> const &values,
+                              std::vector<double> const &noise)
+{
+
+    int nb_u_nodes = u.size();
+    //std::cout << "In ApproxGaussianProcessAugmentedSoR_Build_Gaussian_with_u [" << nodes.size() << "," << nb_u_nodes <<"]" << std::endl;
+    if(nb_u_nodes >= min_nb_u_nodes) {
 
         nb_gp_nodes = nodes.size();
         gp_nodes.clear();
@@ -30,53 +45,9 @@ void ApproxGaussianProcessSoR::build ( std::vector< std::vector<double> > const 
             gp_nodes.push_back(nodes.at(i));
             gp_noise.push_back(noise.at(i));
         }
-        u_idx.clear();
-        //Set distribution for sampling the indices for the u samples
-        std::random_device rd;
-        int random_seed = rd();
-        std::mt19937 random_generator(random_seed);
-        std::vector<double> nodes_weights_vector;
-        nodes_weights_vector.resize(nodes.size());
-        double nodes_weights = 100.0 / nodes.size();
-        std::fill(nodes_weights_vector.begin(), nodes_weights_vector.end(), nodes_weights);
-        /*double prefactor = 200.0/( (nb_gp_nodes + 1)*nb_gp_nodes);
-        for(int i = 1; i <= nb_gp_nodes; ++i){
-            nodes_weights_vector.push_back(prefactor * i);
-        }*/
-        std::discrete_distribution<> d(nodes_weights_vector.begin(), nodes_weights_vector.end());
 
-        //Sample the indices
-        int random_draw = -1;
-        std::vector<int>::iterator it;
-        random_draw = d(random_generator);
-        u_idx.push_back(random_draw);
-        std::cout << "Drawing";
-        int no_draws = 0;
-        while (u_idx.size() < nb_u_nodes) {
-            random_draw = d(random_generator);
-            no_draws++;
-            it = std::find(u_idx.begin(), u_idx.end(), random_draw);
-            if (it == u_idx.end()) {
-                u_idx.push_back(random_draw);
-                no_draws=0;
-            }
-        }
-        std::cout << std::endl;
-        std::sort(u_idx.begin(), u_idx.end());
-        std::cout << "Sampling done with";
-        for(int i = 0; i < u_idx.size(); ++i){
-            std::cout << " " << u_idx.at(i);
-        }
-        std::cout << std::endl;
-
-        //Create u vector
-        std::vector< std::vector<double> > u;
-        u.resize(nb_u_nodes);
-        for (int i = 0; i < nb_u_nodes; ++i) {
-            for (int j = 0; j < nodes.at(u_idx.at(i)).size(); ++j) {
-                u.at(i).push_back(nodes.at(u_idx.at(i)).at(j));
-            }
-        }
+        //std::cout << "U created: ";
+        //VectorOperations::print_matrix(u);
         //std::cout << "Creating u done!" << std::endl;
 
         //std::cout << "Noise: " << std::endl;
@@ -185,13 +156,14 @@ void ApproxGaussianProcessSoR::build ( std::vector< std::vector<double> > const 
 
 
 //--------------------------------------------------------------------------------
-void ApproxGaussianProcessSoR::update ( std::vector<double> const &x,
+void AugmentedSubsetOfRegressors::update ( std::vector<double> const &x,
                                double &value,
                                double &noise )
 {
 
-    int nb_u_nodes = (gp_nodes.size())*u_ratio;
-    //std::cout << "In update Gaussian with [" << gp_nodes.size()+1 << "," << nb_u_nodes <<"]" << std::endl;
+    int nb_u_nodes = gp_nodes.size()*u_ratio;
+    augmented_u.clear();
+    std::cout << "In update Gaussian with [" << gp_nodes.size() << "," << nb_u_nodes <<"]" << std::endl;
     if(nb_u_nodes >= min_nb_u_nodes) {
         //std::cout << "#Update" << std::endl;
         std::vector< std::vector<double> > temp_nodes;
@@ -218,17 +190,42 @@ void ApproxGaussianProcessSoR::update ( std::vector<double> const &x,
     return;
 }
 //--------------------------------------------------------------------------------
-void ApproxGaussianProcessSoR::evaluate ( std::vector<double> const &x,
+
+void AugmentedSubsetOfRegressors::evaluate ( std::vector<double> const &x,
                                  double &mean, double &variance )
 {
-    if(u_idx.size()>0) {
+    if(u.size()>0) {
+        //std::cout << "ApproxAugmented::evaluate" << std::endl;
+        augmented_u.clear();
+        for(int i = 0; i < x.size(); ++i){
+            augmented_u.push_back(x[i]);
+        }
 
-        int nb_u_nodes = u_idx.size();
+        /*std::cout << "Augmented_u:";
+        VectorOperations::print_vector(augmented_u);
+        std::cout << "U:";
+        VectorOperations::print_matrix(u);*/
+        u.push_back(augmented_u);
+
+        std::vector< std::vector<double> > temp_nodes;
+        temp_nodes.resize(gp_nodes.size());
+        std::vector< double > temp_values;
+        std::vector< double > temp_noise;
+        for(int i = 0; i < gp_nodes.size(); ++i) {
+            for (int j = 0; j < gp_nodes.at(i).size(); ++j) {
+                temp_nodes.at(i).push_back(gp_nodes.at(i).at(j));
+            }
+            temp_values.push_back(scaled_function_values.at(i));
+            temp_noise.push_back(gp_noise.at(i));
+        }
+        this->build_with_u(temp_nodes, temp_values, temp_noise);
+
+        int nb_u_nodes = u.size();
 
         K0.clear();
         K0.resize(nb_u_nodes);
         for (int i = 0; i < nb_u_nodes; i++){
-            K0.at(i) = evaluate_kernel(x, gp_nodes[u_idx[i]]);
+            K0.at(i) = evaluate_kernel(x, u[i]);
         }
         /*
         std::cout << "##############Evaluate################" << std::endl;
@@ -245,9 +242,12 @@ void ApproxGaussianProcessSoR::evaluate ( std::vector<double> const &x,
         /*
         std::cout << "Variance: " << variance << std::endl;
         std::cout << "######################################" << std::endl;
+        */
+        /*
         evaluate_counter++;
         assert(evaluate_counter<20*3);
          */
+        u.pop_back();
     }else{
         GaussianProcess::evaluate(x, mean, variance);
     }
@@ -255,16 +255,13 @@ void ApproxGaussianProcessSoR::evaluate ( std::vector<double> const &x,
 
 }
 
-const std::vector<int> ApproxGaussianProcessSoR::get_induced_indices() const {
-    return u_idx;
-}
-
-void ApproxGaussianProcessSoR::get_induced_nodes(std::vector< std::vector<double> > &induced_nodes) const {
+void AugmentedSubsetOfRegressors::get_induced_nodes(std::vector< std::vector<double> > &induced_nodes) const {
     //assert(induced_nodes.size()==u_idx.size());
-    for(int i = 0; i < u_idx.size(); ++i){
-        //for(int j = 0; j < gp_nodes[u_idx[i]].size(); ++j){
-        induced_nodes.push_back(gp_nodes[u_idx[i]]);
-        //}
+    for(int i = 0; i < u.size(); ++i){
+        induced_nodes.push_back(u[i]);
+    }
+    if(augmented_u.size() > 0){
+        induced_nodes.push_back(augmented_u);
     }
     return;
 }

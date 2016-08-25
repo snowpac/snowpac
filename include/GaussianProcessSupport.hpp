@@ -38,8 +38,6 @@ class GaussianProcessSupport : protected VectorOperations {
 
     void evaluate_gaussian_process_at(const int&, std::vector<double> const&, double&, double&);
 
-    const std::vector<int> get_induced_indices_at(const int&) const;
-
     const std::vector<std::vector<double>> &get_nodes_at(const int&) const;
 
     void get_induced_nodes_at(const int idx, std::vector<std::vector<double>> &induced_nodes);

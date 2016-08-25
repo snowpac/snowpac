@@ -1092,18 +1092,15 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::output_for_plotting ( con
         outputfile.close();
     } else std::cout << "Unable to open file." << std::endl;
 
-    bool approximated_gaussians = false;
+    bool approximated_gaussians = true;
     if(approximated_gaussians) {
         outputfile.open(
                 "gp_induced_points_" + std::to_string(evaluation_step) + "_" + std::to_string(sub_index) + ".dat");
         if (outputfile.is_open()) {
             //fvals.at(0) = surrogate_models[0].evaluate( x_loc );
             gaussian_processes.evaluate_gaussian_process_at(0, best_node, fvals.at(0), var); //reset u_indices and augmented_u
-            std::vector< int > u_indices = gaussian_processes.get_induced_indices_at(0);
             std::vector< std::vector<double> > u_nodes;
-            /*for(int i = 0; i < u_indices.size(); ++i){
-                u_nodes.push_back(gp_nodes[u_indices[i]]);
-            }*/
+            u_nodes.clear();
             gaussian_processes.get_induced_nodes_at(0, u_nodes);
             std::cout << "U_matrix: " << std::endl;
             VectorOperations::print_matrix(u_nodes);

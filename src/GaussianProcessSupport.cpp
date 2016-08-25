@@ -2,8 +2,8 @@
 #include <iostream>
 #include <cassert>
 #include <fstream>
-#include <ApproxGaussianProcessSoR.hpp>
-#include <ApproxGaussianProcessAugmentedSoR.hpp>
+#include <SubsetOfRegressors.hpp>
+#include <AugmentedSubsetOfRegressors.hpp>
 #include <algorithm>
 
 //--------------------------------------------------------------------------------
@@ -23,8 +23,8 @@ void GaussianProcessSupport::initialize ( const int dim, const int number_proces
   values.resize( number_processes );
   noise.resize( number_processes );
   for ( int i = 0; i < number_processes; i++) {
-    //GaussianProcess* gp = new ApproxGaussianProcessSoR(dim, *delta);
-    gaussian_processes.push_back ( std::shared_ptr<ApproxGaussianProcessSoR> (new ApproxGaussianProcessSoR(dim, *delta)) );
+    //GaussianProcess* gp = new SubsetOfRegressors(dim, *delta);
+    gaussian_processes.push_back ( std::shared_ptr<AugmentedSubsetOfRegressors> (new AugmentedSubsetOfRegressors(dim, *delta)) );
   }
   rescaled_node.resize( dim );
   return;
@@ -160,6 +160,10 @@ void GaussianProcessSupport::update_gaussian_processes ( BlackBoxData &evaluatio
 void GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
 {
 
+  for(int i = 0; i < number_processes; ++i){
+    gaussian_processes[i]->set_evaluations(evaluations);
+  }
+
   update_data( evaluations );
 
   update_gaussian_processes( evaluations );
@@ -233,10 +237,6 @@ double GaussianProcessSupport::evaluate_objective ( BlackBoxData const &evaluati
 void GaussianProcessSupport::evaluate_gaussian_process_at(const int &idx, std::vector<double> const &loc, double &mean, double &var) {
   gaussian_processes.at(idx)->evaluate(loc, mean, var);
   return;
-}
-
-const std::vector<int> GaussianProcessSupport::get_induced_indices_at(const int &idx) const {
-    return gaussian_processes.at(idx)->get_induced_indices();
 }
 
 const std::vector<std::vector<double>> &GaussianProcessSupport::get_nodes_at(const int &idx) const {

@@ -2,32 +2,33 @@
 // Created by friedrich on 16.08.16.
 //
 
-#ifndef NOWPAC_APPROXGAUSSIANPROCESSESAUGMENTEDSOR_H
-#define NOWPAC_APPROXGAUSSIANPROCESSESAUGMENTEDSOR_H
+#ifndef NOWPAC_APPROXGAUSSIANPROCESSSOR_H
+#define NOWPAC_APPROXGAUSSIANPROCESSSOR_H
 
 #include "GaussianProcess.hpp"
-#include "ApproxGaussianProcessSoR.hpp"
 
-class ApproxGaussianProcessAugmentedSoR : public ApproxGaussianProcessSoR{
-private:
+class SubsetOfRegressors : public GaussianProcess{
+
+protected:
+    std::vector< std::vector<double> > K_u_f;
+    std::vector< std::vector<double> > K_f_u;
     std::vector< std::vector<double> > u;
-    std::vector< double > augmented_u;
     double u_ratio = 0.1;
     int min_nb_u_nodes = 1;
 
-public:
-    const std::vector< int > get_induced_indices() const;
+    void sample_u(const int &nb_u_nodes);
 
+public:
     void get_induced_nodes(std::vector< std::vector<double> >&) const;
     //! Constructor
     /*!
      Class constructor.
      \param n dimension of the Approximated Gaussian process.
     */
-    ApproxGaussianProcessAugmentedSoR( int, double& );
+    SubsetOfRegressors( int, double& );
 
     //! Destructor
-    ~ApproxGaussianProcessAugmentedSoR() { };
+    ~SubsetOfRegressors() { };
 
     //! Build the approximated Gaussian process
     /*!
@@ -40,31 +41,6 @@ public:
     */
     void build ( std::vector< std::vector<double> > const&,
                  std::vector<double> const&, std::vector<double> const&);
-
-    //! Build the approximated Gaussian process
-    /*!
-     Computes the Gaussian process\n
-     Requires the estimation of hyper parameters
-     \param nodes regression points
-     \param function values
-     \param noise in function values
-     \see estimate_hyper_parameters
-    */
-    void build_with_u ( std::vector< std::vector<double> > const&,
-                 std::vector<double> const&, std::vector<double> const&);
-
-    //! Build the approximated Gaussian process
-    /*!
-     Computes the Gaussian process\n
-     Requires the estimation of hyper parameters
-     \param nodes regression points
-     \param function values
-     \param noise in function values
-     \see estimate_hyper_parameters
-    */
-    void build_from_evaluate ( std::vector< std::vector<double> > const&,
-                 std::vector<double> const&, std::vector<double> const&);
-
     //! Update the approximated Gaussian process
     /*!
      Includees a new point into the Gaussian process
@@ -85,4 +61,4 @@ public:
     void evaluate ( std::vector<double> const&, double&, double& );
 };
 
-#endif //NOWPAC_APPROXGAUSSIANPROCESSESAUGMENTEDSOR_H
+#endif //NOWPAC_APPROXIMATEDGAUSSIANPROCESS_H

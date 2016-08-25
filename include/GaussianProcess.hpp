@@ -43,6 +43,8 @@ class GaussianProcess : public GaussianProcessBaseClass,
     double *delta;
     double noise_regularization = 1e-6;
 
+    BlackBoxData evaluations;
+
 protected:
 
     //for gradient based estimation
@@ -117,7 +119,7 @@ protected:
 
     virtual void get_induced_nodes(std::vector< std::vector<double> >&) const;
 
-    virtual const std::vector< int > get_induced_indices() const ;
+    void set_evaluations(const BlackBoxData &evaluations);
 };
 
 #endif

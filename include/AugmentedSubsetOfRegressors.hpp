@@ -2,17 +2,15 @@
 // Created by friedrich on 16.08.16.
 //
 
-#ifndef NOWPAC_APPROXGAUSSIANPROCESSSOR_H
-#define NOWPAC_APPROXGAUSSIANPROCESSSOR_H
+#ifndef NOWPAC_APPROXGAUSSIANPROCESSESAUGMENTEDSOR_H
+#define NOWPAC_APPROXGAUSSIANPROCESSESAUGMENTEDSOR_H
 
 #include "GaussianProcess.hpp"
+#include "SubsetOfRegressors.hpp"
 
-class ApproxGaussianProcessSoR : public GaussianProcess{
-
-protected:
-    std::vector< std::vector<double> > K_u_f;
-    std::vector< std::vector<double> > K_f_u;
-    std::vector< int > u_idx;
+class AugmentedSubsetOfRegressors : public SubsetOfRegressors{
+private:
+    std::vector< double > augmented_u;
     double u_ratio = 0.1;
     int min_nb_u_nodes = 1;
 
@@ -25,10 +23,10 @@ public:
      Class constructor.
      \param n dimension of the Approximated Gaussian process.
     */
-    ApproxGaussianProcessSoR( int, double& );
+    AugmentedSubsetOfRegressors( int, double& );
 
     //! Destructor
-    ~ApproxGaussianProcessSoR() { };
+    ~AugmentedSubsetOfRegressors() { };
 
     //! Build the approximated Gaussian process
     /*!
@@ -41,6 +39,31 @@ public:
     */
     void build ( std::vector< std::vector<double> > const&,
                  std::vector<double> const&, std::vector<double> const&);
+
+    //! Build the approximated Gaussian process
+    /*!
+     Computes the Gaussian process\n
+     Requires the estimation of hyper parameters
+     \param nodes regression points
+     \param function values
+     \param noise in function values
+     \see estimate_hyper_parameters
+    */
+    void build_with_u ( std::vector< std::vector<double> > const&,
+                 std::vector<double> const&, std::vector<double> const&);
+
+    //! Build the approximated Gaussian process
+    /*!
+     Computes the Gaussian process\n
+     Requires the estimation of hyper parameters
+     \param nodes regression points
+     \param function values
+     \param noise in function values
+     \see estimate_hyper_parameters
+    */
+    void build_from_evaluate ( std::vector< std::vector<double> > const&,
+                 std::vector<double> const&, std::vector<double> const&);
+
     //! Update the approximated Gaussian process
     /*!
      Includees a new point into the Gaussian process
@@ -61,4 +84,4 @@ public:
     void evaluate ( std::vector<double> const&, double&, double& );
 };
 
-#endif //NOWPAC_APPROXIMATEDGAUSSIANPROCESS_H
+#endif //NOWPAC_APPROXGAUSSIANPROCESSESAUGMENTEDSOR_H

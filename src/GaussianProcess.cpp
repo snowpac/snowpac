@@ -348,8 +348,7 @@ void GaussianProcess::get_induced_nodes(std::vector<std::vector<double> > &) con
     return;
 }
 
-const std::vector<int> GaussianProcess::get_induced_indices() const {
-    return std::vector<int>();
+void GaussianProcess::set_evaluations(const BlackBoxData &evaluations) {
+    this->evaluations = evaluations;
 }
-
 //--------------------------------------------------------------------------------
