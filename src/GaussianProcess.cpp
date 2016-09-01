@@ -14,7 +14,7 @@ GaussianProcess::GaussianProcess ( int n, double &delta_input ) :
   for (int i = 0; i < n+1; i++) {
     lb.push_back( 0e0  );
     ub.push_back( 10e0 );
-    gp_parameters.push_back( -1e0 );
+    gp_parameters.push_back( 1e0 );
   }
   nb_gp_nodes = 0;
   gp_pointer = NULL;

@@ -88,15 +88,18 @@ double SubproblemDefinitions<TSurrogateModel, TSubproblemOptimization>::opt_rest
   for ( int i = 0; i < (d->me->surrogate_models)->size()-1; ++i ) {
     tmp[0] = (*(d->me->surrogate_models))[i+1].evaluate( x );
     if ( tmp[0] > 0e0 ) {
+      objective_value += 1e-4*tmp[0]; //xxx
       tmp[0] += d->me->inner_boundary_constant->at(i) * tmp[1] * tmp[2];
       d->vo->mat_vec_product( (*(d->me->surrogate_models))[i+1].hessian( ), x, gradient );
       d->vo->add ((*(d->me->surrogate_models))[i+1].gradient( ), gradient );
       //gradient = (*(d->me->surrogate_models))[i+1].gradient( x );
       objective_value += pow( tmp[0] , 2e0);
       if (!grad.empty( )) {
-        for (int j = 0; j < x.size( ); j++) 
+        for (int j = 0; j < x.size( ); j++) {
+          grad[j] += 1e-4*gradient.at(j); //xxx
           grad[j] += 2e0 * tmp[0] * ( gradient.at( j ) + 
                      d->me->inner_boundary_constant->at(i) * x.at(j) * tmp[2]);
+        }
       }
     }
   }

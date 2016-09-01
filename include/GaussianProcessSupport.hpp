@@ -9,7 +9,7 @@
 class GaussianProcessSupport : protected VectorOperations {
   private:
     double *delta;
-    bool do_parameter_estimation = true;
+    bool do_parameter_estimation = false;
     int number_processes;
     int nb_values = 0;
     std::vector<int> update_at_evaluations;
