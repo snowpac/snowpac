@@ -26,7 +26,7 @@ public:
     AugmentedSubsetOfRegressors( int, double& );
 
     //! Destructor
-    ~AugmentedSubsetOfRegressors() { };
+    virtual ~AugmentedSubsetOfRegressors() { };
 
     //! Build the approximated Gaussian process
     /*!

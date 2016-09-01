@@ -23,8 +23,7 @@ void GaussianProcessSupport::initialize ( const int dim, const int number_proces
   values.resize( number_processes );
   noise.resize( number_processes );
   for ( int i = 0; i < number_processes; i++) {
-    //GaussianProcess* gp = new SubsetOfRegressors(dim, *delta);
-    gaussian_processes.push_back ( std::shared_ptr<AugmentedSubsetOfRegressors> (new AugmentedSubsetOfRegressors(dim, *delta)) );
+    gaussian_processes.push_back ( std::shared_ptr<GaussianProcess> (new GaussianProcess(dim, *delta)) );
   }
   rescaled_node.resize( dim );
   return;
@@ -54,6 +53,7 @@ void GaussianProcessSupport::update_data ( BlackBoxData &evaluations )
 //--------------------------------------------------------------------------------
 void GaussianProcessSupport::update_gaussian_processes ( BlackBoxData &evaluations )
 {
+
   if ( nb_values >= next_update && update_interval_length > 0 ) {
     do_parameter_estimation = true;
     next_update += update_interval_length;

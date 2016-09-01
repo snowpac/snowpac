@@ -57,7 +57,7 @@ class NOWPAC : protected NoiseDetection<TSurrogateModel> {
     int dim;
     int nb_constraints;
     GaussianProcessSupport gaussian_processes;
-    BlackBoxBaseClass *blackbox;
+    BlackBoxBaseClass *blackbox = NULL;
     TBasisForSurrogateModel surrogate_basis;
     TSurrogateModel surrogate_model_prototype;
     std::vector<TSurrogateModel> surrogate_models;
@@ -79,7 +79,7 @@ class NOWPAC : protected NoiseDetection<TSurrogateModel> {
     const char *double_format = "  %.16e  ";
     const char *int_format    = "  %d  ";
     const char* output_filename = NULL;
-    std::FILE *output_file;
+    std::FILE *output_file = NULL;
     void *user_data_pointer = NULL;
     BlackBoxData evaluations;
     std::vector<double> x_trial;
@@ -92,9 +92,9 @@ class NOWPAC : protected NoiseDetection<TSurrogateModel> {
     std::vector<double> max_inner_boundary_path_constants;
     std::vector<double> lower_bound_constraints;
     std::vector<double> upper_bound_constraints;
-    double criticality_value;
-    double trial_model_value;
-    double tmp_dbl;
+    double criticality_value = -1;
+    double trial_model_value = -1;
+    double tmp_dbl = -1;
     double stepsize[2];
     double max_noise;
     int noise_observation_span;
@@ -102,8 +102,8 @@ class NOWPAC : protected NoiseDetection<TSurrogateModel> {
     bool noise_detection;
     bool noise_termination;
     int verbose;
-    double acceptance_ratio;
-    int replace_node_index;
+    double acceptance_ratio = -1;
+    int replace_node_index = -1;
     int max_number_blackbox_evaluations;
     bool max_number_blackbox_evaluations_is_set;
     int max_number_accepted_steps;
@@ -113,7 +113,7 @@ class NOWPAC : protected NoiseDetection<TSurrogateModel> {
     int update_interval_length;
     int EXIT_FLAG;
     int NOEXIT;
-    double tmp_dbl1;
+    double tmp_dbl1 = -1;
 
     int output_steps = 1;
 public:
@@ -321,9 +321,9 @@ NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::NOWPAC ( int n ) :
   noise_termination = false;
   noise_detection   = false;
   stepsize[0] = 1e0; stepsize[1] = 0e0;
-  evaluations.max_nb_nodes = (dim*dim + 3*dim + 2)/2;
-//  evaluations.max_nb_nodes = dim +1;
-//  evaluations.max_nb_nodes = 2*dim+1;
+  evaluations.max_nb_nodes = (dim*dim + 3*dim + 2)/2; //fully quadratic
+//  evaluations.max_nb_nodes = dim +1; //linear
+//  evaluations.max_nb_nodes = 2*dim+1; //fully linear
   max_number_blackbox_evaluations_is_set = false;
   max_number_blackbox_evaluations = (int) HUGE_VAL;
   max_number_accepted_steps_is_set = false;
@@ -333,6 +333,7 @@ NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::NOWPAC ( int n ) :
   NOEXIT = 100;
   EXIT_FLAG = NOEXIT;
   update_interval_length = 0;//5 * dim;
+
 }
 //--------------------------------------------------------------------------------
 
@@ -882,6 +883,12 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::write_to_file ( )
     for(int i = 0; i < nb_constraints; ++i) {
         fprintf(output_file, double_format, evaluations.values.at(i+1).at(evaluations.best_index));
     }
+    // output variance of current value on gp
+    double mean = -1;
+    double var = -1;
+    gaussian_processes.evaluate_gaussian_process_at(0, evaluations.nodes.at(evaluations.best_index), mean, var);
+    fprintf(output_file, double_format, var);
+
     fprintf(output_file, "\n");
     fflush(output_file);
 
@@ -1034,7 +1041,7 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::check_parameter_consisten
 template<class TSurrogateModel, class TBasisForSurrogateModel>
 void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::output_for_plotting ( const int& evaluation_step, const int& sub_index, std::vector< double > const& best_node )
 {
-  //return;
+
     std::cout << "Writing Output..." << std::endl;
   std::vector<double> x_loc(dim);
   std::vector<double> fvals(nb_constraints+1);
@@ -1067,6 +1074,7 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::output_for_plotting ( con
     }
     outputfile.close( );
   } else std::cout << "Unable to open file." << std::endl;
+
   outputfile.open( "gp_best_point_" + std::to_string(evaluation_step) + "_" + std::to_string(sub_index) + ".dat" );
   if ( outputfile.is_open( ) ) {
         //fvals.at(0) = surrogate_models[0].evaluate( x_loc );
@@ -1079,18 +1087,31 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::output_for_plotting ( con
         }
         outputfile.close();
   } else std::cout << "Unable to open file." << std::endl;
-    outputfile.open( "gp_points_" + std::to_string(evaluation_step) + "_" + std::to_string(sub_index) + ".dat" );
-    std::vector<std::vector<double>> gp_nodes;
-    if ( outputfile.is_open( ) ) {
-        gp_nodes = gaussian_processes.get_nodes_at(0);
-        for ( int i = 0; i < gp_nodes.size(); ++i) {
-            for (int j = 0; j < gp_nodes[i].size(); ++j){
-                outputfile << gp_nodes[i][j] << " ";
-            }
-            outputfile << std::endl;
-        }
-        outputfile.close();
-    } else std::cout << "Unable to open file." << std::endl;
+
+		outputfile.open( "gp_points_" + std::to_string(evaluation_step) + "_" + std::to_string(sub_index) + ".dat" );
+		std::vector<std::vector<double>> gp_nodes;
+		if ( outputfile.is_open( ) ) {
+			gp_nodes = gaussian_processes.get_nodes_at(0);
+			for ( int i = 0; i < gp_nodes.size(); ++i) {
+					for (int j = 0; j < gp_nodes[i].size(); ++j){
+							outputfile << gp_nodes[i][j] << " ";
+					}
+					outputfile << std::endl;
+			}
+			outputfile.close();
+		} else std::cout << "Unable to open file." << std::endl;
+
+    outputfile.open( "active_nodes_" + std::to_string(evaluation_step) + "_" + std::to_string(sub_index) + ".dat" );
+		if ( outputfile.is_open( ) ) {
+					//fvals.at(0) = surrogate_models[0].evaluate( x_loc );
+					for(int i = 0; i < evaluations.active_index.size(); ++i){
+						for(int j = 0; j < evaluations.nodes[evaluations.active_index[i]].size(); ++j){
+							outputfile << evaluations.nodes[evaluations.active_index[i]][j] << ";";
+						}
+						outputfile << std::endl;
+					}
+					outputfile.close();
+		} else std::cout << "Unable to open file." << std::endl;
 
     bool approximated_gaussians = true;
     if(approximated_gaussians) {
