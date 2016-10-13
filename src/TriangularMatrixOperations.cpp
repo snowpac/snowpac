@@ -8,7 +8,6 @@ TriangularMatrixOperations::TriangularMatrixOperations ( int n )
   w.resize( dim );
   p.resize( dim );
   d.resize( dim );
-//  tmp_ev.resize( dim );  
 }
 //--------------------------------------------------------------------------------
 

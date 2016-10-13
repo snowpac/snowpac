@@ -34,18 +34,12 @@ class GaussianProcess : public GaussianProcessBaseClass,
 
     GaussianProcess *gp_pointer;
     std::vector< std::vector<double> > gp_nodes;
-   // Eigen::VectorXd gp_function_values;
     std::vector<double> scaled_function_values;
     double min_function_value, max_function_value;
     std::vector<double> gp_noise;
     int dim, nb_gp_nodes;
     double *delta;
     double noise_regularization = 1e-6;
-
-    //for gradient based estimation
-//    Eigen::MatrixXd dK;
-    //Eigen::ColPivHouseholderQR<Eigen::MatrixXd> S;
-//    Eigen::FullPivHouseholderQR<Eigen::MatrixXd> S;
 
     static double parameter_estimation_objective(std::vector<double> const&, 
                                                  std::vector<double>&, void*);

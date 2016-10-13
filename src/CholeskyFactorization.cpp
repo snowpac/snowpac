@@ -38,7 +38,7 @@ void CholeskyFactorization::compute(
         }
       }
     }
-//    if (n-i-1 > 0) (L.row(i)).tail(n-i-1) = Eigen::VectorXd::Zero(n-i-1); 
+// Pseudo code:  if (n-i-1 > 0) (L.row(i)).tail(n-i-1) = [0, ..., 0]; 
   }	
   return;
 }

@@ -55,25 +55,6 @@ void MinimumFrobeniusNormModel::set_function_values(
     add( values.at(i), basis->hessian(i), model_hessian );
   }
 
-/*
-  std::cout << " ---------------------- " << std::endl;
-  std::cout << " ---------------------- " << std::endl;
-  for ( int i = 0; i < size; ++i)
-    std::cout << "f["<<i<<"]=" << values[i] << std::endl;
-  std::cout << " ---------------------- " << std::endl;
-  std::cout << "c = " << model_constant << std::endl;
-  for ( int i = 0; i < dim; ++i)
-    std::cout << "g[" <<i << "] = " << model_gradient[i] << std::endl;
-  for ( int i = 0; i < dim; ++i) {
-    for ( int j = 0; j < dim; ++j )
-      std::cout << "H[" <<i << "]["<< j<<"] = " << model_hessian[i][j] << std::endl;
-  }
-  std::cout << " ---------------------- " << std::endl;
-  std::cout << " ---------------------- " << std::endl;
-*/
-//  function_values.resize( values.size() );
-//  for ( unsigned int i = 0; i < size; ++i )
-//    function_values.at(i) = values.at( i );
   return;
 }
 //--------------------------------------------------------------------------------

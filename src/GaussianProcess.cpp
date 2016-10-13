@@ -28,16 +28,9 @@ double GaussianProcess::evaluate_kernel ( std::vector<double> const &x,
                                           std::vector<double> const &y )
 {
   return evaluate_kernel ( x, y, gp_parameters );
-/*
-  dist = 0e0;
-  for ( int i = 0; i < dim; ++i )
-    dist += pow( (x.at(i) - y.at(i)), 2e0) /  gp_parameters.at( i+1 );
-  kernel_evaluation = exp(-dist / 2e0 );
-  
-  return kernel_evaluation * gp_parameters.at( 0 ) ;
-*/
 }
 //--------------------------------------------------------------------------------
+
 //--------------------------------------------------------------------------------
 double GaussianProcess::evaluate_kernel ( std::vector<double> const &x, 
                                           std::vector<double> const &y,
@@ -88,8 +81,6 @@ void GaussianProcess::build ( std::vector< std::vector<double> > const &nodes,
 //    min_function_value = values.at((minmax.first - values.begin()));
 //    max_function_value = values.at((minmax.second - values.begin()));
 
-//    std::cout << "[ " << min_function_value << ", " << max_function_value << " ]" << std::endl;
-
     L.clear();
     L.resize( nb_gp_nodes );
 
@@ -130,8 +121,7 @@ void GaussianProcess::update ( std::vector<double> const &x,
 //  scaled_function_values.push_back ( ( value -  min_function_value ) / 
 //                                     ( 5e-1*( max_function_value-min_function_value ) ) - 1e0 );
 
-  
-   
+ 
   for (int i = 0; i < nb_gp_nodes-1; i++) 
     K0.at(i) = evaluate_kernel( gp_nodes[i], x );
 
@@ -162,9 +152,6 @@ void GaussianProcess::evaluate ( std::vector<double> const &x,
     K0.at(i) = evaluate_kernel( gp_nodes[i], x );
 
   mean = VectorOperations::dot_product(K0, alpha);
-//  mean = VectorOperations::dot_product(K0, alpha) + 1e0;
-//  mean *= 5e-1*( max_function_value-min_function_value );
-//  mean += min_function_value;
 
   forward_substitution( L, K0 );
   
@@ -204,21 +191,13 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
   scaled_function_values.resize(nb_gp_nodes);
   for ( int i = 0; i < nb_gp_nodes; ++i) {
     scaled_function_values.at(i) = values.at(i);
-//    scaled_function_values.at(i) = values.at(i) - min_function_value;
-//    scaled_function_values.at(i) /= 5e-1*( max_function_value-min_function_value );
-//    scaled_function_values.at(i) -= 1e0;
   }
 
   double optval;    
   //adjust those settings to optimize GP approximation
   //--------------------------------------------------
-//  double max_noise = 0e0;
-//  for (int i = 0; i < nb_gp_nodes; i++) {
-//    if (gp_noise.at( i ) > max_noise)
-//      max_noise = gp_noise.at( i );
-//  }
-  lb[0] = 1e-1; // * pow(1000e0 * max_noise / 2e0, 2e0);
-  ub[0] = 1e4;//1e1// * pow(1000e0 * max_noise / 2e0, 2e0);
+  lb[0] = 1e-1; 
+  ub[0] = 1e4;
   lb[0] = max_function_value - 1e2;
   if ( lb[0] < 1e-2 ) lb[0] = 1e-2;
   ub[0] = max_function_value + 1e2;
@@ -230,7 +209,7 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
   }
 
   if (gp_parameters[0] < 0e0) {
-    gp_parameters[0] = max_function_value;//lb[0]*5e-1 + 5e-1*ub[0];
+    gp_parameters[0] = max_function_value;
     for (int i = 1; i < dim+1; ++i) {
       gp_parameters[i] = (lb[i]*5e-1 + 5e-1*ub[i]);
     }
@@ -270,12 +249,6 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
     }
   }
 
-  //std::cout << "exitflag = "<< exitflag<<std::endl;
-//  std::cout << "OPTVAL .... " << optval << std::endl;
-//  for ( int i = 0; i < gp_parameters.size(); ++i )
-//    std::cout << "gp_param = " << gp_parameters[i] << std::endl;
-//  std::cout << std::endl;
- 
       
   return;
 }

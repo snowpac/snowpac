@@ -1,7 +1,6 @@
 #ifndef HLegendreBasisForMinimumFrobeniusNormModel
 #define HLegendreBasisForMinimumFrobeniusNormModel
 
-//#include "BlackBoxData.hpp"
 #include "BasisForSurrogateModelBaseClass.hpp"
 #include "QuadraticLegendre.hpp"
 #include "VectorOperations.hpp"

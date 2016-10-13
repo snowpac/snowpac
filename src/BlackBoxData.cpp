@@ -171,17 +171,6 @@ int BlackBoxData::read_from_file ( const char *filename) {
   initialize( nb_models, dim );
   scaling = scaling_loc;
 
-
-  std::cout << scaling << " ; ";
-  std::cout << best_index << " ; ";
-  std::cout << max_nb_nodes << " ; ";
-  std::cout << nb_nodes << " ; ";
-  std::cout << dim << " ; ";
-  std::cout << values.size() << " ; ";
-  std::cout << noise.size() << std::endl;
-
-
-
   ///
   int line_counter = 0;
   double tmp_dbl;
@@ -208,7 +197,6 @@ int BlackBoxData::read_from_file ( const char *filename) {
       nodes.push_back( node );
     }
     if ( line_counter >= nb_nodes && line_counter < nb_nodes + nb_models ) {
-    std::cout << " ++++ " << std::endl << std::flush;
       while ( ( end_position = line_in_file.find(delimiter) ) != std::string::npos ) { 
         str_value = line_in_file.substr( 0, end_position );
         line_in_file.erase(0, end_position + delimiter.length());
@@ -217,7 +205,6 @@ int BlackBoxData::read_from_file ( const char *filename) {
       values[line_counter-nb_nodes].push_back( std::stod( line_in_file ) ); 
     }
     if ( line_counter >= nb_nodes+nb_models && line_counter < nb_nodes+2*nb_models) {
-    std::cout << " ----- " << std::endl << std::flush;
       while ( ( end_position = line_in_file.find(delimiter) ) != std::string::npos ) { 
         str_value = line_in_file.substr( 0, end_position );
         line_in_file.erase(0, end_position + delimiter.length());
@@ -228,36 +215,6 @@ int BlackBoxData::read_from_file ( const char *filename) {
     line_counter++;
   }
 
-//XXX
-  std::cout << scaling << " ; ";
-  std::cout << best_index << " ; ";
-  std::cout << max_nb_nodes << " ; ";
-  std::cout << nodes.size() << " ; ";
-  std::cout << nodes.at(0).size() << " ; ";
-  std::cout << values.size() << " ; ";
-  std::cout << values[0].size() << " ; ";
-  std::cout << active_index.size() << std::endl;
-
-  for ( unsigned int i = 0; i < active_index.size()-1; ++i )
-    std::cout << active_index[i] << " ; ";
-  std::cout <<  active_index.back() << std::endl;  
-  for ( unsigned int i = 0; i < nodes.size(); ++i ) {
-    for ( unsigned int j = 0; j < nodes[i].size()-1; ++j )
-      std::cout << nodes[i][j] << " ; ";
-    std::cout <<  nodes[i].back() << std::endl;  
-  }
-  for ( unsigned int i = 0; i < values.size(); ++i ) {
-    for ( unsigned int j = 0; j < values[i].size()-1; ++j )
-       std::cout << values[i][j] << " ; ";
-    std::cout << values[i].back() << std::endl;  
-  }
-  for ( unsigned int i = 0; i < noise.size(); ++i ) {
-    for ( unsigned int j = 0; j < noise[i].size()-1; ++j )
-       std::cout << noise[i][j] << " ; ";
-    std::cout << noise[i].back() << std::endl;  
-  }
-//XXX
-
 
   return EXIT_FLAG;
 }
@@ -265,8 +222,6 @@ int BlackBoxData::read_from_file ( const char *filename) {
 
 //--------------------------------------------------------------------------------
 std::vector<double> &BlackBoxData::transform( std::vector<double> const& x ) {
-  //center_node = nodes[ best_index ];
-  //rescale( 1e0 / scaling, x, center_node, scaled_node);
   rescale( 1e0 / scaling, x, nodes[ best_index ], scaled_node);
   return scaled_node;
 }
@@ -275,9 +230,7 @@ std::vector<double> &BlackBoxData::transform( std::vector<double> const& x ) {
 //--------------------------------------------------------------------------------
 std::vector< std::vector<double> > &BlackBoxData::get_scaled_active_nodes ( 
   double scaling_input) {
-//  std::vector<double> const &center_node_input, double scaling_input) {
   scaling = scaling_input;
-//  center_node = center_node_input;
   int scaled_active_nodes_size = scaled_active_nodes.size();
   int active_index_size = active_index.size();
   if ( scaled_active_nodes_size > active_index_size ) {
@@ -307,11 +260,9 @@ std::vector<double> &BlackBoxData::get_active_values( int i ) {
   }
   for ( int j = 0; j < active_values_size; ++j ) {
     active_values.at(j) = values.at( i ).at( active_index.at(j) );
-//        std::cout << active_values.at(j) << std::endl;
   }
   for ( int j = active_values_size; j < active_index_size; ++j ) {
     active_values.push_back( values.at( i ).at(  active_index.at(j) ) );
-//        std::cout << active_values.at(j) << std::endl;
   }
   return active_values;
 }

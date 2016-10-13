@@ -24,9 +24,9 @@ class ImprovePoisedness : public ImprovePoisednessBaseClass,
     //declare auxiliary variables for compute_poisedness_constant
     double poisedness_constant_tmp1, poisedness_constant_tmp2;
     double node_norm_scaling;
-//    Eigen::VectorXd q;
     std::vector<double> q1, q2;
     std::vector<double> basis_values;
+
     std::vector<double> basis_gradient;
     std::vector< std::vector<double> > basis_hessian;
     //define auxiliary variables

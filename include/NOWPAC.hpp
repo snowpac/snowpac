@@ -594,10 +594,6 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_blackbox (
 template<class TSurrogateModel, class TBasisForSurrogateModel>
 double NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::compute_acceptance_ratio ( )
 {
-  //if ( stochastic_optimization ) {
-    //update_surrogate_models( );
-    //trial_model_value = surrogate_models[0].evaluate( evaluations.transform(x_trial) );
-  //}
 
   acceptance_ratio = ( evaluations.values[0].at( evaluations.best_index ) - 
                        evaluations.values[0].back() ) /
@@ -748,23 +744,6 @@ bool NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::last_point_is_feasible ( 
     }
   }
 
-//      tmp_dbl = pow( this->diff_norm( x_trial, evaluations.nodes[ evaluations.best_index ] ) / 
-//                     delta, 1e0 );
-//      std::cout << " step size scale = " << sqrt(tmp_dbl) << std::endl; 
-
-/*
-    std::cout << "**************************************" << std::endl;
-  if ( !point_is_feasible ) 
-    std::cout << "Point is not feasible" << std::endl;
-  if ( point_is_feasible ) 
-    std::cout << "Point is feasible" << std::endl;
-    std::cout << "--------------------------------------" << std::endl;
-    for ( int i = 0; i < nb_constraints; ++i )
-      std::cout << inner_boundary_path_constants[i] << " vs. " <<
-                   evaluations.values[i+1].back() << std::endl;
-    std::cout << "**************************************" << std::endl;
-//    assert( false );
-*/
 
   return point_is_feasible;
 }
@@ -1136,7 +1115,6 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
   int random_seed = 25041981;//rand_dev();
   std::mt19937 rand_generator(random_seed);
   std::normal_distribution<double> norm_dis(0e0,2e-1);
-  //std::uniform_real_distribution<double> norm_dis(-2e0,2e0);
 
   if ( evaluations.nodes.size() == 0 ) {
     for (int i = 0; i < nb_constraints+1; ++i )
@@ -1200,29 +1178,6 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
   update_surrogate_models( );
   if ( verbose == 3 ) { std::cout << "done" << std::endl << std::flush; }
 
-   
-/*
-  std::vector<double> x_loc(2);
-  std::vector<double> fvals(3);
-  std::ofstream outputfile ( "surrogate_data_o.dat" );
-  if ( outputfile.is_open( ) ) {
-    for (double i = -1.0; i <= 2.0; i+=0.1) {
-      x_loc.at(0) = i;
-      for (double j = -1.0; j < 2.0; j+=0.1) {
-        x_loc.at(1) = j;
-        fvals.at(0) = surrogate_models[0].evaluate( evaluations.transform(x_loc) );
-        fvals.at(1) = surrogate_models[1].evaluate( evaluations.transform(x_loc) );
-        fvals.at(2) = surrogate_models[2].evaluate( evaluations.transform(x_loc) );
-        outputfile << x_loc.at(0) << "; " << x_loc.at(1) << "; " << fvals.at(0)<< "; " << 
-                     fvals.at(1)<< "; " << fvals.at(2) << std::endl;
-      }
-    }
-    outputfile.close( );
-  } else std::cout << "Unable to open file." << std::endl;
-
-  return 0;
-*/
-
   x_trial = evaluations.nodes[ evaluations.best_index ];
   if ( verbose == 3 ) { std::cout << "Value of criticality measure : "; }
   criticality_value = surrogate_optimization->compute_criticality_measure( x_trial );
@@ -1265,6 +1220,8 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
         criticality_value = surrogate_optimization->compute_criticality_measure( x_trial );
 
         // TODO: check if while should be exited on infeasible points...
+        // -> it works fine without exiting.
+        // -> could be exited without breaking stochastic algorithm
 
         output_for_plotting( ) ;
         if (verbose == 3) {
@@ -1340,7 +1297,6 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
         }
         blackbox_evaluator( );
         if ( EXIT_FLAG != NOEXIT ) break;
-//        update_trustregion( theta );
         update_surrogate_models( );
 
         if ( noise_detection ) {
@@ -1508,27 +1464,6 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
     std::cout << "*********************************************" << std::endl << std::endl << std::flush;
   }
 
-
-
-/*
-  Eigen::VectorXd x_loc(2);
-  Eigen::VectorXd fvals(3);
-  std::ofstream outputfile ( "surrogate_data_o.dat" );
-  if ( outputfile.is_open( ) ) {
-    for (double i = -1.0; i <= 2.0; i+=0.01) {
-      x_loc(0) = i;
-      for (double j = -1.0; j < 2.0; j+=0.01) {
-        x_loc(1) = j;
-        fvals(0) = surrogate_models[0].evaluate( evaluations.transform(x_loc) );
-        fvals(1) = surrogate_models[1].evaluate( evaluations.transform(x_loc) );
-        fvals(2) = surrogate_models[2].evaluate( evaluations.transform(x_loc) );
-        outputfile << x_loc(0) << "; " << x_loc(1) << "; " << fvals(0)<< "; " << 
-                     fvals(1)<< "; " << fvals(2) << std::endl;
-      }
-    }
-    outputfile.close( );
-  } else std::cout << "Unable to open file." << std::endl;
-*/
 
   
   return 1;

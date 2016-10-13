@@ -63,7 +63,7 @@ int ImprovePoisedness::replace_node ( int reference_node,
     for ( int i = tmp_int-1; i >= 0; --i ) {
       if ( evaluations.active_index[ i ] != reference_node && 
            evaluations.active_index[ i ] != check_node ) {
-        v2 = new_node;//evaluations.nodes[ reference_node ];
+        v2 = new_node;
 //        v2 = evaluations.nodes[ reference_node ];
         add ( -1e0, evaluations.nodes[ evaluations.active_index[ i ] ], v2 );    
         scale( 1e0/norm(v2), v2, v2);
@@ -95,8 +95,8 @@ int ImprovePoisedness::replace_node ( int reference_node,
       }
     }
   }
-//  if ( ref_is_best ) 
-    reference_node = evaluations.best_index;
+
+  reference_node = evaluations.best_index;
 
   basis_values = basis->evaluate ( evaluations.transform( new_node ) );
 
@@ -111,7 +111,6 @@ int ImprovePoisedness::replace_node ( int reference_node,
       if ( LK < 0e0 ) LK = -LK;
       norm_dbl = diff_norm( evaluations.nodes[ evaluations.active_index[i]],
                evaluations.nodes[ evaluations.best_index ] ) / (*delta);
-//      norm_dbl /= sqrt( (double) dim );
       if ( norm_dbl <= 1e0 ) norm_dbl = 1e0;
       else norm_dbl = pow( norm_dbl, 3e0 );
       LK *= norm_dbl;
@@ -121,8 +120,6 @@ int ImprovePoisedness::replace_node ( int reference_node,
       }
     }
   }
-
-//  assert ( change_index != evaluations.best_index);
 
   return change_index;
 }
@@ -136,8 +133,6 @@ void ImprovePoisedness::improve_poisedness ( int reference_node,
 {
   
   nb_nodes = evaluations.active_index.size( );
-
-//  if ( evaluations.active_index.size( ) < max_nb_nodes ) return;
 
   //check quality of the geometrical distribution of the interpolation nodes
   std::vector<double> new_node( dim );
@@ -215,7 +210,6 @@ void ImprovePoisedness::compute_poisedness_constant ( int reference_node,
     node_norm_scaling = 
       diff_norm( evaluations.nodes[ evaluations.active_index[i] ],
                  evaluations.nodes[ evaluations.best_index ] ) / (*delta);
-  //  node_norm_scaling /= sqrt((double) dim);    
     if (node_norm_scaling <= 1e0) { node_norm_scaling = 1e0; 
     } else {
       node_norm_scaling = pow(node_norm_scaling, 3e0);
@@ -267,9 +261,6 @@ void ImprovePoisedness::compute_poisedness_constant ( int reference_node,
 
   }
 
-  assert ( evaluations.best_index != evaluations.active_index[change_index] );
-  assert ( poisedness_constant > 0e0 );
-    	
   return;
 }
 //--------------------------------------------------------------------------------

@@ -11,7 +11,7 @@ class ImprovePoisednessBaseClass {
     BasisForSurrogateModelBaseClass *basis;
     double threshold_for_poisedness_constant;
     double poisedness_constant;
-//    std::vector<bool> index_of_changed_nodes;
+
   public:
     ImprovePoisednessBaseClass ( double threshold_for_poisedness_constant_input, 
                                  BasisForSurrogateModelBaseClass &basis_input ) :
