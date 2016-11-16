@@ -1291,10 +1291,14 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
     }
     for (int i = 0; i < dim; ++i ) {
       x_trial = x;
-      if(x_trial.at(i)+delta < upper_bound_constraints.at(i) )
-        x_trial.at(i) += delta;
-      else
-        x_trial.at(i) -= delta;
+      if(!upper_bound_constraints.empty()){
+    	  if(x_trial.at(i)+delta < upper_bound_constraints.at(i) )
+    		  x_trial.at(i) += delta;
+    	  else
+    		  x_trial.at(i) -= delta;
+      }else{
+    	  x_trial.at(i) += delta;
+      }
       blackbox_evaluator( x_trial, true );
       if ( EXIT_FLAG != NOEXIT ){
         std::cout << "ERROR   : Black box returned invalid value" << std::endl << std::fflush; 
