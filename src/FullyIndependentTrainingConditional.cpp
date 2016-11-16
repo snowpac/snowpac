@@ -6,7 +6,10 @@
  */
 
 #include <FullyIndependentTrainingConditional.hpp>
-
+#include <random>
+#include <assert.h>
+#include <algorithm>
+#include <iostream>
 //--------------------------------------------------------------------------------
 FullyIndependentTrainingConditional::FullyIndependentTrainingConditional(int n,
 		double &delta_input) :
