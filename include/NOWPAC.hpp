@@ -894,7 +894,7 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::write_to_file ( )
         fprintf(output_file, double_format, evaluations.nodes.at(evaluations.nodes.size()-1).at(i));
     }
     // output the last value of the objective
-    fprintf(output_file, double_format, evaluations.values.at(0).at(evaluations.values.size()-1));
+    fprintf(output_file, double_format, evaluations.values.at(evaluations.values.size()-1).at(0));
     
     fprintf(output_file, "\n");
     fflush(output_file);
