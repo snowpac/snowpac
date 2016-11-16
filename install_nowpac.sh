@@ -1,7 +1,7 @@
 #!/bin/bash
 
 clear
-cd ..
+#cd ..
 [[ -d build ]] || mkdir build
 cd build
 
@@ -15,4 +15,4 @@ cmake -DCMAKE_CXX_COMPILER=g++ \
       ../snowpac/
 
 make doc
-make install -j8
+make install -j4

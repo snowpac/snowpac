@@ -91,6 +91,7 @@ IF ( NOWPAC_ENABLE_TESTS STREQUAL "ON" )
 ENDIF ()
 
 SET ( NOWPAC_SOURCE_FILES
+    ${NOWPAC_SOURCE_DIR}/src/FullyIndependentTrainingConditional.cpp
     ${NOWPAC_SOURCE_DIR}/src/AugmentedSubsetOfRegressors.cpp
     ${NOWPAC_SOURCE_DIR}/src/SubsetOfRegressors.cpp
     ${NOWPAC_SOURCE_DIR}/src/BlackBoxData.cpp
@@ -107,6 +108,7 @@ SET ( NOWPAC_SOURCE_FILES
     ${NOWPAC_SOURCE_DIR}/src/TriangularMatrixOperations.cpp
     ${NOWPAC_SOURCE_DIR}/src/VectorOperations.cpp)
 SET ( NOWPAC_HEADER_FILES
+    ${NOWPAC_SOURCE_DIR}/include/FullyIndependentTrainingConditional.hpp
     ${NOWPAC_SOURCE_DIR}/include/AugmentedSubsetOfRegressors.hpp
     ${NOWPAC_SOURCE_DIR}/include/SubsetOfRegressors.hpp
     ${NOWPAC_SOURCE_DIR}/include/BasisForSurrogateModelBaseClass.hpp
