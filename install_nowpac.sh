@@ -1,17 +1,19 @@
 #!/bin/bash
 
 clear
-cd ..
+#cd ..
 [[ -d build ]] || mkdir build
 cd build
 
-cmake -DNOWPAC_INSTALL_PREFIX=/usr/local \
-      -DCMAKE_CXX_COMPILER=/usr/local/Cellar/gcc/5.3.0/bin/g++-5 \
-      -DCMAKE_C_COMPILER=/usr/local/Cellar/gcc/5.3.0/bin/gcc-5 \
+#cmake -DNOWPAC_INSTALL_PREFIX=/usr/local
+cmake -DNOWPAC_INSTALL_PREFIX=/master/home/menhorn/Work/ \
+	-DCMAKE_CXX_COMPILER=g++ \
+      -DCMAKE_C_COMPILER=gcc \
+      -DCMAKE_BUILD_TYPE=Debug \
       -DNOWPAC_ENABLE_SHARED=ON \
-      -DNOWPAC_ENABLE_TESTS=ON \
-      -DNOWPAC_ENABLE_DOXYGEN=ON \
-      ../snowpac/
+      -DNOWPAC_ENABLE_TESTS=OFF \
+      -DNOWPAC_ENABLE_DOXYGEN=OFF \
+      ..
 
 make doc
-make install -j8
+make install -j4

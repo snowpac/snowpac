@@ -889,6 +889,13 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::write_to_file ( )
     gaussian_processes.evaluate_gaussian_process_at(0, evaluations.nodes.at(evaluations.best_index), mean, var);
     fprintf(output_file, double_format, var);
 
+    // output the last added design
+    for(int i = 0; i < dim; ++i) {
+        fprintf(output_file, double_format, evaluations.nodes.at(evaluations.nodes.size()-1).at(i));
+    }
+    // output the last value of the objective
+    fprintf(output_file, double_format, evaluations.values.at(0).at(evaluations.values.size()-1));
+    
     fprintf(output_file, "\n");
     fflush(output_file);
 
@@ -1042,7 +1049,7 @@ template<class TSurrogateModel, class TBasisForSurrogateModel>
 void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::output_for_plotting ( const int& evaluation_step, const int& sub_index, std::vector< double > const& best_node )
 {
 
-    std::cout << "Writing Output..." << std::endl;
+  std::cout << "Writing Output..." << std::endl;
   std::vector<double> x_loc(dim);
   std::vector<double> fvals(nb_constraints+1);
   std::vector<double> fvar(nb_constraints+1);
@@ -1113,7 +1120,7 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::output_for_plotting ( con
 					outputfile.close();
 		} else std::cout << "Unable to open file." << std::endl;
 
-    bool approximated_gaussians = true;
+    bool approximated_gaussians = false;
     if(approximated_gaussians) {
         outputfile.open(
                 "gp_induced_points_" + std::to_string(evaluation_step) + "_" + std::to_string(sub_index) + ".dat");
@@ -1284,7 +1291,10 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
     }
     for (int i = 0; i < dim; ++i ) {
       x_trial = x;
-      x_trial.at(i) += delta;
+      if(x_trial.at(i)+delta < upper_bound_constraints.at(i) )
+        x_trial.at(i) += delta;
+      else
+        x_trial.at(i) -= delta;
       blackbox_evaluator( x_trial, true );
       if ( EXIT_FLAG != NOEXIT ){
         std::cout << "ERROR   : Black box returned invalid value" << std::endl << std::fflush; 
