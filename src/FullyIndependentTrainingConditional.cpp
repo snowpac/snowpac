@@ -155,7 +155,7 @@ void FullyIndependentTrainingConditional::build(
 		}
 		for(int i = 0; i < nb_gp_nodes; i++){
 			for(int j = 0; j < nb_u_nodes; j++){
-				Lambda_K_f_u[i][j] = 1.0/Lambda[i] * K_f_u[i][j]; 
+				Lambda_K_f_u[i][j] = (1.0/Lambda[i] + 0.0001) * K_f_u[i][j];
 			}
 		}
 
@@ -176,9 +176,9 @@ void FullyIndependentTrainingConditional::build(
 		for (int i = 0; i < nb_u_nodes; ++i) {
 			for (int j = 0; j <= i; ++j) {
 				if (i==j)
-					L.at(i).push_back(K_u_u[i][j]+K_u_f_Lambda_f_u[i][j]+ 0.1);
+					L.at(i).push_back(K_u_u[i][j] + K_u_f_Lambda_f_u[i][j] + 0.0001);
 				else
-					L.at(i).push_back(K_u_u[i][j]+K_u_f_Lambda_f_u[i][j]);
+					L.at(i).push_back(K_u_u[i][j] + K_u_f_Lambda_f_u[i][j]);
 			}
 		}
 
