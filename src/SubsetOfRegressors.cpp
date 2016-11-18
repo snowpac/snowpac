@@ -103,6 +103,8 @@ void SubsetOfRegressors::build(std::vector<std::vector<double> > const &nodes,
 				}
 			}
 		}
+		std::cout << "L!" << std::endl;
+		VectorOperations::print_matrix(L);
 
 		//Compute Cholesky of K_u_u
 		CholeskyFactorization::compute(L, pos, rho, nb_u_nodes);
