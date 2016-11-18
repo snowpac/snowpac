@@ -20,7 +20,7 @@ protected:
     std::vector< double > L_u;
     std::vector< double > K_u_f_LambdaInv_f;
     std::vector< std::vector<double> > u;
-    double u_ratio = 0.1;
+    double u_ratio = 1.0;
     int min_nb_u_nodes = 1;
 
     void sample_u(const int &nb_u_nodes);
