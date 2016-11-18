@@ -126,9 +126,6 @@ void FullyIndependentTrainingConditional::build(
 		//Compute diagKff
 		std::vector<double> diag_K_f_f;
 		diag_K_f_f.resize(nb_gp_nodes);
-		for (int i = 0; i < nb_u_nodes; ++i) {
-			diag_K_f_f[i] = 0.0;
-		}
 		for (int i = 0; i < nb_gp_nodes; ++i) {
 			diag_K_f_f[i] = evaluate_kernel(gp_nodes.at(i), gp_nodes.at(i));
 		}
@@ -184,6 +181,9 @@ void FullyIndependentTrainingConditional::build(
 		assert(pos == 0);
 
 		//Set f and compute 1/noise^2*eye(length(f)) * f
+		std::cout << "values" << std::endl;
+		VectorOperations::print_vector(values);
+
 		scaled_function_values.clear();
 		scaled_function_values.resize(nb_gp_nodes);
 		for (int i = 0; i < nb_gp_nodes; i++) {
