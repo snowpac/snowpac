@@ -177,7 +177,7 @@ void FullyIndependentTrainingConditional::build(
 			}
 		}
 		std::cout << "L = K_u_u + K_u_f Lambda_inv K_f_u" << std::endl;
-		VectorOperations::print_matrix(K_u_f_Lambda_f_u);
+		VectorOperations::print_matrix(L);
 
 		CholeskyFactorization::compute(L, pos, rho, nb_u_nodes);
 		assert(pos == 0);
