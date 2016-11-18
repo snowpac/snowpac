@@ -196,6 +196,8 @@ void FullyIndependentTrainingConditional::build(
 			noisy_values[i] = scaled_function_values[i] * 1.0
 					/ pow(gp_noise.at(i) / 2e0 + noise_regularization, 2e0);
 		}
+		std::cout << "noisy_values" << std::endl;
+		VectorOperations::print_vector(noisy_values);
 
 		std::vector<double> LambdaInv_f;
 		LambdaInv_f.clear();
@@ -203,17 +205,21 @@ void FullyIndependentTrainingConditional::build(
 		for(int i = 0; i < nb_gp_nodes; ++i){
 			LambdaInv_f[i] = 1.0/Lambda[i]*noisy_values[i];
 		}
+		std::cout << "LambdaInv_f" << std::endl;
+		VectorOperations::print_vector(LambdaInv_f);
 
 		alpha.clear();
 		alpha.resize(nb_u_nodes);
 		VectorOperations::mat_vec_product(K_u_f, LambdaInv_f, alpha);
 
-		//std::cout << "Alpha:" << std::endl;
-		//VectorOperations::print_vector(alpha);
+		std::cout << "alpha=K_u_f*LambdaInv_f:" << std::endl;
+		VectorOperations::print_vector(alpha);
 
 		//Solve Sigma_not_inv^(-1)*alpha
 		forward_substitution(L, alpha);
 		backward_substitution(L, alpha);
+		std::cout << "alpha=L\(K_u_f*LambdaInv_f):" << std::endl;
+		VectorOperations::print_vector(alpha);
 	} else {
 		GaussianProcess::build(nodes, values, noise);
 	}
