@@ -125,6 +125,8 @@ void SubsetOfRegressors::build(std::vector<std::vector<double> > const &nodes,
 			noisy_values[i] = scaled_function_values[i] * 1.0
 					/ pow(gp_noise.at(i) / 2e0 + noise_regularization, 2e0);
 		}
+		std::cout << "noisy_values" << std::endl;
+		VectorOperations::print_vector(noisy_values);
 		//std::cout << "eye(noise) * f:" << std::endl;
 		//VectorOperations::print_vector(noisy_values);
 
