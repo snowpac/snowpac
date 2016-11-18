@@ -174,7 +174,7 @@ void FullyIndependentTrainingConditional::build(
 		for (int i = 0; i < nb_u_nodes; ++i) {
 			for (int j = 0; j <= i; ++j) {
 				if (i==j)
-					L.at(i).push_back(K_u_u[i][j] + K_u_f_Lambda_f_u[i][j] + 0.0001);
+					L.at(i).push_back(K_u_u[i][j] + K_u_f_Lambda_f_u[i][j] + 10.);
 				else
 					L.at(i).push_back(K_u_u[i][j] + K_u_f_Lambda_f_u[i][j]);
 			}
