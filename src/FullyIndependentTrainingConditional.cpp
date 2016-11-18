@@ -94,19 +94,20 @@ void FullyIndependentTrainingConditional::build(
 			for(int i = 0; i < nb_u_nodes; ++i){
 				temp_vector[i] = K_u_f[i][j];
 			}
-			std::cout << "temp1" << std::endl;
+			//std::cout << "temp1" << std::endl;
 			VectorOperations::print_vector(temp_vector);
 			forward_substitution(K_u_u, temp_vector);
-			std::cout << "temp2" << std::endl;
+			//std::cout << "temp2" << std::endl;
 			VectorOperations::print_vector(temp_vector);
 			backward_substitution(K_u_u, temp_vector);
-			std::cout << "temp3" << std::endl;
+			//std::cout << "temp3" << std::endl;
 			VectorOperations::print_vector(temp_vector);
 			for(int i = 0; i < nb_u_nodes; ++i){
 				K_u_u_u_f[i][j] = temp_vector[i];
 			}
 		}
-
+		std::cout << "K_u_u_u_f" << std::endl;
+		VectorOperations::print_matrix(K_u_u_u_f);
 		//We only need the diagonal elements of Qff for finding Lambda
 		//Let's try and do this in an efficient way
 		//Compute Qff, diag(K_f_u*(inv(K_u_u)*K_u_f first))
