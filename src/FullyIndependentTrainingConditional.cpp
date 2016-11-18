@@ -64,8 +64,8 @@ void FullyIndependentTrainingConditional::build(
 			K_f_u.at(i).resize(nb_u_nodes);
 		}
 		VectorOperations::mat_transpose(K_u_f, K_f_u);
-		//std::cout << "K_u_f and K_f_u done!" << std::endl;
-		//VectorOperations::print_matrix(K_u_f);
+		std::cout << "K_u_f" << std::endl;
+		VectorOperations::print_matrix(K_u_f);
 
 		//Set up matrix K_u_u
 		K_u_u.clear();
@@ -75,7 +75,11 @@ void FullyIndependentTrainingConditional::build(
 				K_u_u.at(i).push_back(evaluate_kernel(u.at(i), u.at(j)));
 			}
 		}
+		std::cout << "K_u_u" << std::endl;
+		VectorOperations::print_matrix(K_u_u);
 		CholeskyFactorization::compute(K_u_u, pos, rho, nb_u_nodes);
+		std::cout << "K_u_uchol" << std::endl;
+		VectorOperations::print_matrix(K_u_u);
 		//We have Kfu, Kuf, Kuu
 		//Compute Qff, inv(K_u_u)*K_u_f=K_u_u_u_f first
 		std::vector<std::vector<double>> K_u_u_u_f;
@@ -86,10 +90,6 @@ void FullyIndependentTrainingConditional::build(
 		}
 		std::vector<double> temp_vector;
 		temp_vector.resize(nb_u_nodes);
-		std::cout << "K_u_u" << std::endl;
-		VectorOperations::print_matrix(K_u_u);
-		std::cout << "K_u_f" << std::endl;
-		VectorOperations::print_matrix(K_u_f);
 		for(int j = 0; j < nb_gp_nodes; ++j){
 			for(int i = 0; i < nb_u_nodes; ++i){
 				temp_vector[i] = K_u_f[i][j];
@@ -121,8 +121,6 @@ void FullyIndependentTrainingConditional::build(
 				diag_Q_f_f[i] += K_f_u[i][j] * K_u_u_u_f[j][i];
 			}
 		}
-		std::cout << "K_f_u" << std::endl;
-		VectorOperations::print_matrix(K_f_u);
 		std::cout << "diag_Q_f_f" << std::endl;
 		VectorOperations::print_vector(diag_Q_f_f);
 		//Compute diagKff
@@ -183,7 +181,7 @@ void FullyIndependentTrainingConditional::build(
 		}
 
 		CholeskyFactorization::compute(L, pos, rho, nb_u_nodes);
-		//assert(pos == 0);
+		assert(pos == 0);
 
 		//Set f and compute 1/noise^2*eye(length(f)) * f
 		scaled_function_values.clear();
