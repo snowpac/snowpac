@@ -84,6 +84,10 @@ void FullyIndependentTrainingConditional::build(
 		}
 		std::vector<double> temp_vector;
 		temp_vector.resize(nb_u_nodes);
+		std::cout << K_u_u << std::endl;
+		VectorOperations::print_matrix(K_u_u);
+		std::cout << K_u_f << std::endl;
+		VectorOperations::print_matrix(K_u_f);
 		for(int j = 0; j < nb_gp_nodes; ++j){
 			for(int i = 0; i < nb_u_nodes; ++i){
 				temp_vector[i] = K_u_f[i][j];
