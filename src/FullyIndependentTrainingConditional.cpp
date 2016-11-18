@@ -158,6 +158,9 @@ void FullyIndependentTrainingConditional::build(
 				Lambda_K_f_u[i][j] = 1.0/Lambda[i] * K_f_u[i][j]; 
 			}
 		}
+
+		std::cout << "Lambda_K_f_u" << std::endl;
+		VectorOperations::print_matrix(Lambda_K_f_u);
 		//K_u_u_u_f reuse as Kuf*Lambda_K_f_u = Kuf*(Lambda^(-1)*Kfu)
 		std::vector<std::vector<double>> K_u_f_Lambda_f_u;
 		K_u_f_Lambda_f_u.clear();
@@ -166,6 +169,8 @@ void FullyIndependentTrainingConditional::build(
 			K_u_f_Lambda_f_u.at(i).resize(nb_u_nodes);
 		}
 		VectorOperations::mat_product(K_u_f, Lambda_K_f_u, K_u_f_Lambda_f_u);
+		std::cout << "K_u_f_Lambda_f_u" << std::endl;
+		VectorOperations::print_matrix(K_u_f_Lambda_f_u);
 		L.clear();
 		L.resize(nb_u_nodes);
 		for (int i = 0; i < nb_u_nodes; ++i) {
