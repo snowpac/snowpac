@@ -76,11 +76,13 @@ void FullyIndependentTrainingConditional::build(
 			}
 		}
 		CholeskyFactorization::compute(K_u_u, pos, rho, nb_u_nodes);
-		std::vector<std::vector<double>> K_u_u_inv;
-		K_u_u_inv.clear();
-		K_u_u_inv.resize(nb_u_nodes);
-		for(int i = 0; i < nb_u_nodes; ++i){
-			K_u_u_inv[i].resize(nb_u_nodes);
+		//We have Kfu, Kuf, Kuu
+		//Compute Qff, inv(K_u_u)*K_u_f=K_u_u_u_f first
+		std::vector<std::vector<double>> K_u_u_u_f;
+		K_u_u_u_f.clear();
+		K_u_u_u_f.resize(nb_u_nodes);
+		for (int i = 0; i < nb_u_nodes; ++i) {
+			K_u_u_u_f.at(i).resize(nb_gp_nodes);
 		}
 		std::vector<double> temp_vector;
 		temp_vector.resize(nb_u_nodes);
@@ -101,27 +103,13 @@ void FullyIndependentTrainingConditional::build(
 			std::cout << "temp3" << std::endl;
 			VectorOperations::print_vector(temp_vector);
 			for(int i = 0; i < nb_u_nodes; ++i){
-				K_u_u_inv[i][j] = temp_vector[i];
+				K_u_u_u_f[i][j] = temp_vector[i];
 			}
 		}
 
-		//std::cout << "K_u_u done!" << std::endl;
-		//TODO invert K_u_u
-		//VectorOperations::print_matrix(L);
-
-		//We have Kfu, Kuf, Kuu
-		//Compute Qff
-		std::vector<std::vector<double>> K_u_u_u_f;
-		K_u_u_u_f.clear();
-		K_u_u_u_f.resize(nb_u_nodes);
-		for (int i = 0; i < nb_u_nodes; ++i) {
-			K_u_u_u_f.at(i).resize(nb_u_nodes);
-		}
-		VectorOperations::print_matrix(K_u_f);
-		VectorOperations::print_matrix(K_u_u_inv);
-		VectorOperations::mat_product(K_u_f, K_u_u_inv, K_u_u_u_f);
 		//We only need the diagonal elements of Qff for finding Lambda
 		//Let's try and do this in an efficient way
+		//Compute Qff, diag(K_f_u*(inv(K_u_u)*K_u_f first))
 		std::vector<double> diag_Q_f_f;
 		diag_Q_f_f.resize(nb_gp_nodes);
 		for (int i = 0; i < nb_u_nodes; ++i) {
@@ -160,12 +148,18 @@ void FullyIndependentTrainingConditional::build(
 			}
 		}
 		//K_u_u_u_f reuse as Kuf*Lambda_K_f_u = Kuf*(Lambda^(-1)*Kfu)
-		VectorOperations::mat_product(K_u_f, Lambda_K_f_u, K_u_u_u_f);
+		std::vector<std::vector<double>> K_u_f_Lambda_f_u;
+		K_u_f_Lambda_f_u.clear();
+		K_u_f_Lambda_f_u.resize(nb_u_nodes);
+		for (int i = 0; i < nb_u_nodes; ++i) {
+			K_u_f_Lambda_f_u.at(i).resize(nb_u_nodes);
+		}
+		VectorOperations::mat_product(K_u_f, Lambda_K_f_u, K_u_f_Lambda_f_u);
 		L.clear();
 		L.resize(nb_u_nodes);
 		for (int i = 0; i < nb_u_nodes; ++i) {
 			for (int j = 0; j <= i; ++j) {
-				L.at(i).push_back(K_u_u[i][j]+K_u_u_u_f[i][j]);
+				L.at(i).push_back(K_u_u[i][j]+K_u_f_Lambda_f_u[i][j]);
 			}
 		}
 
