@@ -64,8 +64,8 @@ void FullyIndependentTrainingConditional::build(
 			K_f_u.at(i).resize(nb_u_nodes);
 		}
 		VectorOperations::mat_transpose(K_u_f, K_f_u);
-		std::cout << "K_u_f" << std::endl;
-		VectorOperations::print_matrix(K_u_f);
+//		std::cout << "K_u_f" << std::endl;
+//		VectorOperations::print_matrix(K_u_f);
 
 		//Set up matrix K_u_u
 		K_u_u.clear();
@@ -75,11 +75,11 @@ void FullyIndependentTrainingConditional::build(
 				K_u_u.at(i).push_back(evaluate_kernel(u.at(i), u.at(j)));
 			}
 		}
-		std::cout << "K_u_u" << std::endl;
-		VectorOperations::print_matrix(K_u_u);
-		CholeskyFactorization::compute(K_u_u, pos, rho, nb_u_nodes);
-		std::cout << "K_u_uchol" << std::endl;
-		VectorOperations::print_matrix(K_u_u);
+//		std::cout << "K_u_u" << std::endl;
+//		VectorOperations::print_matrix(K_u_u);
+//		CholeskyFactorization::compute(K_u_u, pos, rho, nb_u_nodes);
+//		std::cout << "K_u_uchol" << std::endl;
+//		VectorOperations::print_matrix(K_u_u);
 		//We have Kfu, Kuf, Kuu
 		//Compute Qff, inv(K_u_u)*K_u_f=K_u_u_u_f first
 		std::vector<std::vector<double>> K_u_u_u_f;
@@ -106,8 +106,8 @@ void FullyIndependentTrainingConditional::build(
 				K_u_u_u_f[i][j] = temp_vector[i];
 			}
 		}
-		std::cout << "K_u_u_u_f" << std::endl;
-		VectorOperations::print_matrix(K_u_u_u_f);
+//		std::cout << "K_u_u_u_f" << std::endl;
+//		VectorOperations::print_matrix(K_u_u_u_f);
 		//We only need the diagonal elements of Qff for finding Lambda
 		//Let's try and do this in an efficient way
 		//Compute Qff, diag(K_f_u*(inv(K_u_u)*K_u_f first))
