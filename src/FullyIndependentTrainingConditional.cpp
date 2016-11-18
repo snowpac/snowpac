@@ -171,11 +171,13 @@ void FullyIndependentTrainingConditional::build(
 		for (int i = 0; i < nb_u_nodes; ++i) {
 			for (int j = 0; j <= i; ++j) {
 				if (i==j)
-					L.at(i).push_back(K_u_u[i][j] + K_u_f_Lambda_f_u[i][j] + 0.1);
+					L.at(i).push_back(K_u_u[i][j] + K_u_f_Lambda_f_u[i][j] + 0.0001);
 				else
 					L.at(i).push_back(K_u_u[i][j] + K_u_f_Lambda_f_u[i][j]);
 			}
 		}
+		std::cout << "L = K_u_u + K_u_f Lambda_inv K_f_u" << std::endl;
+		VectorOperations::print_matrix(K_u_f_Lambda_f_u);
 
 		CholeskyFactorization::compute(L, pos, rho, nb_u_nodes);
 		assert(pos == 0);
@@ -286,6 +288,8 @@ void FullyIndependentTrainingConditional::evaluate(std::vector<double> const &x,
 		 */
 		std::cout << "K0" << std::endl;
 		VectorOperations::print_vector(K0);
+		std::cout << "alpha= (K_u_u + K_u_f Lambda_inv K_f_u)\(K_u_f*LambdaInv*f):" << std::endl;
+		VectorOperations::print_vector(alpha);
 		mean = VectorOperations::dot_product(K0, alpha);
 		std::cout << "mean:" << mean << std::endl;
 		//std::cout << "Mean: " << mean << std::endl;
