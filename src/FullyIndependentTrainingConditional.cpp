@@ -155,7 +155,7 @@ void FullyIndependentTrainingConditional::build(
 		}
 		for(int i = 0; i < nb_gp_nodes; i++){
 			for(int j = 0; j < nb_u_nodes; j++){
-				Lambda_K_f_u[i][j] = (1.0/Lambda[i] + 0.0001) * K_f_u[i][j];
+				Lambda_K_f_u[i][j] = (1.0/Lambda[i]) * K_f_u[i][j];
 			}
 		}
 
@@ -336,7 +336,7 @@ void FullyIndependentTrainingConditional::sample_u(const int &nb_u_nodes) {
 	std::vector<int> u_idx_from_active;
 	//Set distribution for sampling the indices for the u samples
 	std::random_device rd;
-	int random_seed = 1;//rd();
+	int random_seed = 2;//rd();
 	std::mt19937 random_generator(random_seed);
 	std::vector<double> nodes_weights_vector;
 
