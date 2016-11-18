@@ -203,20 +203,13 @@ void SubsetOfRegressors::evaluate(std::vector<double> const &x, double &mean,
 		for (int i = 0; i < nb_u_nodes; i++) {
 			K0.at(i) = evaluate_kernel(x, u.at(i));
 		}
-		/*
-		 std::cout << "##############Evaluate################" << std::endl;
-		 std::cout << "At x:"<< std::endl;
-		 VectorOperations::print_vector(x);
-		 std::cout << "K_star_u:" << std::endl;
-		 VectorOperations::print_vector(K0);
-		 */
-		std::cout << "K0" << std::endl;
-		VectorOperations::print_vector(K0);
-		std::cout << "alpha=(K_u_u + K_u_f*sigmaI*K_f_u)*K_u_f*noise*y:" << std::endl;
-		VectorOperations::print_vector(alpha);
+
+//		std::cout << "K0" << std::endl;
+//		VectorOperations::print_vector(K0);
+//		std::cout << "alpha=(K_u_u + K_u_f*sigmaI*K_f_u)*K_u_f*noise*y:" << std::endl;
+//		VectorOperations::print_vector(alpha);
 		mean = VectorOperations::dot_product(K0, alpha);
-		std::cout << "mean:" << mean << std::endl;
-		//std::cout << "Mean: " << mean << std::endl;
+//		std::cout << "mean:" << mean << std::endl;
 
 		TriangularMatrixOperations::forward_substitution(L, K0);
 		variance = VectorOperations::dot_product(K0, K0);
