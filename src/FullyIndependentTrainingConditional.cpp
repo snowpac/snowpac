@@ -121,26 +121,26 @@ void FullyIndependentTrainingConditional::build(
 				diag_Q_f_f[i] += K_f_u[i][j] * K_u_u_u_f[j][i];
 			}
 		}
-		std::cout << "diag_Q_f_f" << std::endl;
-		VectorOperations::print_vector(diag_Q_f_f);
+//		std::cout << "diag_Q_f_f" << std::endl;
+//		VectorOperations::print_vector(diag_Q_f_f);
 		//Compute diagKff
 		std::vector<double> diag_K_f_f;
 		diag_K_f_f.resize(nb_gp_nodes);
 		for (int i = 0; i < nb_gp_nodes; ++i) {
 			diag_K_f_f[i] = evaluate_kernel(gp_nodes.at(i), gp_nodes.at(i));
 		}
-		std::cout << "diag_K_f_f" << std::endl;
-		VectorOperations::print_vector(diag_K_f_f);
+//		std::cout << "diag_K_f_f" << std::endl;
+//		VectorOperations::print_vector(diag_K_f_f);
 		//Compute Lambda+noise
 		Lambda.clear();
 		Lambda.resize(nb_gp_nodes);
 		for (int i = 0; i < nb_gp_nodes; ++i) {
 			Lambda[i] = pow( noise.at(i) / 2e0 + noise_regularization, 2e0 );//diag_K_f_f[i] - diag_Q_f_f[i] + pow( noise.at(i) / 2e0 + noise_regularization, 2e0 );
 		}
-		std::cout << "noise" << std::endl;
-		VectorOperations::print_vector(noise);
-		std::cout << "Lambda" << std::endl;
-		VectorOperations::print_vector(Lambda);
+//		std::cout << "noise" << std::endl;
+//		VectorOperations::print_vector(noise);
+//		std::cout << "Lambda" << std::endl;
+//		VectorOperations::print_vector(Lambda);
 		//L=(Kuu+KufLambdainvKfu)
 		std::vector<std::vector<double>> Lambda_K_f_u;
 		Lambda_K_f_u.clear();
@@ -154,8 +154,8 @@ void FullyIndependentTrainingConditional::build(
 			}
 		}
 
-		std::cout << "Lambda_K_f_u" << std::endl;
-		VectorOperations::print_matrix(Lambda_K_f_u);
+//		std::cout << "Lambda_K_f_u" << std::endl;
+//		VectorOperations::print_matrix(Lambda_K_f_u);
 		//K_u_u_u_f reuse as Kuf*Lambda_K_f_u = Kuf*(Lambda^(-1)*Kfu)
 		std::vector<std::vector<double>> K_u_f_Lambda_f_u;
 		K_u_f_Lambda_f_u.clear();
@@ -164,8 +164,8 @@ void FullyIndependentTrainingConditional::build(
 			K_u_f_Lambda_f_u.at(i).resize(nb_u_nodes);
 		}
 		VectorOperations::mat_product(K_u_f, Lambda_K_f_u, K_u_f_Lambda_f_u);
-		std::cout << "K_u_f_Lambda_f_u" << std::endl;
-		VectorOperations::print_matrix(K_u_f_Lambda_f_u);
+//		std::cout << "K_u_f_Lambda_f_u" << std::endl;
+//		VectorOperations::print_matrix(K_u_f_Lambda_f_u);
 		L.clear();
 		L.resize(nb_u_nodes);
 		K_u_u.clear();
@@ -175,8 +175,8 @@ void FullyIndependentTrainingConditional::build(
 				K_u_u.at(i).push_back(evaluate_kernel(u.at(i), u.at(j)));
 			}
 		}
-		std::cout << "K_u_u" << std::endl;
-		VectorOperations::print_matrix(K_u_u);
+//		std::cout << "K_u_u" << std::endl;
+//		VectorOperations::print_matrix(K_u_u);
 		for (int i = 0; i < nb_u_nodes; ++i) {
 			for (int j = 0; j <= i; ++j) {
 				if (i==j)
@@ -192,8 +192,8 @@ void FullyIndependentTrainingConditional::build(
 		assert(pos == 0);
 
 		//Set f and compute 1/noise^2*eye(length(f)) * f
-		std::cout << "values" << std::endl;
-		VectorOperations::print_vector(values);
+//		std::cout << "values" << std::endl;
+//		VectorOperations::print_vector(values);
 
 		scaled_function_values.clear();
 		scaled_function_values.resize(nb_gp_nodes);
@@ -217,8 +217,8 @@ void FullyIndependentTrainingConditional::build(
 		for(int i = 0; i < nb_gp_nodes; ++i){
 			LambdaInv_f[i] = 1.0/Lambda[i]*noisy_values[i];
 		}
-		std::cout << "LambdaInv_f" << std::endl;
-		VectorOperations::print_vector(LambdaInv_f);
+//		std::cout << "LambdaInv_f" << std::endl;
+//		VectorOperations::print_vector(LambdaInv_f);
 
 		alpha.clear();
 		alpha.resize(nb_u_nodes);
@@ -229,6 +229,8 @@ void FullyIndependentTrainingConditional::build(
 
 		//Solve Sigma_not_inv^(-1)*alpha
 		forward_substitution(L, alpha);
+		std::cout << "alpha2=K_u_f*LambdaInv_f:" << std::endl;
+		VectorOperations::print_vector(alpha);
 		backward_substitution(L, alpha);
 		std::cout << "alpha=L\(K_u_f*LambdaInv_f):" << std::endl;
 		VectorOperations::print_vector(alpha);

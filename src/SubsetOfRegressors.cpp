@@ -137,11 +137,13 @@ void SubsetOfRegressors::build(std::vector<std::vector<double> > const &nodes,
 		alpha.resize(nb_u_nodes);
 		VectorOperations::mat_vec_product(K_u_f, noisy_values, alpha);
 
-		//std::cout << "Alpha:" << std::endl;
-		//VectorOperations::print_vector(alpha);
+		std::cout << "Alpha:" << std::endl;
+		VectorOperations::print_vector(alpha);
 
 		//Solve Sigma_not_inv^(-1)*alpha
 		forward_substitution(L, alpha);
+		std::cout << "Alpha2:" << std::endl;
+		VectorOperations::print_vector(alpha);
 		backward_substitution(L, alpha);
 
 		//std::cout << "Sigma*K_u_f*noise*y:" << std::endl;
