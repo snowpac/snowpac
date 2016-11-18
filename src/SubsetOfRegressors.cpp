@@ -61,8 +61,8 @@ void SubsetOfRegressors::build(std::vector<std::vector<double> > const &nodes,
 			K_f_u.at(i).resize(nb_u_nodes);
 		}
 		VectorOperations::mat_transpose(K_u_f, K_f_u);
-		//std::cout << "K_u_f and K_f_u done!" << std::endl;
-		//VectorOperations::print_matrix(K_u_f);
+		std::cout << "K_u_f and K_f_u!" << std::endl;
+		VectorOperations::print_matrix(K_u_f);
 
 		//Set up matrix K_u_u
 		L.clear();
@@ -72,8 +72,8 @@ void SubsetOfRegressors::build(std::vector<std::vector<double> > const &nodes,
 				L.at(i).push_back(evaluate_kernel(u.at(i), u.at(j)));
 			}
 		}
-		//std::cout << "K_u_u done!" << std::endl;
-		//VectorOperations::print_matrix(L);
+		std::cout << "K_u_u!" << std::endl;
+		VectorOperations::print_matrix(L);
 
 		//Compute 1/noise^2*eye(length(f))*K_f_u (we save it directly in K_f_u since we do not change it later)
 		for (int i = 0; i < nb_gp_nodes; ++i) {
@@ -242,7 +242,7 @@ void SubsetOfRegressors::sample_u(const int &nb_u_nodes) {
 	std::vector<int> u_idx_from_active;
 	//Set distribution for sampling the indices for the u samples
 	std::random_device rd;
-	int random_seed = rd();
+	int random_seed = 1;//rd();
 	std::mt19937 random_generator(random_seed);
 	std::vector<double> nodes_weights_vector;
 
