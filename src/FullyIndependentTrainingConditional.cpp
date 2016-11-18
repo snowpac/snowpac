@@ -168,6 +168,13 @@ void FullyIndependentTrainingConditional::build(
 		VectorOperations::print_matrix(K_u_f_Lambda_f_u);
 		L.clear();
 		L.resize(nb_u_nodes);
+		K_u_u.clear();
+		K_u_u.resize(nb_u_nodes);
+		for (int i = 0; i < nb_u_nodes; ++i) {
+			for (int j = 0; j <= i; ++j) {
+				K_u_u.at(i).push_back(evaluate_kernel(u.at(i), u.at(j)));
+			}
+		}
 		std::cout << "K_u_u" << std::endl;
 		VectorOperations::print_matrix(K_u_u);
 		for (int i = 0; i < nb_u_nodes; ++i) {
