@@ -41,8 +41,8 @@ void SubsetOfRegressors::build(std::vector<std::vector<double> > const &nodes,
 
 		this->sample_u(nb_u_nodes);
 
-		std::cout << "Creating u done!" << std::endl;
-		VectorOperations::print_matrix(u);
+//		std::cout << "Creating u done!" << std::endl;
+//		VectorOperations::print_matrix(u);
 
 		//std::cout << "Noise: " << std::endl;
 		//VectorOperations::print_vector(gp_noise);
@@ -61,8 +61,8 @@ void SubsetOfRegressors::build(std::vector<std::vector<double> > const &nodes,
 			K_f_u.at(i).resize(nb_u_nodes);
 		}
 		VectorOperations::mat_transpose(K_u_f, K_f_u);
-		std::cout << "K_u_f and K_f_u!" << std::endl;
-		VectorOperations::print_matrix(K_u_f);
+//		std::cout << "K_u_f and K_f_u!" << std::endl;
+//		VectorOperations::print_matrix(K_u_f);
 
 		//Set up matrix K_u_u
 		L.clear();
@@ -72,8 +72,8 @@ void SubsetOfRegressors::build(std::vector<std::vector<double> > const &nodes,
 				L.at(i).push_back(evaluate_kernel(u.at(i), u.at(j)));
 			}
 		}
-		std::cout << "K_u_u!" << std::endl;
-		VectorOperations::print_matrix(L);
+//		std::cout << "K_u_u!" << std::endl;
+//		VectorOperations::print_matrix(L);
 
 		//Compute 1/noise^2*eye(length(f))*K_f_u (we save it directly in K_f_u since we do not change it later)
 		for (int i = 0; i < nb_gp_nodes; ++i) {
@@ -103,8 +103,8 @@ void SubsetOfRegressors::build(std::vector<std::vector<double> > const &nodes,
 				}
 			}
 		}
-		std::cout << "L!" << std::endl;
-		VectorOperations::print_matrix(L);
+//		std::cout << "L!" << std::endl;
+//		VectorOperations::print_matrix(L);
 
 		//Compute Cholesky of K_u_u
 		CholeskyFactorization::compute(L, pos, rho, nb_u_nodes);
@@ -127,23 +127,21 @@ void SubsetOfRegressors::build(std::vector<std::vector<double> > const &nodes,
 			noisy_values[i] = scaled_function_values[i] * 1.0
 					/ pow(gp_noise.at(i) / 2e0 + noise_regularization, 2e0);
 		}
-		std::cout << "noisy_values" << std::endl;
-		VectorOperations::print_vector(noisy_values);
-		//std::cout << "eye(noise) * f:" << std::endl;
-		//VectorOperations::print_vector(noisy_values);
+//		std::cout << "noisy_values" << std::endl;
+//		VectorOperations::print_vector(noisy_values);
 
 		//Compute K_u_f * f = alpha
 		alpha.clear();
 		alpha.resize(nb_u_nodes);
 		VectorOperations::mat_vec_product(K_u_f, noisy_values, alpha);
 
-		std::cout << "Alpha:" << std::endl;
-		VectorOperations::print_vector(alpha);
+//		std::cout << "Alpha:" << std::endl;
+//		VectorOperations::print_vector(alpha);
 
 		//Solve Sigma_not_inv^(-1)*alpha
 		forward_substitution(L, alpha);
-		std::cout << "Alpha2:" << std::endl;
-		VectorOperations::print_vector(alpha);
+//		std::cout << "Alpha2:" << std::endl;
+//		VectorOperations::print_vector(alpha);
 		backward_substitution(L, alpha);
 
 		//std::cout << "Sigma*K_u_f*noise*y:" << std::endl;
