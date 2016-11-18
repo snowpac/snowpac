@@ -283,12 +283,15 @@ void FullyIndependentTrainingConditional::evaluate(std::vector<double> const &x,
 		 std::cout << "K_star_u:" << std::endl;
 		 VectorOperations::print_vector(K0);
 		 */
+		std::cout << "K0" << std::endl;
+		VectorOperations::print_vector(K0);
 		mean = VectorOperations::dot_product(K0, alpha);
+		std::cout << "mean:" << mean << std::endl;
 		//std::cout << "Mean: " << mean << std::endl;
 
 		TriangularMatrixOperations::forward_substitution(L, K0);
 		double variance_term3 = VectorOperations::dot_product(K0, K0);
-
+		std::cout << "variance_term3:" << variance_term3 << std::endl;
 		K0.clear();
 		K0.resize(nb_u_nodes);
 		for (int i = 0; i < nb_u_nodes; i++) {
@@ -296,6 +299,7 @@ void FullyIndependentTrainingConditional::evaluate(std::vector<double> const &x,
 		}
 		TriangularMatrixOperations::forward_substitution(K_u_u, K0);
 		double variance_term2 = VectorOperations::dot_product(K0, K0);
+		std::cout << "variance_term2:" << variance_term2 << std::endl;
 		/*
 		 std::cout << "Variance: " << variance << std::endl;
 		 std::cout << "######################################" << std::endl;
@@ -303,6 +307,7 @@ void FullyIndependentTrainingConditional::evaluate(std::vector<double> const &x,
 		 assert(evaluate_counter<20*3);
 		 */
 		variance = evaluate_kernel(x,x)-variance_term2+variance_term3;
+		std::cout << "variance:" << variance << std::endl;
 	} else {
 		GaussianProcess::evaluate(x, mean, variance);
 	}
