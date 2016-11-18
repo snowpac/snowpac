@@ -107,6 +107,8 @@ void FullyIndependentTrainingConditional::build(
 		for (int i = 0; i < nb_u_nodes; ++i) {
 			K_u_u_u_f.at(i).resize(nb_u_nodes);
 		}
+		VectorOperations::print_matrix(K_u_f);
+		VectorOperations::print_matrix(K_u_u_inv);
 		VectorOperations::mat_product(K_u_f, K_u_u_inv, K_u_u_u_f);
 		//We only need the diagonal elements of Qff for finding Lambda
 		//Let's try and do this in an efficient way
