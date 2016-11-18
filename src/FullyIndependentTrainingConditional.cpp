@@ -205,8 +205,8 @@ void FullyIndependentTrainingConditional::build(
 		}
 		std::vector<double> noisy_values(scaled_function_values.size());
 		for (int i = 0; i < nb_gp_nodes; ++i) {
-			noisy_values[i] = scaled_function_values[i] * 1.0
-					/ pow(gp_noise.at(i) / 2e0 + noise_regularization, 2e0);
+			noisy_values[i] = scaled_function_values[i];// * 1.0
+				//	/ pow(gp_noise.at(i) / 2e0 + noise_regularization, 2e0);
 		}
 		std::cout << "noisy_values" << std::endl;
 		VectorOperations::print_vector(noisy_values);
@@ -217,8 +217,8 @@ void FullyIndependentTrainingConditional::build(
 		for(int i = 0; i < nb_gp_nodes; ++i){
 			LambdaInv_f[i] = 1.0/Lambda[i]*noisy_values[i];
 		}
-//		std::cout << "LambdaInv_f" << std::endl;
-//		VectorOperations::print_vector(LambdaInv_f);
+		std::cout << "LambdaInv_f" << std::endl;
+		VectorOperations::print_vector(LambdaInv_f);
 
 		alpha.clear();
 		alpha.resize(nb_u_nodes);
