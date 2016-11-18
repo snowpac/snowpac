@@ -135,7 +135,7 @@ void FullyIndependentTrainingConditional::build(
 		Lambda.clear();
 		Lambda.resize(nb_gp_nodes);
 		for (int i = 0; i < nb_gp_nodes; ++i) {
-			Lambda[i] = diag_K_f_f[i] - diag_Q_f_f[i] + pow( noise.at(i) / 2e0 + noise_regularization, 2e0 );
+			Lambda[i] = pow( noise.at(i) / 2e0 + noise_regularization, 2e0 );//diag_K_f_f[i] - diag_Q_f_f[i] + pow( noise.at(i) / 2e0 + noise_regularization, 2e0 );
 		}
 		std::cout << "noise" << std::endl;
 		VectorOperations::print_vector(noise);
