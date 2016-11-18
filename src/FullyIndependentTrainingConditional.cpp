@@ -316,7 +316,7 @@ void FullyIndependentTrainingConditional::sample_u(const int &nb_u_nodes) {
 	std::vector<int> u_idx_from_active;
 	//Set distribution for sampling the indices for the u samples
 	std::random_device rd;
-	int random_seed = rd();
+	int random_seed = 1;//rd();
 	std::mt19937 random_generator(random_seed);
 	std::vector<double> nodes_weights_vector;
 
