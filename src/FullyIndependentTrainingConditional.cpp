@@ -306,7 +306,7 @@ void FullyIndependentTrainingConditional::evaluate(std::vector<double> const &x,
 		 evaluate_counter++;
 		 assert(evaluate_counter<20*3);
 		 */
-		std::cout << "K**:" << evaluate_kernel(x,x) << std::endl
+		std::cout << "K**:" << evaluate_kernel(x,x) << std::endl;
 		variance = evaluate_kernel(x,x)-variance_term2+variance_term3;
 		std::cout << "variance:" << variance << std::endl;
 	} else {
