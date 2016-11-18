@@ -183,7 +183,7 @@ void FullyIndependentTrainingConditional::build(
 		}
 
 		CholeskyFactorization::compute(L, pos, rho, nb_u_nodes);
-		assert(pos == 0);
+		//assert(pos == 0);
 
 		//Set f and compute 1/noise^2*eye(length(f)) * f
 		scaled_function_values.clear();
@@ -336,7 +336,7 @@ void FullyIndependentTrainingConditional::sample_u(const int &nb_u_nodes) {
 	std::vector<int> u_idx_from_active;
 	//Set distribution for sampling the indices for the u samples
 	std::random_device rd;
-	int random_seed = 2;//rd();
+	int random_seed = 1;//rd();
 	std::mt19937 random_generator(random_seed);
 	std::vector<double> nodes_weights_vector;
 
