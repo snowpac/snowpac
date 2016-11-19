@@ -10,16 +10,24 @@
 
 #include "GaussianProcess.hpp"
 
+#include <Eigen/Core>
+
+using namespace Eigen;
+
 class FullyIndependentTrainingConditional: public GaussianProcess{
 
 protected:
-    std::vector< std::vector<double> > K_u_f;
-    std::vector< std::vector<double> > K_f_u;
-    std::vector<std::vector<double>> K_u_u;
-    std::vector< double > Lambda;
-    std::vector< double > L_u;
-    std::vector< double > K_u_f_LambdaInv_f;
-    std::vector< std::vector<double> > u;
+    LLT<MatrixXd> L_eigen;
+    MatrixXd K_u_f;
+    MatrixXd K_u_u;
+    VectorXd Lambda;
+    VectorXd alpha_eigen;
+    VectorXd L_u;
+    VectorXd K_u_f_LambdaInv_f;
+    VectorXd K0_eigen;
+    MatrixXd u;
+    MatrixXd gp_nodes_eigen;
+    VectorXd gp_noise_eigen;
     double u_ratio = 0.1;
     int min_nb_u_nodes = 1;
 
@@ -37,6 +45,12 @@ public:
     //! Destructor
     ~FullyIndependentTrainingConditional() { };
 
+    double evaluate_kernel ( VectorXd const &x,
+                                          VectorXd const &y );
+
+    double evaluate_kernel ( VectorXd const &x,
+                                          VectorXd const &y,
+                                          std::vector<double> const &p );
     //! Build the approximated Gaussian process
     /*!
      Computes the Gaussian process\n
@@ -67,7 +81,15 @@ public:
      \see build
     */
     void evaluate ( std::vector<double> const&, double&, double& );
+   /*
+    void estimate_hyper_parameters ( std::vector< std::vector<double> > const &nodes,
+                                                      std::vector<double> const &values,
+                                                      std::vector<double> const &noise );
 
+    double parameter_estimation_objective(std::vector<double> const &x,
+                                                           std::vector<double> &grad,
+                                                           void *data);
+   */
 };
 
 
