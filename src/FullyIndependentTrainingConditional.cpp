@@ -10,6 +10,7 @@
 #include <assert.h>
 #include <algorithm>
 #include <iostream>
+#include <limits.h>
 
  #include <Eigen/Dense>
 
@@ -47,6 +48,87 @@ double FullyIndependentTrainingConditional::evaluate_kernel ( VectorXd const &x,
   
   return kernel_evaluation * p.at( 0 ) ;
 }
+
+void FullyIndependentTrainingConditional::compute_Kuf_and_Kuu() {
+	int nb_u_nodes = u.rows();
+	//Set up matrix K_u_f and K_f_u
+	K_u_f.resize(nb_u_nodes, nb_gp_nodes);
+	for (int i = 0; i < nb_u_nodes; ++i) {
+		for (int j = 0; j < nb_gp_nodes; ++j) {
+			K_u_f(i, j) = evaluate_kernel(u.row(i), gp_nodes_eigen.row(j));
+		}
+	}
+	//Set up matrix K_u_u
+	K_u_u.resize(nb_u_nodes, nb_u_nodes);
+	for (int i = 0; i < nb_u_nodes; ++i) {
+		for (int j = 0; j < nb_u_nodes; ++j) {
+			K_u_u(i, j) = evaluate_kernel(u.row(i), u.row(j));
+			if (i == j)
+				K_u_u(i, j) += 0.000001;
+		}
+	}
+}
+
+ void FullyIndependentTrainingConditional::compute_Qff(const MatrixXd& K_f_u, VectorXd& diag_Q_f_f) {
+	int nb_u_nodes = u.rows();
+	LLT < MatrixXd > LLTofK_u_u(K_u_u);
+	MatrixXd K_u_u_u_f = LLTofK_u_u.solve(K_u_f);
+
+	diag_Q_f_f.resize(nb_gp_nodes);
+	for (int i = 0; i < nb_gp_nodes; ++i) {
+		diag_Q_f_f(i) = 0.0;
+		for (int j = 0; j < nb_u_nodes; ++j) {
+			diag_Q_f_f(i) += (K_f_u(i, j) * K_u_u_u_f(j, i));
+		}
+	}
+}
+
+void FullyIndependentTrainingConditional::compute_Kff(VectorXd& diag_K_f_f) {
+	diag_K_f_f.resize(nb_gp_nodes);
+	for (int i = 0; i < nb_gp_nodes; ++i) {
+		diag_K_f_f(i) = evaluate_kernel(gp_nodes_eigen.row(i),
+				gp_nodes_eigen.row(i));
+	}
+}
+
+void FullyIndependentTrainingConditional::compute_diff_Kff_Qff(const VectorXd& diag_K_f_f,
+		const VectorXd& diag_Q_f_f, VectorXd& diff_Kff_Qff) {
+	diff_Kff_Qff.resize(nb_gp_nodes);
+	for (int i = 0; i < nb_gp_nodes; ++i) {
+		diff_Kff_Qff(i) = (diag_K_f_f(i) - diag_Q_f_f(i));
+	}
+}
+
+void FullyIndependentTrainingConditional::compute_Lambda(const VectorXd& diff_Kff_Qff, const std::vector<double>& noise) {
+	Lambda.resize(nb_gp_nodes);
+	for (int i = 0; i < nb_gp_nodes; ++i) {
+		Lambda(i) = (diff_Kff_Qff(i) + pow(noise.at(i) / 2e0 + noise_regularization, 2e0));
+	}
+}
+
+void FullyIndependentTrainingConditional::compute_Lambda_times_Kfu(const MatrixXd& K_f_u, MatrixXd& Lambda_K_f_u) {
+	int nb_u_nodes = u.rows();
+	Lambda_K_f_u.resize(nb_gp_nodes, nb_u_nodes);
+	for (int i = 0; i < nb_gp_nodes; i++) {
+		for (int j = 0; j < nb_u_nodes; j++) {
+			Lambda_K_f_u(i, j) = ((1.0 / Lambda(i)) * K_f_u(i, j));
+		}
+	}
+}
+
+void FullyIndependentTrainingConditional::compute_KufLambdaKfu(const MatrixXd& Lambda_K_f_u, MatrixXd& K_u_f_Lambda_f_u) {
+	int nb_u_nodes = u.rows();
+	K_u_f_Lambda_f_u.resize(nb_u_nodes, nb_u_nodes);
+	K_u_f_Lambda_f_u = K_u_f * Lambda_K_f_u;
+}
+
+void FullyIndependentTrainingConditional::compute_LambdaInvF(VectorXd& LambdaInv_f) {
+	LambdaInv_f.resize(nb_gp_nodes);
+	for (int i = 0; i < nb_gp_nodes; ++i) {
+		LambdaInv_f(i) = 1.0 / Lambda(i) * scaled_function_values[i];
+	}
+}
+
 //--------------------------------------------------------------------------------
 
 void FullyIndependentTrainingConditional::build(
@@ -79,139 +161,47 @@ void FullyIndependentTrainingConditional::build(
 			gp_noise_eigen(i) = noise[i];
 		}
 
-		this->sample_u(nb_u_nodes);
-
-//		std::cout << "Creating u done!" << std::endl;
-//		VectorOperations::print_matrix(u);
-
-		//std::cout << "Noise: " << std::endl;
-		//VectorOperations::print_vector(gp_noise);
+		if (resample_u)
+			this->sample_u(nb_u_nodes);
+		resample_u = true;
 
 		//Set up matrix K_u_f and K_f_u
-		K_u_f.resize(nb_u_nodes, nb_gp_nodes);
-		for (int i = 0; i < nb_u_nodes; ++i) {
-			for (int j = 0; j < nb_gp_nodes; ++j) {
-				K_u_f(i,j) = evaluate_kernel(u.row(i), gp_nodes_eigen.row(j));
-			}
-		}
+		compute_Kuf_and_Kuu();
 		MatrixXd K_f_u = K_u_f.transpose();
 
-		//Set up matrix K_u_u
-		K_u_u.resize(nb_u_nodes, nb_u_nodes);
-		for (int i = 0; i < nb_u_nodes; ++i) {
-			for (int j = 0; j <= i; ++j) {
-				K_u_u(i,j) = evaluate_kernel(u.row(i), u.row(j));
-			}
-		}
-//		std::cout << "K_u_u" << std::endl;
-//		VectorOperations::print_matrix(K_u_u);
-//		CholeskyFactorization::compute(K_u_u, pos, rho, nb_u_nodes);
-//		std::cout << "K_u_uchol" << std::endl;
-//		VectorOperations::print_matrix(K_u_u);
-		//We have Kfu, Kuf, Kuu
-		//Compute Qff, inv(K_u_u)*K_u_f=K_u_u_u_f first
-		MatrixXd K_u_u_u_f = K_u_u.inverse()*K_u_f;
-		
-//		std::cout << "K_u_u_u_f" << std::endl;
-//		VectorOperations::print_matrix(K_u_u_u_f);
-		//We only need the diagonal elements of Qff for finding Lambda
-		//Let's try and do this in an efficient way
-		//Compute Qff, diag(K_f_u*(inv(K_u_u)*K_u_f first))
 		VectorXd diag_Q_f_f;
-		diag_Q_f_f.resize(nb_gp_nodes);
+		compute_Qff(K_f_u, diag_Q_f_f);
 
-		for (int i = 0; i < nb_gp_nodes; ++i) {
-			for (int j = 0; j < nb_u_nodes; ++j) {
-				diag_Q_f_f(i) = (K_f_u(i,j) * K_u_u_u_f(j,i));
-			}
-		}
-//		std::cout << "diag_Q_f_f" << std::endl;
-//		VectorOperations::print_vector(diag_Q_f_f);
-		//Compute diagKff
 		VectorXd diag_K_f_f;
-		diag_K_f_f.resize(nb_gp_nodes);
-		for (int i = 0; i < nb_gp_nodes; ++i) {
-			diag_K_f_f(i) = evaluate_kernel(gp_nodes_eigen.row(i),
-											 gp_nodes_eigen.row(i));
-		}
-//		std::cout << "diag_K_f_f" << std::endl;
-//		VectorOperations::print_vector(diag_K_f_f);
-		//Compute Lambda+noise
-		Lambda.resize(nb_gp_nodes);
-		for (int i = 0; i < nb_gp_nodes; ++i) {
-			Lambda(i) = (diag_K_f_f(i) - diag_Q_f_f(i) + pow( noise.at(i) / 2e0 + noise_regularization, 2e0 ));
-		}
-//		std::cout << "noise" << std::endl;
-//		VectorOperations::print_vector(noise);
-//		std::cout << "Lambda" << std::endl;
-//		VectorOperations::print_vector(Lambda);
-		//L=(Kuu+KufLambdainvKfu)
+		compute_Kff(diag_K_f_f);
+
+		VectorXd diff_Kff_Qff; //this is different for FITC, DTC, SoR
+		compute_diff_Kff_Qff(diag_K_f_f, diag_Q_f_f, diff_Kff_Qff);
+
+		compute_Lambda(diff_Kff_Qff, noise);
+
 		MatrixXd Lambda_K_f_u;
-		Lambda_K_f_u.resize(nb_gp_nodes, nb_u_nodes);
-		for(int i = 0; i < nb_gp_nodes; i++){
-			for(int j = 0; j < nb_u_nodes; j++){
-				Lambda_K_f_u(i,j) = ((1.0/Lambda(i)) * K_f_u(i,j));
-			}
-		}
+		compute_Lambda_times_Kfu(K_f_u, Lambda_K_f_u);
 
-//		std::cout << "Lambda_K_f_u" << std::endl;
-//		VectorOperations::print_matrix(Lambda_K_f_u);
-		//K_u_u_u_f reuse as Kuf*Lambda_K_f_u = Kuf*(Lambda^(-1)*Kfu)
 		MatrixXd K_u_f_Lambda_f_u;
-		K_u_f_Lambda_f_u.resize(nb_u_nodes, nb_u_nodes);
-		K_u_f_Lambda_f_u = K_u_f*Lambda_K_f_u;
-//		std::cout << "K_u_f_Lambda_f_u" << std::endl;
-//		VectorOperations::print_matrix(K_u_f_Lambda_f_u);
-
-		/*K_u_u.resize(nb_u_nodes, nb_u_nodes);
-		for (int i = 0; i < nb_u_nodes; ++i) {
-			for (int j = 0; j <= i; ++j) {
-				K_u_u = evaluate_kernel(u(i), u(j));
-			}
-		}*/
-
-//		std::cout << "L = K_u_u + K_u_f Lambda_inv K_f_u" << std::endl;
-//		VectorOperations::print_matrix(L);
+		compute_KufLambdaKfu(Lambda_K_f_u, K_u_f_Lambda_f_u);
 
 		L_eigen.compute(K_u_u + K_u_f_Lambda_f_u);
-
-		//Set f and compute 1/noise^2*eye(length(f)) * f
-//		std::cout << "values" << std::endl;
-//		VectorOperations::print_vector(values);
 
 		scaled_function_values.clear();
 		scaled_function_values.resize(nb_gp_nodes);
 		for (int i = 0; i < nb_gp_nodes; i++) {
 			scaled_function_values.at(i) = values.at(i);
-			//      scaled_function_values.at(i) = values.at(i) - min_function_value;
-			//      scaled_function_values.at(i) /= 5e-1*( max_function_value-min_function_value );
-			//      scaled_function_values.at(i) -= 1e0;
 		}
-//		std::cout << "noisy_values" << std::endl;
-//		VectorOperations::print_vector(noisy_values);
 
 		VectorXd LambdaInv_f;
-		LambdaInv_f.resize(nb_gp_nodes);
-		for(int i = 0; i < nb_gp_nodes; ++i){
-			LambdaInv_f(i) = 1.0/Lambda(i)*scaled_function_values[i];
-		}
-//		std::cout << "LambdaInv_f" << std::endl;
-//		VectorOperations::print_vector(LambdaInv_f);
+		compute_LambdaInvF(LambdaInv_f);
 
 		VectorXd alpha_eigen_rhs = K_u_f * LambdaInv_f;
-
-//		std::cout << "alpha=K_u_f*LambdaInv_f:" << std::endl;
-//		VectorOperations::print_vector(alpha);
 
 		//Solve Sigma_not_inv^(-1)*alpha
 		alpha_eigen = L_eigen.solve(alpha_eigen_rhs);
 
-		//forward_substitution(L, alpha);
-//		std::cout << "alpha2=K_u_f*LambdaInv_f:" << std::endl;
-//		VectorOperations::print_vector(alpha);
-		//backward_substitution(L, alpha);
-//		std::cout << "alpha=L\(K_u_f*LambdaInv_f):" << std::endl;
-//		VectorOperations::print_vector(alpha);
 	} else {
 		GaussianProcess::build(nodes, values, noise);
 	}
@@ -271,8 +261,7 @@ void FullyIndependentTrainingConditional::evaluate(std::vector<double> const &x,
 		for (int i = 0; i < nb_u_nodes; i++) {
 			K0_eigen(i) = evaluate_kernel(x_eigen, u.row(i));
 		}
-//		std::cout << "K0" << std::endl;
-//		VectorOperations::print_vector(K0);
+
 //		std::cout << "alpha= (K_u_u + K_u_f Lambda_inv K_f_u)\(K_u_f*LambdaInv*f):" << std::endl;
 //		VectorOperations::print_vector(alpha);
 		mean = K0_eigen.dot(alpha_eigen);
@@ -420,7 +409,7 @@ void FullyIndependentTrainingConditional::sample_u(const int &nb_u_nodes) {
 	return;
 }
 
-/*
+
 void FullyIndependentTrainingConditional::estimate_hyper_parameters ( std::vector< std::vector<double> > const &nodes,
                                                   std::vector<double> const &values,
                                                   std::vector<double> const &noise )
@@ -445,8 +434,10 @@ void FullyIndependentTrainingConditional::estimate_hyper_parameters ( std::vecto
     L.at(i).resize( i+1 );
 
   scaled_function_values.resize(nb_gp_nodes);
+  scaled_function_values_eigen.resize(nb_gp_nodes);
   for ( int i = 0; i < nb_gp_nodes; ++i) {
     scaled_function_values.at(i) = values.at(i);
+    scaled_function_values_eigen(i) = values.at(i);
 //    scaled_function_values.at(i) = values.at(i) - min_function_value;
 //    scaled_function_values.at(i) /= 5e-1*( max_function_value-min_function_value );
 //    scaled_function_values.at(i) -= 1e0;
@@ -460,31 +451,31 @@ void FullyIndependentTrainingConditional::estimate_hyper_parameters ( std::vecto
 //    if (gp_noise.at( i ) > max_noise)
 //      max_noise = gp_noise.at( i );
 //  }
-  lb.resize(1+dim+u.size()*dim);
-  ub.resize(1+dim+u.size()*dim);
+  lb.resize(1+dim+u.rows()*dim);
+  ub.resize(1+dim+u.rows()*dim);
   lb[0] = 1e-1; // * pow(1000e0 * max_noise / 2e0, 2e0);
   ub[0] = 1e1;// * pow(1000e0 * max_noise / 2e0, 2e0);
   double delta_threshold = *delta;
   if (delta_threshold < 1e-2) delta_threshold = 1e-2;
   for (int i = 0; i < dim; ++i) {
-      lb[i+1] = 1e1 * delta_threshold;
+      lb[i+1] = 1e-1 * delta_threshold;
       ub[i+1] = 1e2 * delta_threshold;
   }
   int offset = 1+dim;
   std::vector<double> lb_u(dim);
-  lb_u[0] = -1;
+  lb_u[0] = -1; //TODO 
   lb_u[1] = -1;
   std::vector<double> ub_u(dim);
-  ub_u[0] = -1;
-  ub_u[1] = -1;
+  ub_u[0] = 5;
+  ub_u[1] = 5;
   for (int i = 0; i < dim; ++i) {
-	  for(int j = offset + i*u.size(); j < offset + (i+1)*u.size(); ++j){
+	  for(int j = offset + i*u.rows(); j < offset + (i+1)*u.rows(); ++j){
           lb[j] = lb_u[i];
           ub[j] = ub_u[i];
 	  }
   }
 
-  gp_parameters.resize(1+dim+u.size()*dim);
+  gp_parameters.resize(1+dim+u.rows()*dim);
   if (gp_parameters[0] < 0e0) {
     gp_parameters[0] = lb[0]*5e-1 + 5e-1*ub[0];
     for (int i = 1; i < dim+1; ++i) {
@@ -496,82 +487,200 @@ void FullyIndependentTrainingConditional::estimate_hyper_parameters ( std::vecto
       if ( gp_parameters[i] >= ub[i] ) gp_parameters[i] = 0.9 * ub[i];
     }
   }
+
+  for ( int i = 0; i < dim + 1; ++i )
+    std::cout << "gp_param = " << gp_parameters[i] << std::endl;
+  int u_counter;
   for (int i = 0; i < dim; ++i) {
-  	  for(int j = offset + i*u.size(); j < offset + (i+1)*u.size(); ++j){
-            gp_parameters[j] = u[j-offset][i];
+  	  u_counter = 0;
+  	  for(int j = offset + i*u.rows(); j < offset + (i+1)*u.rows(); ++j){
+            gp_parameters[j] = u(u_counter,i);    		
+            std::cout << "gp_param = " << gp_parameters[j] << std::endl;
+            u_counter++;
   	  }
-  }
+  } 
   //--------------------------------------------------
 
   //initialize optimizer from NLopt library
-  int dimp1 = dim+1;
+  int dimp1 = 1+dim+u.rows()*dim;
 //  nlopt::opt opt(nlopt::LD_CCSAQ, dimp1);
 //  nlopt::opt opt(nlopt::LN_BOBYQA, dimp1);
 //
-  nlopt::opt opt(nlopt::GN_DIRECT, dimp1);
+  nlopt::opt opt(nlopt::GN_CRS2_LM, dimp1);
 
   //opt = nlopt_create(NLOPT_LN_COBYLA, dim+1);
   opt.set_lower_bounds( lb );
   opt.set_upper_bounds( ub );
 
-  opt.set_max_objective( parameter_estimation_objective, gp_pointer);
+  opt.set_min_objective( parameter_estimation_objective, gp_pointer);
 
  // opt.set_xtol_abs(1e-2);
 //  opt.set_xtol_rel(1e-2);
 //set timeout to NLOPT_TIMEOUT seconds
-  opt.set_maxtime(1.0);
+  opt.set_maxtime(1800.0);
   //perform optimization to get correction factors
 
-    int exitflag=-20;
-  try {
+  int exitflag=-20;
+  //try {
     exitflag = opt.optimize(gp_parameters, optval);
-  } catch (...) {
-    gp_parameters[0] = lb[0]*5e-1 + 5e-1*ub[0];
-    for (int i = 1; i < dim+1; ++i) {
-      gp_parameters[i] = (lb[i]*5e-1 + 5e-1*ub[i]);
-    }
-  }
+  //} catch (...) {
+  //  gp_parameters[0] = lb[0]*5e-1 + 5e-1*ub[0];
+  //  for (int i = 1; i < dim+1; ++i) {
+  //    gp_parameters[i] = (lb[i]*5e-1 + 5e-1*ub[i]);
+  //  }
+  //}
 
   std::cout << "exitflag = "<< exitflag<<std::endl;
   std::cout << "OPTVAL .... " << optval << std::endl;
-  for ( int i = 0; i < gp_parameters.size(); ++i )
+  for ( int i = 0; i < dim + 1; ++i )
     std::cout << "gp_param = " << gp_parameters[i] << std::endl;
   std::cout << std::endl;
 
+  resample_u = false;
+  this->build(nodes, values, noise);
 
   return;
 }
 //--------------------------------------------------------------------------------
+
 //--------------------------------------------------------------------------------
 double FullyIndependentTrainingConditional::parameter_estimation_objective(std::vector<double> const &x,
                                                        std::vector<double> &grad,
                                                        void *data)
 {
 
-  GaussianProcess *d = reinterpret_cast<FullyIndependentTrainingConditional*>(data);
-
-
-
-  for (int i = 0; i < d->nb_gp_nodes; ++i) {
-    for (int j = 0; j <= i; ++j)
-      d->L.at(i).at(j) = d->evaluate_kernel( d->gp_nodes[i], d->gp_nodes[j], x );
-    d->L.at(i).at(i) += pow( d->gp_noise.at(i) / 2e0 + d->noise_regularization, 2e0 );
+  FullyIndependentTrainingConditional *d = reinterpret_cast<FullyIndependentTrainingConditional*>(data);
+  int offset = 1+d->dim;
+  int u_counter;
+  double nugget = 0.0001;
+  double nugget2 = 0.0;
+  for (int i = 0; i < d->dim; ++i) {
+  	  u_counter = 0;
+  	  for(int j = offset + i*d->u.rows(); j < offset + (i+1)*d->u.rows(); ++j){
+            d->u(u_counter,i) = x[j];
+            u_counter++;
+  	  }
   }
 
+  //Compute Kuf, Kuu
+  //Set up matrix K_u_f and K_f_u
+	int nb_gp_nodes = d->gp_nodes.size();
+	int nb_u_nodes = d->u.rows();
+	d->K_u_f.resize(nb_u_nodes, nb_gp_nodes);
+	for (int i = 0; i < nb_u_nodes; ++i) {
+		for (int j = 0; j < nb_gp_nodes; ++j) {
+			d->K_u_f(i,j) = d->evaluate_kernel(d->u.row(i), d->gp_nodes_eigen.row(j), x);
+		}
+	}
+	MatrixXd K_f_u = d->K_u_f.transpose();
+	//std::cout << "Kuf\n" << d->K_u_f << std::endl;
 
-  d->CholeskyFactorization::compute( d->L, d->pos, d->rho, d->nb_gp_nodes );
-  assert(d->pos == 0);
-  d->alpha = d->scaled_function_values;
-  d->forward_substitution( d->L, d->alpha );
-  d->backward_substitution( d->L, d->alpha );
-  double result = -0.5*d->VectorOperations::dot_product(d->scaled_function_values, d->alpha) +
-                  -0.5*((double)d->nb_gp_nodes)*log(6.28);
-  for (int i = 0; i < d->nb_gp_nodes; ++i)
-    result -= 0.5*log(d->L.at(i).at(i));
+	//Set up matrix K_u_u
+	d->K_u_u.resize(nb_u_nodes, nb_u_nodes);
+	for (int i = 0; i < nb_u_nodes; ++i) {
+		for (int j = 0; j < nb_u_nodes; ++j) {
+			d->K_u_u(i,j) = d->evaluate_kernel(d->u.row(i), d->u.row(j), x);
+			if(i==j)
+				d->K_u_u(i,j) += nugget;
+		}
+	}
+	//std::cout << "Kuu\n" << d->K_u_u << std::endl;
+	LLT<MatrixXd> LLTofK_u_u(d->K_u_u);
+	MatrixXd K_u_u_u_f = LLTofK_u_u.solve(d->K_u_f);
 
-  // std::cout << result << std::endl;
+	VectorXd diag_Q_f_f;
+	diag_Q_f_f.resize(nb_gp_nodes);
+
+	for (int i = 0; i < nb_gp_nodes; ++i) {
+		diag_Q_f_f(i) = 0.0;
+		for (int j = 0; j < nb_u_nodes; ++j) {
+			diag_Q_f_f(i) += (K_f_u(i,j) * K_u_u_u_f(j,i));
+		}
+	}
+	VectorXd diag_K_f_f;
+	diag_K_f_f.resize(nb_gp_nodes);
+	for (int i = 0; i < nb_gp_nodes; ++i) {
+		diag_K_f_f(i) = d->evaluate_kernel(d->gp_nodes_eigen.row(i),
+									 d->gp_nodes_eigen.row(i), x);
+	}
+	/*std::cout << "diag_K_f_f\n" << diag_K_f_f << std::endl;
+	std::cout << "diag_Q_f_f\n" << diag_Q_f_f << std::endl;*/
+
+	d->Lambda.resize(nb_gp_nodes);
+	//std::cout << "noise\n" << std::endl;
+	for (int i = 0; i < nb_gp_nodes; ++i) {
+		d->Lambda(i) = (diag_K_f_f(i) - diag_Q_f_f(i) + pow( d->gp_noise.at(i) / 2e0 + d->noise_regularization, 2e0 ));
+	}
+	//std::cout << std::endl;
+
+	MatrixXd Lambda_K_f_u;
+	Lambda_K_f_u.resize(nb_gp_nodes, nb_u_nodes);
+	for(int i = 0; i < nb_gp_nodes; i++){
+		for(int j = 0; j < nb_u_nodes; j++){
+			Lambda_K_f_u(i,j) = ((1.0/(d->Lambda(i) + nugget2)) * K_f_u(i,j));
+		}
+	}
+	MatrixXd K_u_f_Lambda_f_u;
+	K_u_f_Lambda_f_u.resize(nb_u_nodes, nb_u_nodes);
+	K_u_f_Lambda_f_u = d->K_u_f*Lambda_K_f_u;
+
+	MatrixXd Sigma = d->K_u_u + K_u_f_Lambda_f_u;
+	for (int i = 0; i < nb_u_nodes; ++i) {
+		//Sigma(i,i) += nugget;
+	}
+	d->L_eigen.compute(Sigma);
+	double L12 = 0.0;//-log(d->K_u_u.determinant());
+	for (int i = 0; i < d->u.rows(); ++i){
+		L12 += log(LLTofK_u_u.matrixL()(i,i));
+    	//std::cout << L1 << "L11-" << i << std::endl;
+	}
+
+	double det_Leigen = 0.0;
+	for (int i = 0; i < d->u.rows(); ++i){
+		det_Leigen += log(d->L_eigen.matrixL()(i,i));
+    	//std::cout << d->L_eigen.matrixL()(i,i) << " " << log(d->L_eigen.matrixL()(i,i)) << "det_Leigen-" << i << std::endl;
+	}
+
+	double L11 = 0.0;
+    //std::cout << L1 << "L12 " << std::endl;
+	for (int i = 0; i < d->nb_gp_nodes; ++i){
+		L11 += log(d->Lambda(i));
+		//std::cout << "Lambda: " << i << " " << d->Lambda(i) <<" "<<log(d->Lambda(i)) << std::endl;
+	}
+    double L1 = 0.0;
+	L1 = 0.5*L11 + (2*0.5)*det_Leigen - (2*0.5)*L12;
+
+	MatrixXd Q_f_f = K_f_u*K_u_u_u_f;
+	for(int i = 0; i < nb_gp_nodes; i++){
+		Q_f_f(i,i) += d->Lambda(i);
+	}
+	LLT<MatrixXd> LLTofQ_f_f(Q_f_f);
+	double L2 = 0.5*d->scaled_function_values_eigen.dot(LLTofQ_f_f.solve(d->scaled_function_values_eigen));
+  	
+  	//std::cout << d->scaled_function_values_eigen << std::endl;
+  double result = L1 + L2;
+ 
+  if (isinf(result) || isnan(result)){
+  	std::cout << "Result is inf or nan" << std::endl;
+  	std::cout << "L11 " << L11 << " " << 'x' << std::endl;
+    std::cout << "L12 " << L12 << " "  << log(d->K_u_u.determinant()) << std::endl;
+    std::cout << "L13 " << det_Leigen << " " << log(Sigma.determinant()) << std::endl;
+    std::cout << L1 << ' ' << L2 << std::endl;
+  	result = std::numeric_limits<double>::infinity();
+  }
+  if ((d->print%100)==0){
+	  for ( int i = 0; i < d->dim + 1; ++i )
+	    std::cout << "gp_param = " << x[i] << std::endl;
+	  for(int j = offset; j < offset + d->u.rows(); ++j)
+			std::cout << "gp_param = " << x[j] <<","<<x[j+ d->u.rows()]<< std::endl;
+  	
+    std::cout << L1 << ' ' << L2 << std::endl;
+  	std::cout << "Objective: "  << result<< std::endl;
+  }
+
+  d->print++;
 
   return result;
 
 }
-*/
+

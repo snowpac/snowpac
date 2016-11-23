@@ -21,6 +21,7 @@ protected:
     MatrixXd K_u_f;
     MatrixXd K_u_u;
     VectorXd Lambda;
+    VectorXd Gamma;
     VectorXd alpha_eigen;
     VectorXd L_u;
     VectorXd K_u_f_LambdaInv_f;
@@ -28,10 +29,23 @@ protected:
     MatrixXd u;
     MatrixXd gp_nodes_eigen;
     VectorXd gp_noise_eigen;
+    VectorXd scaled_function_values_eigen;
     double u_ratio = 0.1;
     int min_nb_u_nodes = 1;
-
+    bool resample_u = true;
     void sample_u(const int &nb_u_nodes);
+	void compute_Kuf_and_Kuu();
+	void compute_Qff(const MatrixXd& K_f_u, VectorXd& diag_Q_f_f);
+	void compute_Kff(VectorXd& diag_K_f_f);
+	void compute_diff_Kff_Qff(const VectorXd& diag_K_f_f,
+			const VectorXd& diag_Q_f_f, VectorXd& diff_Kff_Qff);
+	void compute_Lambda(const VectorXd& diff_Kff_Qff,
+			const std::vector<double>& noise);
+	void compute_Lambda_times_Kfu(const MatrixXd& K_f_u, MatrixXd& Lambda_K_f_u);
+	void compute_KufLambdaKfu(const MatrixXd& Lambda_K_f_u, MatrixXd& K_u_f_Lambda_f_u);
+	void compute_LambdaInvF(VectorXd& LambdaInv_f);
+
+    int print = 0;
 
 public:
     void get_induced_nodes(std::vector< std::vector<double> >&) const;
@@ -81,15 +95,15 @@ public:
      \see build
     */
     void evaluate ( std::vector<double> const&, double&, double& );
-   /*
+   
     void estimate_hyper_parameters ( std::vector< std::vector<double> > const &nodes,
                                                       std::vector<double> const &values,
                                                       std::vector<double> const &noise );
 
-    double parameter_estimation_objective(std::vector<double> const &x,
+    static double parameter_estimation_objective(std::vector<double> const &x,
                                                            std::vector<double> &grad,
                                                            void *data);
-   */
+   
 };
 
 
