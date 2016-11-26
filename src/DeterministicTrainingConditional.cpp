@@ -2,138 +2,34 @@
 // Created by friedrich on 16.08.16.
 //
 
-#include <SubsetOfRegressors.hpp>
+#include <DeterministicTrainingConditional.hpp>
 #include <assert.h>
 #include <random>
 #include <algorithm>
 #include <iostream>
 
 //--------------------------------------------------------------------------------
-SubsetOfRegressors::SubsetOfRegressors(int n, double &delta_input) :
-		FullyIndependentTrainingConditional(n, delta_input) {
+DeterministicTrainingConditional::DeterministicTrainingConditional(int n, double &delta_input) :
+		SubsetOfRegressors(n, delta_input) {
 }
 //--------------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------------
-void SubsetOfRegressors::build(std::vector<std::vector<double> > const &nodes,
+void DeterministicTrainingConditional::build(std::vector<std::vector<double> > const &nodes,
 		std::vector<double> const &values, std::vector<double> const &noise) {
-
-	int nb_u_nodes;
-	if (nodes.size() < evaluations.active_index.size()) {
-		nb_u_nodes = (nodes.size());
-	} else if ((nodes.size()) * u_ratio < evaluations.active_index.size()) {
-		nb_u_nodes = evaluations.active_index.size();
-	} else {
-		nb_u_nodes = (nodes.size()) * u_ratio;
-	}
-	std::cout << "In Build Gaussian with [" << nodes.size() << "," << nb_u_nodes
-			<< "]" << std::endl;
-	if (nb_u_nodes >= min_nb_u_nodes) {
-		//nb_u_nodes++;
-
-		nb_gp_nodes = nodes.size();
-		gp_nodes.clear();
-		gp_noise.clear();
-		gp_nodes_eigen.resize(nb_gp_nodes, dim);
-		gp_noise_eigen.resize(nb_gp_nodes);
-		for (int i = 0; i < nb_gp_nodes; ++i) {
-			gp_nodes.push_back(nodes.at(i));
-			gp_noise.push_back(noise.at(i));
-			for(int j = 0; j < dim; ++j){
-				gp_nodes_eigen(i,j) = nodes[i][j];	
-			}
-			gp_noise_eigen(i) = noise[i];
-		}
-
-		if (resample_u)
-			this->sample_u(nb_u_nodes);
-		resample_u = true;
-
-		//Set up matrix K_u_f and K_f_u
-		compute_Kuf_and_Kuu();
-		MatrixXd K_f_u = K_u_f.transpose();
-
-		VectorXd diag_Q_f_f;
-		compute_Qff(K_f_u, diag_Q_f_f);
-
-		VectorXd diag_K_f_f;
-		compute_Kff(diag_K_f_f);
-
-		VectorXd diff_Kff_Qff(nb_gp_nodes); 
-		diff_Kff_Qff.setZero();
-
-		compute_Lambda(diff_Kff_Qff, noise);
-
-		MatrixXd Lambda_K_f_u;
-		compute_Lambda_times_Kfu(K_f_u, Lambda_K_f_u);
-
-		MatrixXd K_u_f_Lambda_f_u;
-		compute_KufLambdaKfu(Lambda_K_f_u, K_u_f_Lambda_f_u);
-
-		L_eigen.compute(K_u_u + K_u_f_Lambda_f_u);
-
-		scaled_function_values.clear();
-		scaled_function_values.resize(nb_gp_nodes);
-		for (int i = 0; i < nb_gp_nodes; i++) {
-			scaled_function_values.at(i) = values.at(i);
-		}
-
-		VectorXd LambdaInv_f;
-		compute_LambdaInvF(LambdaInv_f);
-
-		VectorXd alpha_eigen_rhs = K_u_f * LambdaInv_f;
-
-		//Solve Sigma_not_inv^(-1)*alpha
-		alpha_eigen = L_eigen.solve(alpha_eigen_rhs);
-
-	} else {
-		GaussianProcess::build(nodes, values, noise);
-	}
-	return;
+	SubsetOfRegressors::build(nodes, values, noise);
 }
 //--------------------------------------------------------------------------------
-void SubsetOfRegressors::evaluate(std::vector<double> const &x, double &mean,
+void DeterministicTrainingConditional::evaluate(std::vector<double> const &x, double &mean,
 		double &variance) {
-	if (u.size() > 0) {
-		int nb_u_nodes = u.rows();
-		VectorXd x_eigen;
-		x_eigen.resize(x.size());
-		for(int i = 0; i < x.size(); ++i){
-			x_eigen(i) = x[i];
-		}
-		K0_eigen.resize(nb_u_nodes);
-		for (int i = 0; i < nb_u_nodes; i++) {
-			K0_eigen(i) = evaluate_kernel(x_eigen, u.row(i));
-		}
-
-//		std::cout << "K0" << std::endl;
-//		VectorOperations::print_vector(K0);
-//		std::cout << "alpha=(K_u_u + K_u_f*sigmaI*K_f_u)*K_u_f*noise*y:" << std::endl;
-//		VectorOperations::print_vector(alpha);
-		mean = K0_eigen.dot(alpha_eigen);
-//		std::cout << "mean:" << mean << std::endl;
-
-		variance = K0_eigen.dot((L_eigen.solve(K0_eigen)));
-		/*
-		 std::cout << "Variance: " << variance << std::endl;
-		 std::cout << "######################################" << std::endl;
-		 evaluate_counter++;
-		 assert(evaluate_counter<20*3);
-		 */
-	} else {
-		GaussianProcess::evaluate(x, mean, variance);
-	}
-	return;
-
+	FullyIndependentTrainingConditional::evaluate(x, mean, variance);
 }
 
 //--------------------------------------------------------------------------------
-double SubsetOfRegressors::parameter_estimation_objective(std::vector<double> const &x,
+double DeterministicTrainingConditional::parameter_estimation_objective(std::vector<double> const &x,
                                                        std::vector<double> &grad,
-                                                       void *data)
-{
-
-  SubsetOfRegressors *d = reinterpret_cast<SubsetOfRegressors*>(data);
+                                                       void *data){
+  DeterministicTrainingConditional *d = reinterpret_cast<DeterministicTrainingConditional*>(data);
   int offset = 1+d->dim;
   int u_counter;
   double nugget = 0.0001;
@@ -264,5 +160,4 @@ double SubsetOfRegressors::parameter_estimation_objective(std::vector<double> co
   d->print++;
 
   return result;
-
 }

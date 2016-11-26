@@ -2,12 +2,12 @@
 // Created by friedrich on 16.08.16.
 //
 
-#ifndef NOWPAC_APPROXGAUSSIANPROCESSSOR_H
-#define NOWPAC_APPROXGAUSSIANPROCESSSOR_H
+#ifndef NOWPAC_DETERMINISTICTRAININGCONDITIONAL_H
+#define NOWPAC_DETERMINISTICTRAININGCONDITIONAL_H
 
-#include "FullyIndependentTrainingConditional.hpp"
+#include "SubsetOfRegressors.hpp"
 
-class SubsetOfRegressors : public FullyIndependentTrainingConditional{
+class DeterministicTrainingConditional : public SubsetOfRegressors{
 
 protected:
 
@@ -17,10 +17,10 @@ public:
      Class constructor.
      \param n dimension of the Approximated Gaussian process.
     */
-    SubsetOfRegressors( int, double& );
+    DeterministicTrainingConditional( int, double& );
 
     //! Destructor
-    ~SubsetOfRegressors() { };
+    ~DeterministicTrainingConditional() { };
 
     //! Build the approximated Gaussian process
     /*!
@@ -51,4 +51,4 @@ public:
    
 };
 
-#endif //NOWPAC_APPROXIMATEDGAUSSIANPROCESS_H
+#endif //NOWPAC_DETERMINISTICTRAININGCONDITIONAL_H

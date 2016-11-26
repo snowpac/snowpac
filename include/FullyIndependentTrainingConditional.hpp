@@ -20,6 +20,7 @@ protected:
     LLT<MatrixXd> L_eigen;
     MatrixXd K_u_f;
     MatrixXd K_u_u;
+    LLT < MatrixXd > LLTofK_u_u;
     VectorXd Lambda;
     VectorXd Gamma;
     VectorXd alpha_eigen;
@@ -44,6 +45,11 @@ protected:
 	void compute_Lambda_times_Kfu(const MatrixXd& K_f_u, MatrixXd& Lambda_K_f_u);
 	void compute_KufLambdaKfu(const MatrixXd& Lambda_K_f_u, MatrixXd& K_u_f_Lambda_f_u);
 	void compute_LambdaInvF(VectorXd& LambdaInv_f);
+    void compute_GammaDotDoubleBar(const MatrixXd& Kffdot,
+                                    const MatrixXd& Kufdot,
+                                    const MatrixXd& Kfudot,
+                                    const MatrixXd& Kuudot,
+                                    VectorXd& GammaRes);
 
     int print = 0;
 
@@ -65,6 +71,41 @@ public:
     double evaluate_kernel ( VectorXd const &x,
                                           VectorXd const &y,
                                           std::vector<double> const &p );
+
+
+    double evaluate_kernel1D_exp_term(double const &x,
+                              double const &y,
+                              double const &l );
+
+    void derivate_K_u_u_wrt_uik(std::vector<double> const &p, 
+                                                int const &i, 
+                                                int const &k,
+                                                MatrixXd &deriv_matrix );
+
+    void derivate_K_u_f_wrt_uik(std::vector<double> const &p, 
+                                                int const &i, 
+                                                int const &k,
+                                                MatrixXd &deriv_matrix);
+
+    void derivate_K_u_f_wrt_sigmaf(std::vector<double> const &p, 
+                                        MatrixXd &deriv_matrix);
+
+    void derivate_K_f_f_wrt_sigmaf(std::vector<double> const &p, 
+                                        MatrixXd &deriv_matrix);
+
+    void derivate_K_u_u_wrt_sigmaf(std::vector<double> const &p,
+                                        MatrixXd &deriv_matrix);
+
+    void derivate_K_u_f_wrt_l(std::vector<double> const &p,
+                                             int const &k,
+                                        MatrixXd &deriv_matrix);
+    void derivate_K_f_f_wrt_l(std::vector<double> const &p,
+                                             int const &k,
+                                        MatrixXd &deriv_matrix);
+
+    void derivate_K_u_u_wrt_l(std::vector<double> const &p,
+                                             int const &k,
+                                        MatrixXd &deriv_matrix);
     //! Build the approximated Gaussian process
     /*!
      Computes the Gaussian process\n
@@ -101,6 +142,9 @@ public:
                                                       std::vector<double> const &noise );
 
     static double parameter_estimation_objective(std::vector<double> const &x,
+                                                           std::vector<double> &grad,
+                                                           void *data);
+    static double parameter_estimation_objective_w_gradients(std::vector<double> const &x,
                                                            std::vector<double> &grad,
                                                            void *data);
    
