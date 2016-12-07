@@ -65,6 +65,10 @@ protected:
     //! Evaluation of the derivative of the Gaussina process kernel
     virtual double d_evaluate_kernel ( std::vector<double> const&, std::vector<double> const&,
                                std::vector<double> const&, int );
+
+    static double parameter_estimation_objective_w_gradients(std::vector<double> const &x,
+                                                           std::vector<double> &grad,
+                                                           void *data){};
   public:
     //! Constructor
     /*!
@@ -120,6 +124,9 @@ protected:
     virtual void get_induced_nodes(std::vector< std::vector<double> >&) const;
 
     void set_evaluations(const BlackBoxData &evaluations);
+
+
+   
 };
 
 #endif

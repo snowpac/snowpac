@@ -21,21 +21,11 @@ FullyIndependentTrainingConditional::FullyIndependentTrainingConditional(int n,
 
 }
 //--------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------
 double FullyIndependentTrainingConditional::evaluate_kernel ( VectorXd const &x,
                                           VectorXd const &y )
 {
   return evaluate_kernel ( x, y, gp_parameters );
-/*
-  dist = 0e0;
-  for ( int i = 0; i < dim; ++i )
-    dist += pow( (x.at(i) - y.at(i)), 2e0) /  gp_parameters.at( i+1 );
-  kernel_evaluation = exp(-dist / 2e0 );
-  
-  return kernel_evaluation * gp_parameters.at( 0 ) ;
-*/
 }
-//--------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------
 double FullyIndependentTrainingConditional::evaluate_kernel ( VectorXd const &x,
                                           VectorXd const &y,
@@ -68,11 +58,36 @@ void FullyIndependentTrainingConditional::derivate_K_u_u_wrt_uik(std::vector<dou
 		for(int d = 0; d < dim; ++d){
 			C *= evaluate_kernel1D_exp_term(u(i, d), u(j, d), p[1+d]);
 		}
-		deriv_matrix(i,j) = C * (-1) * (u(i, k)-u(j, k))/p[k];
+		deriv_matrix(i,j) = C * (-1) * (u(i, k)-u(j, k))/p[k+1];
 	}
 	for(int j = 0; j < nb_u_nodes; ++j){
-		deriv_matrix(j,i) = (-1) * deriv_matrix(i,j);
+		deriv_matrix(j,i) = deriv_matrix(i,j);
 	}
+	/*//Good
+	MatrixXd K_u_u_fd1(nb_u_nodes, nb_u_nodes);
+	MatrixXd K_u_u_fd2(nb_u_nodes, nb_u_nodes);
+
+	MatrixXd ufd1(nb_u_nodes, dim);
+	MatrixXd ufd2(nb_u_nodes, dim);
+	for(int j = 0; j < nb_u_nodes; ++j){
+		for(int d = 0; d < dim; ++d){
+			ufd1(j,d) = u(j,d);
+			ufd2(j,d) = u(j,d);
+		}
+	}
+	ufd1(i, k) += 0.1;
+	ufd2(i, k) -= 0.1;
+	for (int h = 0; h < nb_u_nodes; ++h) {
+		for (int j = 0; j < nb_u_nodes; ++j) {
+			K_u_u_fd1(h, j) = evaluate_kernel(ufd1.row(h), ufd1.row(j));
+			K_u_u_fd2(h, j) = evaluate_kernel(ufd2.row(h), ufd2.row(j));
+		}
+	}
+	K_u_u_fd1 = 1.0/0.2 * (K_u_u_fd1-K_u_u_fd2);
+	std::cout << "Kufdot " << deriv_matrix << std::endl;
+	std::cout << "K_u_f_fd1 " << K_u_u_fd1 << std::endl;
+	exit(-1);
+	*/
 }
 
 
@@ -89,8 +104,35 @@ void FullyIndependentTrainingConditional::derivate_K_u_f_wrt_uik(std::vector<dou
 		for(int d = 0; d < dim; ++d){
 			C *= evaluate_kernel1D_exp_term(u(i, d), gp_nodes_eigen(j, d), p[1+d]);
 		}
-		deriv_matrix(i,j) = C * (-1) * (u(i, k)-gp_nodes_eigen(j, k))/p[k];
+		deriv_matrix(i,j) = C * (-1) * (u(i, k)-gp_nodes_eigen(j, k))/p[k+1];
 	}
+	
+	/*Good
+	MatrixXd K_f_u_fd1(nb_gp_nodes, nb_u_nodes);
+	MatrixXd K_f_u_fd2(nb_gp_nodes, nb_u_nodes);
+
+	MatrixXd ufd1(nb_u_nodes, dim);
+	MatrixXd ufd2(nb_u_nodes, dim);
+	for(int j = 0; j < nb_u_nodes; ++j){
+		for(int d = 0; d < dim; ++d){
+			ufd1(j,d) = u(j,d);
+			ufd2(j,d) = u(j,d);
+		}
+	}
+	ufd1(i, k) += 0.1;
+	ufd2(i, k) -= 0.1;
+	for (int h = 0; h < nb_u_nodes; ++h) {
+		for (int j = 0; j < nb_gp_nodes; ++j) {
+			K_f_u_fd1(j, h) = evaluate_kernel(gp_nodes_eigen.row(j), ufd1.row(h));
+			K_f_u_fd2(j, h) = evaluate_kernel(gp_nodes_eigen.row(j), ufd2.row(h));
+		}
+	}
+	K_f_u_fd1 = 1.0/0.2 * (K_f_u_fd1-K_f_u_fd2);
+	std::cout << "Kufdot " << deriv_matrix << std::endl;
+	std::cout << "K_f_u_fd1 " << K_f_u_fd1 << std::endl;
+	exit(-1);
+	*/
+	
 }
 
 void FullyIndependentTrainingConditional::derivate_K_u_f_wrt_sigmaf(std::vector<double> const &p, 
@@ -109,6 +151,25 @@ void FullyIndependentTrainingConditional::derivate_K_u_f_wrt_sigmaf(std::vector<
 			deriv_matrix(i,j) = C;
 		}
 	}
+	/*Good
+	MatrixXd K_f_u_fd1(nb_gp_nodes, nb_u_nodes);
+	MatrixXd K_f_u_fd2(nb_gp_nodes, nb_u_nodes);
+
+	std::vector<double> gpfd1 = gp_parameters;
+	gpfd1[0] += 0.1; 
+	std::vector<double> gpfd2 = gp_parameters;
+	gpfd2[0] -= 0.1;
+	for (int h = 0; h < nb_u_nodes; ++h) {
+		for (int j = 0; j < nb_gp_nodes; ++j) {
+			K_f_u_fd1(j, h) = evaluate_kernel(gp_nodes_eigen.row(j), u.row(h), gpfd1);
+			K_f_u_fd2(j, h) = evaluate_kernel(gp_nodes_eigen.row(j), u.row(h), gpfd2);
+		}
+	}
+	K_f_u_fd1 = 1.0/0.2 * (K_f_u_fd1-K_f_u_fd2);
+	std::cout << "Kufdot " << deriv_matrix << std::endl;
+	std::cout << "K_u_f_fd1 " << K_f_u_fd1 << std::endl;
+	exit(-1);
+	*/
 }
 
 void FullyIndependentTrainingConditional::derivate_K_f_f_wrt_sigmaf(std::vector<double> const &p, 
@@ -126,6 +187,25 @@ void FullyIndependentTrainingConditional::derivate_K_f_f_wrt_sigmaf(std::vector<
 			deriv_matrix(i,j) = C;
 		}
 	}
+	/*Good
+	MatrixXd K_f_f_fd1(nb_gp_nodes, nb_gp_nodes);
+	MatrixXd K_f_f_fd2(nb_gp_nodes, nb_gp_nodes);
+
+	std::vector<double> gpfd1 = gp_parameters;
+	gpfd1[0] += 0.1; 
+	std::vector<double> gpfd2 = gp_parameters;
+	gpfd2[0] -= 0.1;
+	for (int h = 0; h < nb_gp_nodes; ++h) {
+		for (int j = 0; j < nb_gp_nodes; ++j) {
+			K_f_f_fd1(j, h) = evaluate_kernel(gp_nodes_eigen.row(j), gp_nodes_eigen.row(h), gpfd1);
+			K_f_f_fd2(j, h) = evaluate_kernel(gp_nodes_eigen.row(j), gp_nodes_eigen.row(h), gpfd2);
+		}
+	}
+	K_f_f_fd1 = 1.0/0.2 * (K_f_f_fd1-K_f_f_fd2);
+	std::cout << "Kufdot " << deriv_matrix << std::endl;
+	std::cout << "K_f_f_fd1 " << K_f_f_fd1 << std::endl;
+	exit(-1);
+	*/
 }
 
 void FullyIndependentTrainingConditional::derivate_K_u_u_wrt_sigmaf(std::vector<double> const &p, 
@@ -137,13 +217,32 @@ void FullyIndependentTrainingConditional::derivate_K_u_u_wrt_sigmaf(std::vector<
 	//Set up matrix d(K_u_f)/d(sigma_f^2)
 	for (int i = 0; i < nb_u_nodes; ++i) {
 		for (int j = 0; j < nb_u_nodes; ++j) {
-			C = p[0]; //sigma_f^2
+			C = 1.0;//sigma_f^2
 			for(int d = 0; d < dim; ++d){
 				C *= evaluate_kernel1D_exp_term(u(i, d), u(j, d), p[1+d]);
 			}
 			deriv_matrix(i,j) = C;
 		}
 	}
+	/*//Good
+	MatrixXd K_u_u_fd1(nb_u_nodes, nb_u_nodes);
+	MatrixXd K_u_u_fd2(nb_u_nodes, nb_u_nodes);
+
+	std::vector<double> gpfd1 = gp_parameters;
+	gpfd1[0] += 0.1; 
+	std::vector<double> gpfd2 = gp_parameters;
+	gpfd2[0] -= 0.1;
+	for (int h = 0; h < nb_u_nodes; ++h) {
+		for (int j = 0; j < nb_u_nodes; ++j) {
+			K_u_u_fd1(j, h) = evaluate_kernel(u.row(j), u.row(h), gpfd1);
+			K_u_u_fd2(j, h) = evaluate_kernel(u.row(j), u.row(h), gpfd2);
+		}
+	}
+	K_u_u_fd1 = 1.0/0.2 * (K_u_u_fd1-K_u_u_fd2);
+	std::cout << "Kuudot " << deriv_matrix << std::endl;
+	std::cout << "K_u_u_fd1 " << K_u_u_fd1 << std::endl;
+	exit(-1);
+	*/
 }
 
 void FullyIndependentTrainingConditional::derivate_K_u_f_wrt_l(std::vector<double> const &p,
@@ -156,14 +255,33 @@ void FullyIndependentTrainingConditional::derivate_K_u_f_wrt_l(std::vector<doubl
 	//Set up matrix d(K_u_f)/d(sigma_f^2)
 	for (int i = 0; i < nb_u_nodes; ++i) {
 		for (int j = 0; j < nb_gp_nodes; ++j) {
-			C = 1.0;
+			C = p[0];
 			for(int d = 0; d < dim; ++d){
 				C *= evaluate_kernel1D_exp_term(u(i, d), gp_nodes_eigen(j, d), p[1+d]);
 			}
 			deriv_matrix(i,j) = C * (u(i, k)-gp_nodes_eigen(j, k))*(u(i, k)-gp_nodes_eigen(j, k))/
-											(2*p[k]*p[k]);
+											(2*p[k+1]*p[k+1]);
 		}
 	}
+	/*//Good
+	MatrixXd K_f_u_fd1(nb_gp_nodes, nb_u_nodes);
+	MatrixXd K_f_u_fd2(nb_gp_nodes, nb_u_nodes);
+
+	std::vector<double> gpfd1 = gp_parameters;
+	gpfd1[k+1] += 0.1; 
+	std::vector<double> gpfd2 = gp_parameters;
+	gpfd2[k+1] -= 0.1;
+	for (int h = 0; h < nb_u_nodes; ++h) {
+		for (int j = 0; j < nb_gp_nodes; ++j) {
+			K_f_u_fd1(j, h) = evaluate_kernel(gp_nodes_eigen.row(j), u.row(h), gpfd1);
+			K_f_u_fd2(j, h) = evaluate_kernel(gp_nodes_eigen.row(j), u.row(h), gpfd2);
+		}
+	}
+	K_f_u_fd1 = 1.0/0.2 * (K_f_u_fd1-K_f_u_fd2);
+	std::cout << "Kufdot " << deriv_matrix << std::endl;
+	std::cout << "K_u_f_fd1 " << K_f_u_fd1 << std::endl;
+	exit(-1);
+	*/
 }
 
 void FullyIndependentTrainingConditional::derivate_K_f_f_wrt_l(std::vector<double> const &p,
@@ -175,14 +293,34 @@ void FullyIndependentTrainingConditional::derivate_K_f_f_wrt_l(std::vector<doubl
 	//Set up matrix d(K_u_f)/d(sigma_f^2)
 	for (int i = 0; i < nb_gp_nodes; ++i) {
 		for (int j = 0; j < nb_gp_nodes; ++j) {
-			C = 1.0;
+			C = p[0];
 			for(int d = 0; d < dim; ++d){
 				C *= evaluate_kernel1D_exp_term(gp_nodes_eigen(i, d), gp_nodes_eigen(j, d), p[1+d]);
 			}
-			deriv_matrix(i,j) = C * (gp_nodes_eigen(i, k)-gp_nodes_eigen(j, k))*(gp_nodes_eigen(i, k)-gp_nodes_eigen(j, k))/
-											(2*p[k]*p[k]);
+			deriv_matrix(i,j) = C * (gp_nodes_eigen(i, k)-gp_nodes_eigen(j, k))*
+									(gp_nodes_eigen(i, k)-gp_nodes_eigen(j, k))/
+											(2*p[k+1]*p[k+1]);
 		}
 	}
+	/*//Good
+	MatrixXd K_f_f_fd1(nb_gp_nodes, nb_gp_nodes);
+	MatrixXd K_f_f_fd2(nb_gp_nodes, nb_gp_nodes);
+
+	std::vector<double> gpfd1 = gp_parameters;
+	gpfd1[k+1] += 0.1; 
+	std::vector<double> gpfd2 = gp_parameters;
+	gpfd2[k+1] -= 0.1;
+	for (int h = 0; h < nb_gp_nodes; ++h) {
+		for (int j = 0; j < nb_gp_nodes; ++j) {
+			K_f_f_fd1(j, h) = evaluate_kernel(gp_nodes_eigen.row(j), gp_nodes_eigen.row(h), gpfd1);
+			K_f_f_fd2(j, h) = evaluate_kernel(gp_nodes_eigen.row(j), gp_nodes_eigen.row(h), gpfd2);
+		}
+	}
+	K_f_f_fd1 = 1.0/0.2 * (K_f_f_fd1-K_f_f_fd2);
+	std::cout << "Kffdot " << deriv_matrix << std::endl;
+	std::cout << "K_f_f_fd1 " << K_f_f_fd1 << std::endl;
+	exit(-1);
+	*/
 }
 
 void FullyIndependentTrainingConditional::derivate_K_u_u_wrt_l(std::vector<double> const &p,
@@ -195,14 +333,33 @@ void FullyIndependentTrainingConditional::derivate_K_u_u_wrt_l(std::vector<doubl
 	//Set up matrix d(K_u_f)/d(sigma_f^2)
 	for (int i = 0; i < nb_u_nodes; ++i) {
 		for (int j = 0; j < nb_u_nodes; ++j) {
-			C = 1.0;
+			C = p[0];
 			for(int d = 0; d < dim; ++d){
 				C *= evaluate_kernel1D_exp_term(u(i, d), u(j, d), p[1+d]);
 			}
 			deriv_matrix(i,j) = C * (u(i, k)-u(j, k))*(u(i, k)-u(j, k))/
-											(2*p[k]*p[k]);
+											(2*p[k+1]*p[k+1]);
 		}
 	}
+	/*//Good
+	MatrixXd K_u_u_fd1(nb_u_nodes, nb_u_nodes);
+	MatrixXd K_u_u_fd2(nb_u_nodes, nb_u_nodes);
+
+	std::vector<double> gpfd1 = gp_parameters;
+	gpfd1[k+1] += 0.1; 
+	std::vector<double> gpfd2 = gp_parameters;
+	gpfd2[k+1] -= 0.1;
+	for (int h = 0; h < nb_u_nodes; ++h) {
+		for (int j = 0; j < nb_u_nodes; ++j) {
+			K_u_u_fd1(j, h) = evaluate_kernel(u.row(j), u.row(h), gpfd1);
+			K_u_u_fd2(j, h) = evaluate_kernel(u.row(j), u.row(h), gpfd2);
+		}
+	}
+	K_u_u_fd1 = 1.0/0.2 * (K_u_u_fd1-K_u_u_fd2);
+	std::cout << "Kuudot " << deriv_matrix << std::endl;
+	std::cout << "K_u_u_fd1 " << K_u_u_fd1 << std::endl;
+	exit(-1);
+	*/
 }
 
 
@@ -221,14 +378,14 @@ void FullyIndependentTrainingConditional::compute_Kuf_and_Kuu() {
 		for (int j = 0; j < nb_u_nodes; ++j) {
 			K_u_u(i, j) = evaluate_kernel(u.row(i), u.row(j));
 			if (i == j)
-				K_u_u(i, j) += 0.000001;
+				K_u_u(i, j) += 0.00001;
 		}
 	}
+	LLTofK_u_u.compute(K_u_u);
 }
 
  void FullyIndependentTrainingConditional::compute_Qff(const MatrixXd& K_f_u, VectorXd& diag_Q_f_f) {
 	int nb_u_nodes = u.rows();
-	LLTofK_u_u.compute(K_u_u);
 	MatrixXd K_u_u_u_f = LLTofK_u_u.solve(K_u_f);
 
 	diag_Q_f_f.resize(nb_gp_nodes);
@@ -286,6 +443,24 @@ void FullyIndependentTrainingConditional::compute_LambdaInvF(VectorXd& LambdaInv
 	}
 }
 
+void FullyIndependentTrainingConditional::compute_LambdaDot(const MatrixXd& Kffdot,
+                                    const MatrixXd& Kufdot,
+                                    const MatrixXd& Kfudot,
+                                    const MatrixXd& Kuudot,
+                                    VectorXd& LambdaDot){
+	LambdaDot.resize(nb_gp_nodes);
+	LambdaDot.setZero();
+	MatrixXd KfudotKuinvKuf = Kfudot * LLTofK_u_u.solve(K_u_f);
+	MatrixXd K_f_u = K_u_f.transpose();
+	//MatrixXd KfuKuinvKufdot = K_f_u * LLTofK_u_u.solve(Kufdot);
+	MatrixXd KfuKuinfKudotKuinvKuf = K_f_u*(LLTofK_u_u.solve(Kuudot*(LLTofK_u_u.solve(K_u_f))));
+
+	for(int i = 0; i < nb_gp_nodes; ++i){
+		LambdaDot(i) = Kffdot(i,i) - 2*KfudotKuinvKuf(i,i) + KfuKuinfKudotKuinvKuf(i,i);// - KfuKuinvKufdot(i,i);
+	}
+
+}
+
 void FullyIndependentTrainingConditional::compute_GammaDotDoubleBar(const MatrixXd& Kffdot,
 																	const MatrixXd& Kufdot,
 																	const MatrixXd& Kfudot,
@@ -293,15 +468,14 @@ void FullyIndependentTrainingConditional::compute_GammaDotDoubleBar(const Matrix
 																	VectorXd& GammaRes){
 	GammaRes.resize(nb_gp_nodes);
 	GammaRes.setZero();
-	MatrixXd KfudotKuinvKuf = 2 * Kfudot * LLTofK_u_u.solve(Kufdot);
+	MatrixXd KfudotKuinvKuf = Kfudot * LLTofK_u_u.solve(K_u_f);
 	MatrixXd K_f_u = K_u_f.transpose();
+	MatrixXd KfuKuinvKufdot = K_f_u * LLTofK_u_u.solve(Kufdot);
 	MatrixXd KfuKuinfKudotKuinvKuf = K_f_u*(LLTofK_u_u.solve(Kuudot*(LLTofK_u_u.solve(K_u_f))));
-
-	VectorXd diagTerm;
 	
 	double diag_ii;
 	for(int i = 0; i < nb_gp_nodes; ++i){
-		diag_ii = Kffdot(i,i) - KfudotKuinvKuf(i,i) + KfuKuinfKudotKuinvKuf(i,i);
+		diag_ii = Kffdot(i,i) - KfudotKuinvKuf(i,i) + KfuKuinfKudotKuinvKuf(i,i) - KfuKuinvKufdot(i,i);
 		GammaRes(i) = 1/Lambda(i) * diag_ii;
 	}
 
@@ -445,18 +619,17 @@ void FullyIndependentTrainingConditional::evaluate(std::vector<double> const &x,
 //		std::cout << "mean:" << mean << std::endl;
 		//std::cout << "Mean: " << mean << std::endl;
 
-		double variance_term3 = K0_eigen.dot((L_eigen.solve(K0_eigen)));
-//		std::cout << "variance_term3:" << variance_term3 << std::endl;
-
+		double variance_term3 = K0_eigen.dot(L_eigen.solve(K0_eigen));
 
 		double variance_term2 = K0_eigen.dot(LLTofK_u_u.solve(K0_eigen));
-//		std::cout << "variance_term2:" << variance_term2 << std::endl;
 		/*
 		 std::cout << "Variance: " << variance << std::endl;
 		 std::cout << "######################################" << std::endl;
 		 evaluate_counter++;
 		 assert(evaluate_counter<20*3);
 //		 */
+		//exit(-1);
+
 //		std::cout << "K**:" << evaluate_kernel(x,x) << std::endl;
 		variance = evaluate_kernel(x_eigen,x_eigen)-variance_term2+variance_term3;
 //		std::cout << "variance:" << variance << std::endl;
@@ -586,11 +759,9 @@ void FullyIndependentTrainingConditional::sample_u(const int &nb_u_nodes) {
 	return;
 }
 
-
-void FullyIndependentTrainingConditional::estimate_hyper_parameters ( std::vector< std::vector<double> > const &nodes,
+void FullyIndependentTrainingConditional::copy_data_to_members( std::vector< std::vector<double> > const &nodes,
                                                   std::vector<double> const &values,
-                                                  std::vector<double> const &noise )
-{
+                                                  std::vector<double> const &noise){
   nb_gp_nodes = nodes.size();
   gp_nodes.clear();
   gp_noise.clear();
@@ -598,8 +769,6 @@ void FullyIndependentTrainingConditional::estimate_hyper_parameters ( std::vecto
     gp_nodes.push_back ( nodes.at(i) );
     gp_noise.push_back ( noise.at(i) );
   }
-
-  gp_pointer = this;
 
 //  auto minmax = std::minmax_element(values.begin(), values.end());
 //  min_function_value = values.at((minmax.first - values.begin()));
@@ -620,16 +789,15 @@ void FullyIndependentTrainingConditional::estimate_hyper_parameters ( std::vecto
 //    scaled_function_values.at(i) -= 1e0;
   }
 
-  double optval;
-  //adjust those settings to optimize GP approximation
-  //--------------------------------------------------
-//  double max_noise = 0e0;
-//  for (int i = 0; i < nb_gp_nodes; i++) {
-//    if (gp_noise.at( i ) > max_noise)
-//      max_noise = gp_noise.at( i );
-//  }
-  lb.resize(1+dim+u.rows()*dim);
-  ub.resize(1+dim+u.rows()*dim);
+}
+void FullyIndependentTrainingConditional::set_optimizer(nlopt::opt*& local_opt, nlopt::opt*& global_opt){
+
+  optimize_global = true;
+  optimize_local = true;
+
+  int dimp1 = 1+dim+u.rows()*dim;
+  lb.resize(dimp1);
+  ub.resize(dimp1);
   lb[0] = 1e-1; // * pow(1000e0 * max_noise / 2e0, 2e0);
   ub[0] = 1e1;// * pow(1000e0 * max_noise / 2e0, 2e0);
   double delta_threshold = *delta;
@@ -640,11 +808,11 @@ void FullyIndependentTrainingConditional::estimate_hyper_parameters ( std::vecto
   }
   int offset = 1+dim;
   std::vector<double> lb_u(dim);
-  lb_u[0] = -1; //TODO 
-  lb_u[1] = -1;
+  lb_u[0] = -1.+0.2; //TODO 
+  lb_u[1] = -1.+0.2;
   std::vector<double> ub_u(dim);
-  ub_u[0] = 5;
-  ub_u[1] = 5;
+  ub_u[0] = 5.-0.2;
+  ub_u[1] = 5.-0.2;
   for (int i = 0; i < dim; ++i) {
 	  for(int j = offset + i*u.rows(); j < offset + (i+1)*u.rows(); ++j){
           lb[j] = lb_u[i];
@@ -652,7 +820,7 @@ void FullyIndependentTrainingConditional::estimate_hyper_parameters ( std::vecto
 	  }
   }
 
-  gp_parameters.resize(1+dim+u.rows()*dim);
+  gp_parameters.resize(dimp1);
   if (gp_parameters[0] < 0e0) {
     gp_parameters[0] = lb[0]*5e-1 + 5e-1*ub[0];
     for (int i = 1; i < dim+1; ++i) {
@@ -673,37 +841,69 @@ void FullyIndependentTrainingConditional::estimate_hyper_parameters ( std::vecto
             u_counter++;
   	  }
   } 
-  //--------------------------------------------------
 
-  //initialize optimizer from NLopt library
+  local_opt = new nlopt::opt(nlopt::LD_MMA, dimp1);
+  global_opt = new nlopt::opt(nlopt::GN_CRS2_LM, dimp1);
+
+  global_opt->set_lower_bounds( lb );
+  global_opt->set_upper_bounds( ub );
+  global_opt->set_maxtime(300.0);
+
+  local_opt->set_lower_bounds( lb );
+  local_opt->set_upper_bounds( ub );
+  local_opt->set_maxtime(300.0);
+}
+
+void FullyIndependentTrainingConditional::run_optimizer(){
+	double optval;
+
+  int exitflag;
+
+  nlopt::opt* local_opt;
+  nlopt::opt* global_opt;
+
   int dimp1 = 1+dim+u.rows()*dim;
-//  nlopt::opt opt(nlopt::LD_CCSAQ, dimp1);
-//  nlopt::opt opt(nlopt::LN_BOBYQA, dimp1);
-//
-  nlopt::opt opt(nlopt::GN_CRS2_LM, dimp1);
+  set_optimizer(local_opt, global_opt);
 
-  //opt = nlopt_create(NLOPT_LN_COBYLA, dim+1);
-  opt.set_lower_bounds( lb );
-  opt.set_upper_bounds( ub );
+  if (optimize_global){
+  	  print = 0;
+ 	  std::cout << "Global optimization" << std::endl;
+	  exitflag=-20;
+	  global_opt->set_min_objective( parameter_estimation_objective, gp_pointer);
+	  exitflag = global_opt->optimize(gp_parameters, optval);
 
-  opt.set_min_objective( parameter_estimation_objective, gp_pointer);
+	  std::cout << "exitflag = "<< exitflag<<std::endl;
+  	  std::cout << "Function calls: " << print << std::endl;
+	  std::cout << "OPTVAL .... " << optval << std::endl;
+	  for ( int i = 0; i < dimp1; ++i )
+	    std::cout << "gp_param = " << gp_parameters[i] << std::endl;
+	  std::cout << std::endl;
+  }
+  if (optimize_local){
+  	  print = 0;
+  	  std::cout << "Local optimization" << std::endl;
+	  exitflag=-20;
+	  //try {
+	  local_opt->set_min_objective( parameter_estimation_objective_w_gradients, gp_pointer);
+	  exitflag = local_opt->optimize(gp_parameters, optval);
 
- // opt.set_xtol_abs(1e-2);
-//  opt.set_xtol_rel(1e-2);
-//set timeout to NLOPT_TIMEOUT seconds
-  opt.set_maxtime(1800.0);
-  //perform optimization to get correction factors
+	  std::cout << "exitflag = "<< exitflag<<std::endl;
+  	  std::cout << "Function calls: " << print << std::endl;
+	  std::cout << "OPTVAL .... " << optval << std::endl;
+	  for ( int i = 0; i < dimp1; ++i )
+	    std::cout << "gp_param = " << gp_parameters[i] << std::endl;
+	  std::cout << std::endl;
+  }
+  
+  delete local_opt;
+  delete global_opt;
 
-  int exitflag=-20;
-  //try {
-    exitflag = opt.optimize(gp_parameters, optval);
-  //} catch (...) {
-  //  gp_parameters[0] = lb[0]*5e-1 + 5e-1*ub[0];
-  //  for (int i = 1; i < dim+1; ++i) {
-  //    gp_parameters[i] = (lb[i]*5e-1 + 5e-1*ub[i]);
-  //  }
-  //}
+  return;
+}
 
+void FullyIndependentTrainingConditional::update_induced_points(){
+  int u_counter;
+  int offset = 1+dim;
   for (int i = 0; i < dim; ++i) {
   	  u_counter = 0;
   	  for(int j = offset + i*u.rows(); j < offset + (i+1)*u.rows(); ++j){
@@ -711,12 +911,20 @@ void FullyIndependentTrainingConditional::estimate_hyper_parameters ( std::vecto
             u_counter++;
   	  }
   }
+}
 
-  std::cout << "exitflag = "<< exitflag<<std::endl;
-  std::cout << "OPTVAL .... " << optval << std::endl;
-  for ( int i = 0; i < dim + 1; ++i )
-    std::cout << "gp_param = " << gp_parameters[i] << std::endl;
-  std::cout << std::endl;
+void FullyIndependentTrainingConditional::estimate_hyper_parameters ( std::vector< std::vector<double> > const &nodes,
+                                                  std::vector<double> const &values,
+                                                  std::vector<double> const &noise )
+{
+
+  copy_data_to_members(nodes, values, noise);
+
+  gp_pointer = this;
+
+  run_optimizer();
+
+  update_induced_points();
 
   resample_u = false;
   this->build(nodes, values, noise);
@@ -730,12 +938,12 @@ double FullyIndependentTrainingConditional::parameter_estimation_objective(std::
                                                        std::vector<double> &grad,
                                                        void *data)
 {
-
   FullyIndependentTrainingConditional *d = reinterpret_cast<FullyIndependentTrainingConditional*>(data);
   int offset = 1+d->dim;
   int u_counter;
-  double nugget = 0.0001;
+  double nugget = 0.00001;
   double nugget2 = 0.0;
+  double nuggetQff = 0.00001;
   for (int i = 0; i < d->dim; ++i) {
   	  u_counter = 0;
   	  for(int j = offset + i*d->u.rows(); j < offset + (i+1)*d->u.rows(); ++j){
@@ -767,8 +975,146 @@ double FullyIndependentTrainingConditional::parameter_estimation_objective(std::
 		}
 	}
 	//std::cout << "Kuu\n" << d->K_u_u << std::endl;
-	LLT<MatrixXd> LLTofK_u_u(d->K_u_u);
-	MatrixXd K_u_u_u_f = LLTofK_u_u.solve(d->K_u_f);
+	d->LLTofK_u_u.compute(d->K_u_u);
+	MatrixXd K_u_u_u_f = d->LLTofK_u_u.solve(d->K_u_f);
+
+	VectorXd diag_Q_f_f;
+	diag_Q_f_f.resize(nb_gp_nodes);
+
+	for (int i = 0; i < nb_gp_nodes; ++i) {
+		diag_Q_f_f(i) = 0.0;
+		for (int j = 0; j < nb_u_nodes; ++j) {
+			diag_Q_f_f(i) += (K_f_u(i,j) * K_u_u_u_f(j,i));
+		}
+	}
+	VectorXd diag_K_f_f;
+	diag_K_f_f.resize(nb_gp_nodes);
+	for (int i = 0; i < nb_gp_nodes; ++i) {
+		diag_K_f_f(i) = d->evaluate_kernel(d->gp_nodes_eigen.row(i),
+									 d->gp_nodes_eigen.row(i), x);
+	}
+
+	d->Lambda.resize(nb_gp_nodes);
+	//std::cout << "noise\n" << std::endl;
+	for (int i = 0; i < nb_gp_nodes; ++i) {
+		d->Lambda(i) = (diag_K_f_f(i) - diag_Q_f_f(i) + pow( d->gp_noise.at(i) / 2e0 + d->noise_regularization, 2e0 ));
+	}
+	//std::cout << std::endl;
+
+	MatrixXd Lambda_K_f_u;
+	Lambda_K_f_u.resize(nb_gp_nodes, nb_u_nodes);
+	for(int i = 0; i < nb_gp_nodes; i++){
+		for(int j = 0; j < nb_u_nodes; j++){
+			Lambda_K_f_u(i,j) = ((1.0/(d->Lambda(i) + nugget2)) * K_f_u(i,j));
+		}
+	}
+	MatrixXd K_u_f_Lambda_f_u;
+	K_u_f_Lambda_f_u.resize(nb_u_nodes, nb_u_nodes);
+	K_u_f_Lambda_f_u = d->K_u_f*Lambda_K_f_u;
+
+	MatrixXd Sigma = d->K_u_u + K_u_f_Lambda_f_u;
+	for (int i = 0; i < nb_u_nodes; ++i) {
+		//Sigma(i,i) += nugget;
+	}
+	d->L_eigen.compute(Sigma);
+	double L12 = 0.0;//-log(d->K_u_u.determinant());
+	for (int i = 0; i < d->u.rows(); ++i){
+		L12 += log(d->LLTofK_u_u.vectorD()(i));
+    	//std::cout << L1 << "L11-" << i << std::endl;
+	}
+
+	double det_Leigen = 0.0;
+	for (int i = 0; i < d->u.rows(); ++i){
+		det_Leigen += log(d->L_eigen.vectorD()(i));
+    	//std::cout << d->L_eigen.matrixL()(i,i) << " " << log(d->L_eigen.matrixL()(i,i)) << "det_Leigen-" << i << std::endl;
+	}
+
+	double L11 = 0.0;
+    //std::cout << L1 << "L12 " << std::endl;
+	for (int i = 0; i < d->nb_gp_nodes; ++i){
+		L11 += log(d->Lambda(i));
+		//std::cout << "Lambda: " << i << " " << d->Lambda(i) <<" "<<log(d->Lambda(i)) << std::endl;
+	}
+    double L1 = 0.0;
+	//L1 = 0.5*L11 + (2*0.5)*det_Leigen + 0.5*det_LeigenD - (2*0.5)*L12 - 0.5*L12D;
+	L1 = 0.5*L11 + 0.5*det_Leigen - 0.5*L12;
+
+	MatrixXd Q_f_f = K_f_u*K_u_u_u_f;
+	for(int i = 0; i < nb_gp_nodes; i++){
+		Q_f_f(i,i) += d->Lambda(i)+ nuggetQff;
+	}
+	LLT<MatrixXd> LLTofQ_f_f(Q_f_f);
+	double L2 = 0.5*d->scaled_function_values_eigen.dot(LLTofQ_f_f.solve(d->scaled_function_values_eigen));
+  	
+  	//std::cout << d->scaled_function_values_eigen << std::endl;
+  double result = L1 + L2;
+ 
+  if (isinf(result) || isnan(result)){
+  	std::cout << "Result is inf or nan" << std::endl;
+  	std::cout << "L11 " << L11 << " " << 'x' << std::endl;
+    std::cout << "L12 " << L12 << " "  << log(d->K_u_u.determinant()) << std::endl;
+    std::cout << "L13 " << det_Leigen << " " << log(Sigma.determinant()) << std::endl;
+    std::cout << L1 << ' ' << L2 << std::endl;
+  	result = std::numeric_limits<double>::infinity();
+  }
+  if ((d->print%1000)==0){
+	  //for ( int i = 0; i < d->dim + 1; ++i )
+	  //  std::cout << "gp_param = " << x[i] << std::endl;
+	  //for(int j = offset; j < offset + d->u.rows(); ++j)
+	//		std::cout << "gp_param = " << x[j] <<","<<x[j+ d->u.rows()]<< std::endl;
+  	
+  	//std::cout << d->print <<" Objective: " << L1 << " " << L2 << " "<< result<< std::endl;
+   }
+
+  d->print++;
+  return result;
+
+}
+
+double FullyIndependentTrainingConditional::parameter_estimation_objective_w_gradients(std::vector<double> const &x,
+                                                       std::vector<double> &grad,
+                                                       void *data)
+{
+
+  FullyIndependentTrainingConditional *d = reinterpret_cast<FullyIndependentTrainingConditional*>(data);
+  int offset = 1+d->dim;
+  int u_counter;
+  double nugget = 0.00001;
+  double nugget2 = 0.0;
+  double nuggetQff = 0.00001;
+  for (int i = 0; i < d->dim; ++i) {
+  	  u_counter = 0;
+  	  for(int j = offset + i*d->u.rows(); j < offset + (i+1)*d->u.rows(); ++j){
+            d->u(u_counter,i) = x[j];
+            u_counter++;
+  	  }
+  }
+
+  //Compute Kuf, Kuu
+  //Set up matrix K_u_f and K_f_u
+	int nb_gp_nodes = d->gp_nodes.size();
+	int nb_u_nodes = d->u.rows();
+	d->K_u_f.resize(nb_u_nodes, nb_gp_nodes);
+	for (int i = 0; i < nb_u_nodes; ++i) {
+		for (int j = 0; j < nb_gp_nodes; ++j) {
+			d->K_u_f(i,j) = d->evaluate_kernel(d->u.row(i), d->gp_nodes_eigen.row(j), x);
+		}
+	}
+	MatrixXd K_f_u = d->K_u_f.transpose();
+	//std::cout << "Kuf\n" << d->K_u_f << std::endl;
+
+	//Set up matrix K_u_u
+	d->K_u_u.resize(nb_u_nodes, nb_u_nodes);
+	for (int i = 0; i < nb_u_nodes; ++i) {
+		for (int j = 0; j < nb_u_nodes; ++j) {
+			d->K_u_u(i,j) = d->evaluate_kernel(d->u.row(i), d->u.row(j), x);
+			if(i==j)
+				d->K_u_u(i,j) += nugget;
+		}
+	}
+	//std::cout << "Kuu\n" << d->K_u_u << std::endl;
+	d->LLTofK_u_u.compute(d->K_u_u);
+	MatrixXd K_u_u_u_f = d->LLTofK_u_u.solve(d->K_u_f);
 
 	VectorXd diag_Q_f_f;
 	diag_Q_f_f.resize(nb_gp_nodes);
@@ -813,13 +1159,13 @@ double FullyIndependentTrainingConditional::parameter_estimation_objective(std::
 	d->L_eigen.compute(Sigma);
 	double L12 = 0.0;//-log(d->K_u_u.determinant());
 	for (int i = 0; i < d->u.rows(); ++i){
-		L12 += log(LLTofK_u_u.matrixL()(i,i));
+		L12 += log(d->LLTofK_u_u.vectorD()(i));
     	//std::cout << L1 << "L11-" << i << std::endl;
 	}
 
 	double det_Leigen = 0.0;
 	for (int i = 0; i < d->u.rows(); ++i){
-		det_Leigen += log(d->L_eigen.matrixL()(i,i));
+		det_Leigen += log(d->L_eigen.vectorD()(i));
     	//std::cout << d->L_eigen.matrixL()(i,i) << " " << log(d->L_eigen.matrixL()(i,i)) << "det_Leigen-" << i << std::endl;
 	}
 
@@ -830,11 +1176,11 @@ double FullyIndependentTrainingConditional::parameter_estimation_objective(std::
 		//std::cout << "Lambda: " << i << " " << d->Lambda(i) <<" "<<log(d->Lambda(i)) << std::endl;
 	}
     double L1 = 0.0;
-	L1 = 0.5*L11 + (2*0.5)*det_Leigen - (2*0.5)*L12;
-
+	//L1 = 0.5*L11 + (2*0.5)*det_Leigen + 0.5*det_LeigenD - (2*0.5)*L12 - 0.5*L12D;
+	L1 = 0.5*L11 + 0.5*det_Leigen - 0.5*L12;
 	MatrixXd Q_f_f = K_f_u*K_u_u_u_f;
 	for(int i = 0; i < nb_gp_nodes; i++){
-		Q_f_f(i,i) += d->Lambda(i);
+		Q_f_f(i,i) += d->Lambda(i)+ nuggetQff;
 	}
 	LLT<MatrixXd> LLTofQ_f_f(Q_f_f);
 	double L2 = 0.5*d->scaled_function_values_eigen.dot(LLTofQ_f_f.solve(d->scaled_function_values_eigen));
@@ -850,53 +1196,119 @@ double FullyIndependentTrainingConditional::parameter_estimation_objective(std::
     std::cout << L1 << ' ' << L2 << std::endl;
   	result = std::numeric_limits<double>::infinity();
   }
-  if ((d->print%1000)==0){
+  if ((d->print%1)==0){
 	  /*for ( int i = 0; i < d->dim + 1; ++i )
 	    std::cout << "gp_param = " << x[i] << std::endl;
 	  for(int j = offset; j < offset + d->u.rows(); ++j)
 			std::cout << "gp_param = " << x[j] <<","<<x[j+ d->u.rows()]<< std::endl;*/
   	
-  	std::cout << d->print <<" Objective: " << L1 << " " << L2 << " "<< result<< std::endl;
+  	//std::cout << d->print <<" Objective: " << L1 << " " << L2 << " "<< result<< std::endl;
   }
-
-  d->print++;
-
 
 	//Gradient computation:
 	int dim_grad = 1+d->dim+d->u.rows()*d->dim;
 	grad.resize(dim_grad);
-	d->Gamma.resize(nb_gp_nodes);
-	for (int i = 0; i < nb_gp_nodes; ++i) {
-		d->Gamma(i) = d->Lambda(i)/pow( d->gp_noise.at(i) / 2e0 + d->noise_regularization, 2e0 );
-	}
 
 	for(int i = 0; i < grad.size(); i++){
-		//Gammadot__ = Gamma^-0.5 Gammadot Gamma^-0.5
-		VectorXd Gammadot__;
-		Gammadot__.resize(nb_gp_nodes); 
 
 		MatrixXd Kffdot;
 		MatrixXd Kufdot;
 		MatrixXd Kfudot;
 		MatrixXd Kuudot;
-		VectorXd GammaDotDoubleBar;
+		VectorXd LambdaDot;
 		if(i == 0){//grad sigma_f
 			d->derivate_K_u_u_wrt_sigmaf(x, Kuudot);
 			d->derivate_K_f_f_wrt_sigmaf(x, Kffdot);
 			d->derivate_K_u_f_wrt_sigmaf(x, Kufdot);
 			Kfudot = Kufdot.transpose();
-			d->compute_GammaDotDoubleBar(Kffdot, Kufdot, Kfudot, Kuudot, GammaDotDoubleBar);
-
 		}else if(i > 0 && i < 1 + d->dim){//grad length parameter
-
+			d->derivate_K_u_u_wrt_l(x, i-1, Kuudot);
+			d->derivate_K_f_f_wrt_l(x, i-1, Kffdot);
+			d->derivate_K_u_f_wrt_l(x, i-1, Kufdot);
+			Kfudot = Kufdot.transpose();
 		}else{//grad u
+			int uidx = (i-offset)%d->u.rows();
+			int udim = (int) ((i-offset)/d->u.rows());
+			d->derivate_K_u_u_wrt_uik(x, uidx, udim, Kuudot);
+			d->derivate_K_u_f_wrt_uik(x, uidx, udim, Kufdot);
+			Kffdot.resize(nb_gp_nodes, nb_gp_nodes);
+			Kffdot.setZero();
+			Kfudot = Kufdot.transpose(); 
+		}
+		d->compute_LambdaDot(Kffdot, Kufdot, Kfudot, Kuudot, LambdaDot);
+		/*
+		IOFormat HeavyFmt(FullPrecision, 0, ", ", ";\n", "", "", "[", "]");
+		std::cout << "Kuudot\n" << Kuudot.format(HeavyFmt) << std::endl;
+		std::cout << "Kffdot\n" << Kffdot.format(HeavyFmt) << std::endl;
+		std::cout << "Kufdot\n" << Kufdot.format(HeavyFmt) << std::endl;
+		std::cout << "LambdaDot\n" << LambdaDot.format(HeavyFmt) << std::endl;
+		std::cout << "Kuu\n" << d->K_u_u.format(HeavyFmt) << std::endl;
+		std::cout << "Kuf\n" << d->K_u_f.format(HeavyFmt) << std::endl;
+		std::cout << "Qff\n" << Q_f_f.format(HeavyFmt) << std::endl;
+		std::cout << "Lambda\n" << d->Lambda.format(HeavyFmt) << std::endl;
+		std::cout << "noise:\n" << std::endl;
+		for (int i = 0; i < nb_gp_nodes; ++i) {
+			std::cout << (pow( d->gp_noise.at(i) / 2e0 + d->noise_regularization, 2e0 )) << std::endl;
+		}		
+		std::cout << std::endl;
+		std::cout << "y:\n" << d->scaled_function_values_eigen << std::endl;
+		*/
 
-
+		//L1-term: dL3/dtheta = d(Lambda+noise^2)/dtheta = tr((Lambda+noise^2)^(-1)*LambdaDot)
+		double dL1 = 0.0;
+		VectorXd LambdaInv(nb_gp_nodes);
+		for(int j = 0; j < nb_gp_nodes; ++j){
+			LambdaInv(j) = 1.0/d->Lambda(j);
+			dL1 += LambdaInv(j) * LambdaDot(j);
 		}
 
-		//L3-term: dL3/dtheta= tr(Gamma^-0.5 Gammadot Gamma^-0.5)
-		double dL3 = GammaDotDoubleBar.sum(); 
+		//L2-term: dL2/dtheta= tr(Kuu^(-1) * Kuudot)
+		double dL2 = d->LLTofK_u_u.solve(Kuudot).trace();
+
+		//L3-term: d(log(det(Kuu+Kuf*(Lambda+noise^2)^(-1)*Kfu)))/dtheta
+		MatrixXd LambdaInvDiag = LambdaInv.asDiagonal();
+		MatrixXd LambdaDotDiag = LambdaDot.asDiagonal();
+		MatrixXd dSigma = Kuudot 
+							+ 2*Kufdot*LambdaInvDiag*K_f_u 
+							- d->K_u_f*LambdaInvDiag*LambdaDotDiag*LambdaInvDiag*K_f_u; 
+							//+ d->K_u_f*LambdaInvDiag*Kfudot;
+		double dL3 = (d->L_eigen.solve(dSigma)).trace();
+
+		//L4-term: d(yT*Q*y)/dtheta
+		MatrixXd KfudotKuinvKuf = Kfudot * d->LLTofK_u_u.solve(d->K_u_f);
+		MatrixXd KfuKuinvKufdot = K_f_u * d->LLTofK_u_u.solve(Kufdot);
+		MatrixXd KfuKuinfKudotKuinvKuf = K_f_u*(d->LLTofK_u_u.solve(Kuudot*(d->LLTofK_u_u.solve(d->K_u_f))));
+		MatrixXd dQ = KfudotKuinvKuf - KfuKuinfKudotKuinvKuf + KfuKuinvKufdot + LambdaDotDiag;
+		double dL4 = (-1)*d->scaled_function_values_eigen.dot(
+						LLTofQ_f_f.solve(dQ*LLTofQ_f_f.solve(
+							d->scaled_function_values_eigen)));
+
+		grad[i] = 0.5*(dL1 - dL2 + dL3 + dL4);
+
+
+		/*JacobiSVD<MatrixXd> svdKuuInv(d->K_u_u.inverse());
+		double condKuu = svdKuuInv.singularValues()(0) 
+		    / svdKuuInv.singularValues()(svdKuuInv.singularValues().size()-1);
+		JacobiSVD<MatrixXd> svdQ(Q_f_f.inverse());
+		double condQff = svdQ.singularValues()(0) 
+		    / svdQ.singularValues()(svdQ.singularValues().size()-1);
+		JacobiSVD<MatrixXd> svdLambdaInv(LambdaInvDiag);
+		double condLambda = svdLambdaInv.singularValues()(0) 
+		    / svdLambdaInv.singularValues()(svdLambdaInv.singularValues().size()-1);
+		JacobiSVD<MatrixXd> svddQ(dQ);
+		double conddQ = svddQ.singularValues()(0) 
+		    / svddQ.singularValues()(svddQ.singularValues().size()-1);
+		std::cout << "Condition numbers: \n";
+		std::cout << "Kuuinv: " << condKuu << " Qff: " << condQff 
+			<< " LambdaInv: " << condLambda << " dQ: " << conddQ << std::endl;
+		*/
+		//if ((d->print%1)==0){
+		// 	std::cout << "Grad: " << i << "|" << 0.5*dL1 << " + "<< 0.5*dL2 << " + "<< 0.5*dL3 << " + "<< 0.5*dL4 << " = " << grad[i] << std::endl;
+		//}
+		//exit(-1);
 	}
+
+  d->print++;
 
   return result;
 

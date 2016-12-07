@@ -17,10 +17,10 @@ using namespace Eigen;
 class FullyIndependentTrainingConditional: public GaussianProcess{
 
 protected:
-    LLT<MatrixXd> L_eigen;
+    LDLT<MatrixXd> L_eigen;
     MatrixXd K_u_f;
     MatrixXd K_u_u;
-    LLT < MatrixXd > LLTofK_u_u;
+    LDLT<MatrixXd> LLTofK_u_u;
     VectorXd Lambda;
     VectorXd Gamma;
     VectorXd alpha_eigen;
@@ -31,6 +31,8 @@ protected:
     MatrixXd gp_nodes_eigen;
     VectorXd gp_noise_eigen;
     VectorXd scaled_function_values_eigen;
+    bool optimize_global = true;
+    bool optimize_local = true;
     double u_ratio = 0.1;
     int min_nb_u_nodes = 1;
     bool resample_u = true;
@@ -45,12 +47,25 @@ protected:
 	void compute_Lambda_times_Kfu(const MatrixXd& K_f_u, MatrixXd& Lambda_K_f_u);
 	void compute_KufLambdaKfu(const MatrixXd& Lambda_K_f_u, MatrixXd& K_u_f_Lambda_f_u);
 	void compute_LambdaInvF(VectorXd& LambdaInv_f);
+    void compute_LambdaDot(const MatrixXd& Kffdot,
+                                    const MatrixXd& Kufdot,
+                                    const MatrixXd& Kfudot,
+                                    const MatrixXd& Kuudot,
+                                    VectorXd& LambdaDot);
     void compute_GammaDotDoubleBar(const MatrixXd& Kffdot,
                                     const MatrixXd& Kufdot,
                                     const MatrixXd& Kfudot,
                                     const MatrixXd& Kuudot,
                                     VectorXd& GammaRes);
 
+    virtual void copy_data_to_members( std::vector< std::vector<double> > const &nodes,
+                                                  std::vector<double> const &values,
+                                                  std::vector<double> const &noise);
+    void set_optimizer(nlopt::opt*& local_opt, nlopt::opt*& global_opt);
+
+    virtual void run_optimizer();
+
+    virtual void update_induced_points();
     int print = 0;
 
 public:

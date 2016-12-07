@@ -10,7 +10,7 @@
 class DeterministicTrainingConditional : public SubsetOfRegressors{
 
 protected:
-
+    void run_optimizer();
 public:
     //! Constructor
     /*!
@@ -45,9 +45,18 @@ public:
     */
     void evaluate ( std::vector<double> const&, double&, double& );
 
+    void estimate_hyper_parameters ( std::vector< std::vector<double> > const &nodes,
+                                                  std::vector<double> const &values,
+                                                  std::vector<double> const &noise );
+
+
     static double parameter_estimation_objective(std::vector<double> const &x,
                                                            std::vector<double> &grad,
                                                            void *data);
+
+    static double parameter_estimation_objective_w_gradients(std::vector<double> const &x,
+                                                       std::vector<double> &grad,
+                                                       void *data);
    
 };
 

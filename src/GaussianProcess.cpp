@@ -223,7 +223,7 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
   double delta_threshold = *delta;
   if (delta_threshold < 1e-2) delta_threshold = 1e-2;
   for (int i = 0; i < dim; ++i) {
-      lb[i+1] = 1e1 * delta_threshold;
+      lb[i+1] = 1e-1 * delta_threshold;
       ub[i+1] = 1e2 * delta_threshold;
   }
 
@@ -256,7 +256,7 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
  // opt.set_xtol_abs(1e-2);
 //  opt.set_xtol_rel(1e-2);
 //set timeout to NLOPT_TIMEOUT seconds
-  opt.set_maxtime(1800.0);
+  opt.set_maxtime(300.0);
   //perform optimization to get correction factors
 
     int exitflag=-20;
