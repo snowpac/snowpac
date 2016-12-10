@@ -45,8 +45,6 @@ class GaussianProcess : public GaussianProcessBaseClass,
 
     BlackBoxData evaluations;
 
-protected:
-
     //for gradient based estimation
 //    Eigen::MatrixXd dK;
     //Eigen::ColPivHouseholderQR<Eigen::MatrixXd> S;
@@ -125,7 +123,9 @@ protected:
 
     void set_evaluations(const BlackBoxData &evaluations);
 
+    virtual void set_constraint_ball_radius(const double& radius){};
 
+    virtual void set_constraint_ball_center(const std::vector<double>& center){};
    
 };
 

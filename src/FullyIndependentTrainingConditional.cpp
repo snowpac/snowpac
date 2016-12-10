@@ -807,12 +807,13 @@ void FullyIndependentTrainingConditional::set_optimizer(nlopt::opt*& local_opt, 
       ub[i+1] = 1e2 * delta_threshold;
   }
   int offset = 1+dim;
+  //Set box constraints such that the constraint ball is inside
   std::vector<double> lb_u(dim);
-  lb_u[0] = -1.+0.2; //TODO 
-  lb_u[1] = -1.+0.2;
   std::vector<double> ub_u(dim);
-  ub_u[0] = 5.-0.2;
-  ub_u[1] = 5.-0.2;
+  for (int i = 0; i < dim; ++i) {
+      lb_u[i] = constraint_ball_center[i] - 3*constraint_ball_radius;
+      ub_u[i] = constraint_ball_center[i] + 3*constraint_ball_radius;
+  }
   for (int i = 0; i < dim; ++i) {
 	  for(int j = offset + i*u.rows(); j < offset + (i+1)*u.rows(); ++j){
           lb[j] = lb_u[i];
@@ -843,15 +844,15 @@ void FullyIndependentTrainingConditional::set_optimizer(nlopt::opt*& local_opt, 
   } 
 
   local_opt = new nlopt::opt(nlopt::LD_MMA, dimp1);
-  global_opt = new nlopt::opt(nlopt::GN_CRS2_LM, dimp1);
+  global_opt = new nlopt::opt(nlopt::GN_ISRES, dimp1);
 
   global_opt->set_lower_bounds( lb );
   global_opt->set_upper_bounds( ub );
-  global_opt->set_maxtime(300.0);
+  global_opt->set_maxtime(600.0);
 
   local_opt->set_lower_bounds( lb );
   local_opt->set_upper_bounds( ub );
-  local_opt->set_maxtime(300.0);
+  local_opt->set_maxtime(600.0);
 }
 
 void FullyIndependentTrainingConditional::run_optimizer(){
@@ -865,10 +866,15 @@ void FullyIndependentTrainingConditional::run_optimizer(){
   int dimp1 = 1+dim+u.rows()*dim;
   set_optimizer(local_opt, global_opt);
 
+  std::vector<double> tol(dimp1);
+  for(int i = 0; i < dimp1; ++i){
+  	tol[i] = 0.0;
+  }
   if (optimize_global){
   	  print = 0;
  	  std::cout << "Global optimization" << std::endl;
 	  exitflag=-20;
+	  global_opt->add_inequality_mconstraint(trust_region_constraint, gp_pointer, tol);
 	  global_opt->set_min_objective( parameter_estimation_objective, gp_pointer);
 	  exitflag = global_opt->optimize(gp_parameters, optval);
 
@@ -884,6 +890,7 @@ void FullyIndependentTrainingConditional::run_optimizer(){
   	  std::cout << "Local optimization" << std::endl;
 	  exitflag=-20;
 	  //try {
+	  local_opt->add_inequality_mconstraint(trust_region_constraint, gp_pointer, tol);
 	  local_opt->set_min_objective( parameter_estimation_objective_w_gradients, gp_pointer);
 	  exitflag = local_opt->optimize(gp_parameters, optval);
 
@@ -942,7 +949,7 @@ double FullyIndependentTrainingConditional::parameter_estimation_objective(std::
   int offset = 1+d->dim;
   int u_counter;
   double nugget = 0.00001;
-  double nugget2 = 0.0;
+  double nugget2 = 0.00001;
   double nuggetQff = 0.00001;
   for (int i = 0; i < d->dim; ++i) {
   	  u_counter = 0;
@@ -1080,7 +1087,7 @@ double FullyIndependentTrainingConditional::parameter_estimation_objective_w_gra
   int offset = 1+d->dim;
   int u_counter;
   double nugget = 0.00001;
-  double nugget2 = 0.0;
+  double nugget2 = 0.00001;
   double nuggetQff = 0.00001;
   for (int i = 0; i < d->dim; ++i) {
   	  u_counter = 0;
@@ -1312,5 +1319,87 @@ double FullyIndependentTrainingConditional::parameter_estimation_objective_w_gra
 
   return result;
 
+}
+
+void FullyIndependentTrainingConditional::set_constraint_ball_radius(const double& radius){
+	constraint_ball_radius = radius;
+}
+
+void FullyIndependentTrainingConditional::set_constraint_ball_center(const std::vector<double>& center){
+	constraint_ball_center.resize(center.size());
+	for(int i = 0; i < center.size(); ++i){
+		constraint_ball_center(i) = center[i];
+	}
+}
+
+void FullyIndependentTrainingConditional::trust_region_constraint(unsigned int m, double* c, unsigned int n, const double* x, double* grad,
+                                                     			void *data){
+	FullyIndependentTrainingConditional *d = reinterpret_cast<FullyIndependentTrainingConditional*>(data);
+
+	int offset = 1+d->dim;
+  	int u_counter;
+
+  	for (int i = 0; i < offset; ++i) {
+  		c[i] = -1;
+  	}
+  	MatrixXd u_intern(d->u.rows(), d->u.cols());
+  	for (int i = 0; i < d->dim; ++i) {
+  	  u_counter = 0;
+  	  for(int j = offset + i*d->u.rows(); j < offset + (i+1)*d->u.rows(); ++j){
+            u_intern(u_counter, i) = x[j];
+            u_counter++;
+  	  }
+  	}
+  	VectorXd c_intern(u_intern.rows());
+  	VectorXd dist(2);
+  	for (int i = 0; i < u_intern.rows(); ++i) {
+  			for (int j = 0; j < d->dim; ++j) {
+  				dist(j) = (u_intern(i, j)-d->constraint_ball_center(j));
+  			}
+    	    c_intern(i) = sqrt( dist.dot(dist) ) - d->constraint_ball_radius;
+    }
+  	for (int i = 0; i < d->dim; ++i) {
+  	    u_counter = 0;
+  	  	for(int j = offset + i*d->u.rows(); j < offset + (i+1)*d->u.rows(); ++j){
+    	    c[j] = c_intern(u_counter);
+            u_counter++;
+  	  	}
+  	}
+  	return;
+  	// UNIT TESTS SUCK!
+  	// UNIT TESTS SUCK!
+  	// UNIT TESTS SUCK!
+	// UNIT TESTS SUCK!
+  	// UNIT TESTS SUCK!
+  	// UNIT TESTS SUCK!
+  	// UNIT TESTS SUCK!
+  	// UNIT TESTS SUCK!
+  	// UNIT TESTS SUCK!
+  	// UNIT TESTS SUCK!
+  	// UNIT TESTS SUCK!
+  	// UNIT TESTS SUCK!
+  	// UNIT TESTS SUCK!
+  	// UNIT TESTS SUCK!
+  	// UNIT TESTS SUCK!
+  	// UNIT TESTS SUCK!
+  	// UNIT TESTS SUCK!
+  	// UNIT TESTS SUCK!
+  	// UNIT TESTS SUCK!
+  	// UNIT TESTS SUCK!
+  	// UNIT TESTS SUCK!
+  	// UNIT TESTS SUCK!
+  	// UNIT TESTS SUCK!
+  	// UNIT TESTS SUCK!
+  	// UNIT TESTS SUCK!
+  	// UNIT TESTS SUCK!
+  	// UNIT TESTS SUCK!
+  	// UNIT TESTS SUCK!
+  	// UNIT TESTS SUCK!
+  	// UNIT TESTS SUCK!
+  	// UNIT TESTS SUCK!
+  	// UNIT TESTS SUCK!
+  	// UNIT TESTS SUCK!
+  	// UNIT TESTS SUCK!
+  	// :D
 }
 

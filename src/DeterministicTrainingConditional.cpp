@@ -35,11 +35,15 @@ void DeterministicTrainingConditional::run_optimizer(){
 
   int dimp1 = 1+dim+u.rows()*dim;
   set_optimizer(local_opt, global_opt);
-
+  std::vector<double> tol(dimp1);
+  for(int i = 0; i < dimp1; ++i){
+  	tol[i] = 0.0;
+  }
   if (optimize_global){
   	  print = 0;
  	  std::cout << "Global optimization" << std::endl;
 	  exitflag=-20;
+	  global_opt->add_inequality_mconstraint(trust_region_constraint, gp_pointer, tol);
 	  global_opt->set_min_objective( parameter_estimation_objective, gp_pointer);
 	  exitflag = global_opt->optimize(gp_parameters, optval);
 
@@ -55,6 +59,7 @@ void DeterministicTrainingConditional::run_optimizer(){
   	  std::cout << "Local optimization" << std::endl;
 	  exitflag=-20;
 	  //try {
+	  local_opt->add_inequality_mconstraint(trust_region_constraint, gp_pointer, tol);
 	  local_opt->set_min_objective( parameter_estimation_objective_w_gradients, gp_pointer);
 	  exitflag = local_opt->optimize(gp_parameters, optval);
 
@@ -99,7 +104,7 @@ double DeterministicTrainingConditional::parameter_estimation_objective(std::vec
   int offset = 1+d->dim;
   int u_counter;
   double nugget = 0.00001;
-  double nugget2 = 0.0;
+  double nugget2 = 0.00001;
   double nuggetQff = 0.00001;
   for (int i = 0; i < d->dim; ++i) {
   	  u_counter = 0;
@@ -239,7 +244,7 @@ double DeterministicTrainingConditional::parameter_estimation_objective_w_gradie
   int offset = 1+d->dim;
   int u_counter;
   double nugget = 0.00001;
-  double nugget2 = 0.0;
+  double nugget2 = 0.00001;
   double nuggetQff = 0.00001;
   for (int i = 0; i < d->dim; ++i) {
   	  u_counter = 0;
@@ -430,4 +435,40 @@ double DeterministicTrainingConditional::parameter_estimation_objective_w_gradie
 
   return result;
 
+}
+
+void DeterministicTrainingConditional::trust_region_constraint(unsigned int m, double* c, unsigned int n, const double* x, double* grad,
+                                                     			void *data){
+	DeterministicTrainingConditional *d = reinterpret_cast<DeterministicTrainingConditional*>(data);
+
+	int offset = 1+d->dim;
+  	int u_counter;
+
+  	for (int i = 0; i < offset; ++i) {
+  		c[i] = -1;
+  	}
+  	MatrixXd u_intern(d->u.rows(), d->u.cols());
+  	for (int i = 0; i < d->dim; ++i) {
+  	  u_counter = 0;
+  	  for(int j = offset + i*d->u.rows(); j < offset + (i+1)*d->u.rows(); ++j){
+            u_intern(u_counter, i) = x[j];
+            u_counter++;
+  	  }
+  	}
+  	VectorXd c_intern(u_intern.rows());
+  	VectorXd dist(2);
+  	for (int i = 0; i < u_intern.rows(); ++i) {
+  			for (int j = 0; j < d->dim; ++j) {
+  				dist(j) = (u_intern(i, j)-d->constraint_ball_center(j));
+  			}
+    	    c_intern(i) = sqrt( dist.dot(dist) ) - d->constraint_ball_radius;
+    }
+  	for (int i = 0; i < d->dim; ++i) {
+  	    u_counter = 0;
+  	  	for(int j = offset + i*d->u.rows(); j < offset + (i+1)*d->u.rows(); ++j){
+    	    c[j] = c_intern(u_counter);
+            u_counter++;
+  	  	}
+  	}
+  	return;
 }

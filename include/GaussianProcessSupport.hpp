@@ -32,7 +32,7 @@ class GaussianProcessSupport : protected VectorOperations {
     void update_gaussian_processes ( BlackBoxData& );
   public:
     void initialize ( const int, const int, double&,
-                      std::vector<double> const&, int );
+                      std::vector<double> const&, int , const bool);
     void smooth_data ( BlackBoxData& );
     double evaluate_objective ( BlackBoxData const& );
 
@@ -41,6 +41,10 @@ class GaussianProcessSupport : protected VectorOperations {
     const std::vector<std::vector<double>> &get_nodes_at(const int&) const;
 
     void get_induced_nodes_at(const int idx, std::vector<std::vector<double>> &induced_nodes);
+
+    void set_constraint_ball_center(const std::vector<double>& center);
+
+    void set_constraint_ball_radius(const double& radius);
 };
 
 #endif

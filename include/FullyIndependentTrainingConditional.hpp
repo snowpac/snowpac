@@ -36,6 +36,9 @@ protected:
     double u_ratio = 0.1;
     int min_nb_u_nodes = 1;
     bool resample_u = true;
+    int print = 0;
+    double constraint_ball_radius;
+    VectorXd constraint_ball_center;
     void sample_u(const int &nb_u_nodes);
 	void compute_Kuf_and_Kuu();
 	void compute_Qff(const MatrixXd& K_f_u, VectorXd& diag_Q_f_f);
@@ -66,19 +69,6 @@ protected:
     virtual void run_optimizer();
 
     virtual void update_induced_points();
-    int print = 0;
-
-public:
-    void get_induced_nodes(std::vector< std::vector<double> >&) const;
-    //! Constructor
-    /*!
-     Class constructor.
-     \param n dimension of the Approximated Gaussian process.
-    */
-    FullyIndependentTrainingConditional( int, double& );
-
-    //! Destructor
-    ~FullyIndependentTrainingConditional() { };
 
     double evaluate_kernel ( VectorXd const &x,
                                           VectorXd const &y );
@@ -121,6 +111,23 @@ public:
     void derivate_K_u_u_wrt_l(std::vector<double> const &p,
                                              int const &k,
                                         MatrixXd &deriv_matrix);
+public:
+
+    void set_constraint_ball_radius(const double& radius);
+    
+    void set_constraint_ball_center(const std::vector<double>& center);
+
+    void get_induced_nodes(std::vector< std::vector<double> >&) const;
+    //! Constructor
+    /*!
+     Class constructor.
+     \param n dimension of the Approximated Gaussian process.
+    */
+    FullyIndependentTrainingConditional( int, double& );
+
+    //! Destructor
+    ~FullyIndependentTrainingConditional() { };
+
     //! Build the approximated Gaussian process
     /*!
      Computes the Gaussian process\n
@@ -159,7 +166,15 @@ public:
     static double parameter_estimation_objective(std::vector<double> const &x,
                                                            std::vector<double> &grad,
                                                            void *data);
+
     static double parameter_estimation_objective_w_gradients(std::vector<double> const &x,
+                                                           std::vector<double> &grad,
+                                                           void *data);
+
+    static void trust_region_constraint(unsigned int m, double* c, unsigned int n, const double* x, double* grad,
+                                                                void *data);
+
+    static void trust_region_constraint_w_gradients(std::vector<double> &c, std::vector<double> const &x,
                                                            std::vector<double> &grad,
                                                            void *data);
    

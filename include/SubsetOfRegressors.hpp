@@ -56,6 +56,9 @@ public:
     static double parameter_estimation_objective_w_gradients(std::vector<double> const &x,
                                                            std::vector<double> &grad,
                                                            void *data);
+
+    static void trust_region_constraint(unsigned int m, double* c, unsigned int n, const double* x, double* grad,
+                                                                void *data);
    
 };
 

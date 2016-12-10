@@ -3,13 +3,15 @@
 #include <cassert>
 #include <fstream>
 #include <SubsetOfRegressors.hpp>
+#include <DeterministicTrainingConditional.hpp>
+#include <FullyIndependentTrainingConditional.hpp>
 #include <AugmentedSubsetOfRegressors.hpp>
 #include <algorithm>
 
 //--------------------------------------------------------------------------------
 void GaussianProcessSupport::initialize ( const int dim, const int number_processes_input,
   double &delta_input, std::vector<double> const &update_at_evaluations_input,
-  int update_interval_length_input ) 
+  int update_interval_length_input, const bool use_approx_gaussian_process ) 
 {
   nb_values = 0;
   delta = &delta_input;
@@ -23,7 +25,11 @@ void GaussianProcessSupport::initialize ( const int dim, const int number_proces
   values.resize( number_processes );
   noise.resize( number_processes );
   for ( int i = 0; i < number_processes; i++) {
-    gaussian_processes.push_back ( std::shared_ptr<GaussianProcess> (new GaussianProcess(dim, *delta)) );
+    if(use_approx_gaussian_process)
+      gaussian_processes.push_back ( std::shared_ptr<SubsetOfRegressors> (new SubsetOfRegressors(dim, *delta)) );
+    else{
+      gaussian_processes.push_back ( std::shared_ptr<GaussianProcess> (new GaussianProcess(dim, *delta)) );
+    }
   }
   rescaled_node.resize( dim );
   return;
@@ -248,4 +254,17 @@ void GaussianProcessSupport::get_induced_nodes_at(const int idx, std::vector<std
     return;
 }
 
+void GaussianProcessSupport::set_constraint_ball_center(const std::vector<double>& center){
+  for ( int j = 0; j < number_processes; ++j ) {
+      gaussian_processes[j]->set_constraint_ball_center(center);
+
+    }
+}
+
+void GaussianProcessSupport::set_constraint_ball_radius(const double& radius){
+  for ( int j = 0; j < number_processes; ++j ) {
+      gaussian_processes[j]->set_constraint_ball_radius(radius);
+
+    }
+}
 //--------------------------------------------------------------------------------

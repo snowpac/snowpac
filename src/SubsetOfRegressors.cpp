@@ -136,11 +136,15 @@ void SubsetOfRegressors::run_optimizer(){
   nlopt::opt* global_opt;
   int dimp1 = 1+dim+u.rows()*dim;
   set_optimizer(local_opt, global_opt);
-
+  std::vector<double> tol(dimp1);
+  for(int i = 0; i < dimp1; ++i){
+  	tol[i] = 0.0;
+  }
   if (optimize_global){
   	  print = 0;
  	  std::cout << "Global optimization" << std::endl;
 	  exitflag=-20;
+	  global_opt->add_inequality_mconstraint(trust_region_constraint, gp_pointer, tol);
   	  global_opt->set_min_objective( parameter_estimation_objective, gp_pointer);
 	  exitflag = global_opt->optimize(gp_parameters, optval);
 
@@ -156,6 +160,7 @@ void SubsetOfRegressors::run_optimizer(){
   	  std::cout << "Local optimization" << std::endl;
 	  exitflag=-20;
 	  //try {
+	  local_opt->add_inequality_mconstraint(trust_region_constraint, gp_pointer, tol);
 	  local_opt->set_min_objective( parameter_estimation_objective_w_gradients, gp_pointer);
 	  exitflag = local_opt->optimize(gp_parameters, optval);
 
@@ -202,7 +207,7 @@ double SubsetOfRegressors::parameter_estimation_objective(std::vector<double> co
   int offset = 1+d->dim;
   int u_counter;
   double nugget = 0.00001;
-  double nugget2 = 0.0;
+  double nugget2 = 0.00001;
   double nuggetQff = 0.00001;
   for (int i = 0; i < d->dim; ++i) {
   	  u_counter = 0;
@@ -312,10 +317,11 @@ double SubsetOfRegressors::parameter_estimation_objective(std::vector<double> co
   double result = L1 + L2;
  
   if (isinf(result) || isnan(result)){
+  	IOFormat HeavyFmt(FullPrecision, 0, ", ", ";\n", "", "", "[", "]");
   	std::cout << "Result is inf or nan" << std::endl;
   	std::cout << "L11 " << L11 << " " << 'x' << std::endl;
     std::cout << "L12 " << L12 << " "  << log(d->K_u_u.determinant()) << std::endl;
-    std::cout << "L13 " << det_Leigen << " " << log(Sigma.determinant()) << std::endl;
+    std::cout << "L13 " << det_Leigen << " " << log(Sigma.determinant()) << d->L_eigen.vectorD().format(HeavyFmt) << std::endl;
     std::cout << L1 << ' ' << L2 << std::endl;
   	result = std::numeric_limits<double>::infinity();
   }
@@ -345,7 +351,7 @@ double SubsetOfRegressors::parameter_estimation_objective_w_gradients(std::vecto
   int offset = 1+d->dim;
   int u_counter;
   double nugget = 0.00001;
-  double nugget2 = 0.0;
+  double nugget2 = 0.00001;
   double nuggetQff = 0.00001;
   for (int i = 0; i < d->dim; ++i) {
   	  u_counter = 0;
@@ -559,4 +565,40 @@ double SubsetOfRegressors::parameter_estimation_objective_w_gradients(std::vecto
 
   return result;
 
+}
+
+void SubsetOfRegressors::trust_region_constraint(unsigned int m, double* c, unsigned int n, const double* x, double* grad,
+                                                     			void *data){
+	SubsetOfRegressors *d = reinterpret_cast<SubsetOfRegressors*>(data);
+	
+	int offset = 1+d->dim;
+  	int u_counter;
+
+  	for (int i = 0; i < offset; ++i) {
+  		c[i] = -1;
+  	}
+  	MatrixXd u_intern(d->u.rows(), d->u.cols());
+  	for (int i = 0; i < d->dim; ++i) {
+  	  u_counter = 0;
+  	  for(int j = offset + i*d->u.rows(); j < offset + (i+1)*d->u.rows(); ++j){
+            u_intern(u_counter, i) = x[j];
+            u_counter++;
+  	  }
+  	}
+  	VectorXd c_intern(u_intern.rows());
+  	VectorXd dist(2);
+  	for (int i = 0; i < u_intern.rows(); ++i) {
+  			for (int j = 0; j < d->dim; ++j) {
+  				dist(j) = (u_intern(i, j)-d->constraint_ball_center(j));
+  			}
+    	    c_intern(i) = sqrt( dist.dot(dist) ) - d->constraint_ball_radius;
+    }
+  	for (int i = 0; i < d->dim; ++i) {
+  	    u_counter = 0;
+  	  	for(int j = offset + i*d->u.rows(); j < offset + (i+1)*d->u.rows(); ++j){
+    	    c[j] = c_intern(u_counter);
+            u_counter++;
+  	  	}
+  	}
+  	return;
 }

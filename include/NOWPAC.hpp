@@ -114,6 +114,7 @@ class NOWPAC : protected NoiseDetection<TSurrogateModel> {
     int EXIT_FLAG;
     int NOEXIT;
     double tmp_dbl1 = -1;
+    bool use_approx_gaussian_process = false;
 
     int output_steps = 1;
 public:
@@ -398,6 +399,11 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_option (
     noise_termination = option_value;
     return;
   } 
+
+  if ( option_name.compare( "approximated_gaussian_gp" ) == 0 ) {
+    use_approx_gaussian_process = option_value;
+    return;
+  } 
   std::cout << "Warning : Unknown parameter (" << option_name << ")"<< std::endl;
   return;
 }
@@ -666,9 +672,10 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::blackbox_evaluator (
   write_to_file();
 
   //TODO Remove this later
-  output_for_plotting(output_steps, 0, x);
-  output_steps++;
-
+  if(false){
+    output_for_plotting(output_steps, 0, x);
+    output_steps++;
+  }
   return;
 }  
 //--------------------------------------------------------------------------------
@@ -727,11 +734,12 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::blackbox_evaluator ( )
 
   write_to_file();
   //TODO: Remove this later
-
-  for(int i = nb_vals_tmp; i < nb_nodes_tmp; ++i){
-    output_for_plotting(output_steps, i-nb_vals_tmp, evaluations.nodes[ i ]);
+  if(false){
+    for(int i = nb_vals_tmp; i < nb_nodes_tmp; ++i){
+      output_for_plotting(output_steps, i-nb_vals_tmp, evaluations.nodes[ i ]);
+    }
+    output_steps++;
   }
-  output_steps++;
   return;
 }  
 //--------------------------------------------------------------------------------
@@ -841,6 +849,11 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::update_trustregion (
   }
   if ( delta > delta_max ) delta = delta_max;
   if ( delta < delta_min ) EXIT_FLAG = 0;
+
+  if (use_approx_gaussian_process){
+    gaussian_processes.set_constraint_ball_radius(1.5*delta);
+  }
+
   return;
 }
 //--------------------------------------------------------------------------------
@@ -1273,7 +1286,7 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
 
     if ( stochastic_optimization )
       gaussian_processes.initialize ( dim, nb_constraints + 1, delta,
-                                      update_at_evaluations, update_interval_length );
+                                      update_at_evaluations, update_interval_length, use_approx_gaussian_process );
 
     if ( verbose >= 2 ) { std::cout << "Initial evaluation of black box functions" << std::endl; }
     // initial evaluations 
@@ -1510,6 +1523,9 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
                                                            evaluations, x_trial );
         add_trial_node( );
         evaluations.best_index = evaluations.nodes.size()-1;
+        if(use_approx_gaussian_process){
+          gaussian_processes.set_constraint_ball_center(evaluations.nodes[evaluations.best_index]);
+        }
         update_surrogate_models( );
         number_accepted_steps++;
         if ( number_accepted_steps >= max_number_accepted_steps ) EXIT_FLAG = -6;
