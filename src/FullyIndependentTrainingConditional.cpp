@@ -481,18 +481,31 @@ void FullyIndependentTrainingConditional::compute_GammaDotDoubleBar(const Matrix
 
 }
 
+int FullyIndependentTrainingConditional::compute_nb_u_nodes(int total_nb_nodes){
+	int nb_u_nodes;
+	if (total_nb_nodes < evaluations.active_index.size()) {
+		nb_u_nodes = total_nb_nodes;
+	} else if (total_nb_nodes * u_ratio < evaluations.active_index.size()) {
+		nb_u_nodes = evaluations.active_index.size();
+	} else {
+		nb_u_nodes = total_nb_nodes * u_ratio;
+	}
+	return nb_u_nodes;
+}
+
 //--------------------------------------------------------------------------------
 void FullyIndependentTrainingConditional::build(
 		std::vector<std::vector<double> > const &nodes,
 		std::vector<double> const &values, std::vector<double> const &noise) {
-	int nb_u_nodes;
-	if (nodes.size() < evaluations.active_index.size()) {
-		nb_u_nodes = (nodes.size());
-	} else if ((nodes.size()) * u_ratio < evaluations.active_index.size()) {
-		nb_u_nodes = evaluations.active_index.size();
-	} else {
-		nb_u_nodes = (nodes.size()) * u_ratio;
+	int nb_u_nodes = compute_nb_u_nodes(nodes.size());
+	if(nb_u_nodes == cur_nb_u_nodes){
+		resample_u = false;
+	}else{
+		std::cout << "Decision for resample: " << nb_u_nodes << " " << cur_nb_u_nodes << std::endl;
+		resample_u = true;
+		cur_nb_u_nodes = nb_u_nodes;
 	}
+
 	std::cout << "In Build Gaussian with [" << nodes.size() << "," << nb_u_nodes
 			<< "]" << std::endl;
 	if (nb_u_nodes >= min_nb_u_nodes) {
@@ -512,9 +525,12 @@ void FullyIndependentTrainingConditional::build(
 			gp_noise_eigen(i) = noise[i];
 		}
 
-		if (resample_u)
+		if (resample_u){
 			this->sample_u(nb_u_nodes);
-		resample_u = true;
+			if (do_hp_estimation)
+				this->estimate_hyper_parameters(nodes, values, noise);
+  			resample_u = false;
+		}
 
 		//Set up matrix K_u_f and K_f_u
 		compute_Kuf_and_Kuu();
@@ -562,15 +578,7 @@ void FullyIndependentTrainingConditional::build(
 //--------------------------------------------------------------------------------
 void FullyIndependentTrainingConditional::update(std::vector<double> const &x,
 		double &value, double &noise) {
-	int nb_u_nodes;
-	if (gp_nodes.size() < evaluations.active_index.size()) {
-		nb_u_nodes = (gp_nodes.size() + 1);
-	} else if ((gp_nodes.size() + 1) * u_ratio
-			< evaluations.active_index.size()) {
-		nb_u_nodes = evaluations.active_index.size();
-	} else {
-		nb_u_nodes = (gp_nodes.size() + 1) * u_ratio;
-	}
+	int nb_u_nodes = compute_nb_u_nodes(gp_nodes.size());
 	//std::cout << "In update Gaussian with [" << gp_nodes.size()+1 << "," << nb_u_nodes <<"]" << std::endl;
 	if (nb_u_nodes >= min_nb_u_nodes) {
 		//std::cout << "#Update" << std::endl;
@@ -848,11 +856,11 @@ void FullyIndependentTrainingConditional::set_optimizer(nlopt::opt*& local_opt, 
 
   global_opt->set_lower_bounds( lb );
   global_opt->set_upper_bounds( ub );
-  global_opt->set_maxtime(600.0);
+  global_opt->set_maxtime(30.0);
 
   local_opt->set_lower_bounds( lb );
   local_opt->set_upper_bounds( ub );
-  local_opt->set_maxtime(600.0);
+  local_opt->set_maxtime(30.0);
 }
 
 void FullyIndependentTrainingConditional::run_optimizer(){
@@ -874,7 +882,7 @@ void FullyIndependentTrainingConditional::run_optimizer(){
   	  print = 0;
  	  std::cout << "Global optimization" << std::endl;
 	  exitflag=-20;
-	  global_opt->add_inequality_mconstraint(trust_region_constraint, gp_pointer, tol);
+	  //global_opt->add_inequality_mconstraint(trust_region_constraint, gp_pointer, tol);
 	  global_opt->set_min_objective( parameter_estimation_objective, gp_pointer);
 	  exitflag = global_opt->optimize(gp_parameters, optval);
 
@@ -890,7 +898,7 @@ void FullyIndependentTrainingConditional::run_optimizer(){
   	  std::cout << "Local optimization" << std::endl;
 	  exitflag=-20;
 	  //try {
-	  local_opt->add_inequality_mconstraint(trust_region_constraint, gp_pointer, tol);
+	  //local_opt->add_inequality_mconstraint(trust_region_constraint, gp_pointer, tol);
 	  local_opt->set_min_objective( parameter_estimation_objective_w_gradients, gp_pointer);
 	  exitflag = local_opt->optimize(gp_parameters, optval);
 
@@ -933,7 +941,6 @@ void FullyIndependentTrainingConditional::estimate_hyper_parameters ( std::vecto
 
   update_induced_points();
 
-  resample_u = false;
   this->build(nodes, values, noise);
 
   return;
@@ -1366,40 +1373,8 @@ void FullyIndependentTrainingConditional::trust_region_constraint(unsigned int m
   	  	}
   	}
   	return;
-  	// UNIT TESTS SUCK!
-  	// UNIT TESTS SUCK!
-  	// UNIT TESTS SUCK!
-	// UNIT TESTS SUCK!
-  	// UNIT TESTS SUCK!
-  	// UNIT TESTS SUCK!
-  	// UNIT TESTS SUCK!
-  	// UNIT TESTS SUCK!
-  	// UNIT TESTS SUCK!
-  	// UNIT TESTS SUCK!
-  	// UNIT TESTS SUCK!
-  	// UNIT TESTS SUCK!
-  	// UNIT TESTS SUCK!
-  	// UNIT TESTS SUCK!
-  	// UNIT TESTS SUCK!
-  	// UNIT TESTS SUCK!
-  	// UNIT TESTS SUCK!
-  	// UNIT TESTS SUCK!
-  	// UNIT TESTS SUCK!
-  	// UNIT TESTS SUCK!
-  	// UNIT TESTS SUCK!
-  	// UNIT TESTS SUCK!
-  	// UNIT TESTS SUCK!
-  	// UNIT TESTS SUCK!
-  	// UNIT TESTS SUCK!
-  	// UNIT TESTS SUCK!
-  	// UNIT TESTS SUCK!
-  	// UNIT TESTS SUCK!
-  	// UNIT TESTS SUCK!
-  	// UNIT TESTS SUCK!
-  	// UNIT TESTS SUCK!
-  	// UNIT TESTS SUCK!
-  	// UNIT TESTS SUCK!
-  	// UNIT TESTS SUCK!
-  	// :D
 }
 
+  void FullyIndependentTrainingConditional::set_hp_estimation(bool do_estimation){
+	do_hp_estimation = do_estimation;
+  }

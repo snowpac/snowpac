@@ -35,7 +35,9 @@ protected:
     bool optimize_local = true;
     double u_ratio = 0.1;
     int min_nb_u_nodes = 1;
+    int cur_nb_u_nodes = 0;
     bool resample_u = true;
+    bool do_hp_estimation = false;
     int print = 0;
     double constraint_ball_radius;
     VectorXd constraint_ball_center;
@@ -111,10 +113,12 @@ protected:
     void derivate_K_u_u_wrt_l(std::vector<double> const &p,
                                              int const &k,
                                         MatrixXd &deriv_matrix);
+
+    int compute_nb_u_nodes(int total_nb_nodes);
 public:
 
     void set_constraint_ball_radius(const double& radius);
-    
+
     void set_constraint_ball_center(const std::vector<double>& center);
 
     void get_induced_nodes(std::vector< std::vector<double> >&) const;
@@ -177,7 +181,7 @@ public:
     static void trust_region_constraint_w_gradients(std::vector<double> &c, std::vector<double> const &x,
                                                            std::vector<double> &grad,
                                                            void *data);
-   
+    virtual void set_hp_estimation(bool);
 };
 
 

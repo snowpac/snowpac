@@ -18,13 +18,13 @@ SubsetOfRegressors::SubsetOfRegressors(int n, double &delta_input) :
 void SubsetOfRegressors::build(std::vector<std::vector<double> > const &nodes,
 		std::vector<double> const &values, std::vector<double> const &noise) {
 
-	int nb_u_nodes;
-	if (nodes.size() < evaluations.active_index.size()) {
-		nb_u_nodes = (nodes.size());
-	} else if ((nodes.size()) * u_ratio < evaluations.active_index.size()) {
-		nb_u_nodes = evaluations.active_index.size();
-	} else {
-		nb_u_nodes = (nodes.size()) * u_ratio;
+	int nb_u_nodes = compute_nb_u_nodes(nodes.size());
+	if(nb_u_nodes == cur_nb_u_nodes){
+		resample_u = false;
+	}else{
+		std::cout << "Decision for resample: " << nb_u_nodes << " " << cur_nb_u_nodes << std::endl;
+		resample_u = true;
+		cur_nb_u_nodes = nb_u_nodes;
 	}
 	std::cout << "In Build Gaussian with [" << nodes.size() << "," << nb_u_nodes
 			<< "]" << std::endl;
@@ -45,9 +45,12 @@ void SubsetOfRegressors::build(std::vector<std::vector<double> > const &nodes,
 			gp_noise_eigen(i) = noise[i];
 		}
 
-		if (resample_u)
+		if (resample_u){
 			this->sample_u(nb_u_nodes);
-		resample_u = true;
+			if (do_hp_estimation)
+				this->estimate_hyper_parameters(nodes, values, noise);
+  			resample_u = false;
+		}
 
 		//Set up matrix K_u_f and K_f_u
 		compute_Kuf_and_Kuu();
@@ -191,7 +194,6 @@ void SubsetOfRegressors::estimate_hyper_parameters ( std::vector< std::vector<do
 
   update_induced_points();
 
-  resample_u = false;
   this->build(nodes, values, noise);
 
   return;
@@ -570,7 +572,7 @@ double SubsetOfRegressors::parameter_estimation_objective_w_gradients(std::vecto
 void SubsetOfRegressors::trust_region_constraint(unsigned int m, double* c, unsigned int n, const double* x, double* grad,
                                                      			void *data){
 	SubsetOfRegressors *d = reinterpret_cast<SubsetOfRegressors*>(data);
-	
+
 	int offset = 1+d->dim;
   	int u_counter;
 

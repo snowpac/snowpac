@@ -7,6 +7,7 @@
 #include <vector>
 #include <nlopt.hpp>
 #include <cassert>
+#include <iomanip>
 
 #define NLOPT_ALG LN_COBYLA
 //#define NLOPT_ALG LD_CCSAQ
@@ -288,7 +289,7 @@ double SubproblemOptimization<TSurrogateModel>::compute_trial_point (
   int errmess = -2541981;
 
   best_point = x;
-
+  //std::cout << "-----------------------------1-----------------------" << std::endl;
   for ( int i = 0; i < dim; ++i ) 
     x[i] = 0e0;
 
@@ -297,12 +298,47 @@ double SubproblemOptimization<TSurrogateModel>::compute_trial_point (
   set_local_upper_bounds( best_point );
   opt_trial_point.set_upper_bounds ( ub );
 
+  /*std::cout << "TrialPointOpt: " << std::endl;
+  std::cout << "LowerBound: " << std::endl;
+  for (int i = 0; i < dim; ++i)
+    std::cout << lb[i] << " ";
+  std::cout << "\nUpperBound: " << std::endl;
+  for (int i = 0; i < dim; ++i)
+    std::cout << ub[i] << " ";
+  std::cout << "\nbest_point: " << std::endl;
+  for (int i = 0; i < dim; ++i)
+    std::cout << best_point[i] << " ";
+  std::cout << "\n x: " << std::endl;
+  for (int i = 0; i < dim; ++i)
+    std::cout << x[i] << " ";
+  std::cout << std::endl;*/
+
   set_feasibility_thresholds ( x );
 
+  //std::cout << "Point is feasible: " << point_is_feasible << std::endl;
   if ( !point_is_feasible ) {
     opt_restore_feasibility.optimize ( x, optimization_result );
     set_feasibility_thresholds ( x );    
+    //std::cout << "Point is feasible: " << point_is_feasible << std::endl;
     if ( point_is_feasible ) {
+      /*std::cout << "      LowerBound: " << std::endl;
+      for (int i = 0; i < dim; ++i)
+        std::cout << std::setprecision(16) << "      " << lb[i] << " ";
+      std::cout << "\n      UpperBound: " << std::endl;
+      for (int i = 0; i < dim; ++i)
+        std::cout << std::setprecision(16) << "      " << ub[i] << " ";
+      std::cout << "\n      best_point: " << std::endl;
+      for (int i = 0; i < dim; ++i)
+        std::cout << std::setprecision(16) << "      " << best_point[i] << " ";
+      std::cout << "\n      x: " << std::endl;
+      for (int i = 0; i < dim; ++i)
+        std::cout << std::setprecision(16) << "      " << x[i] << " ";
+      std::cout << std::endl;*/
+      for (int i = 0; i < dim; ++i)
+        if(x[i] > 1.0){
+          std::cout << std::setprecision(16) << "Setting x[i] from " << x[i] << " to 1.0!"<< std::endl;
+          x[i] = 1.0;
+        }
       opt_trial_point.optimize ( x, optimization_result );
     }
    // assert( false );
@@ -334,6 +370,8 @@ double SubproblemOptimization<TSurrogateModel>::compute_trial_point (
 
   add( *delta, x, best_point );
   x = best_point;
+  //std::cout << "-----------------------------2-----------------------" << std::endl;
+
 
   return optimization_result;
 }

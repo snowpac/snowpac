@@ -42,6 +42,7 @@ class GaussianProcess : public GaussianProcessBaseClass,
     int dim, nb_gp_nodes;
     double *delta;
     double noise_regularization = 1e-6;
+    bool induced_point_recently_added = false;
 
     BlackBoxData evaluations;
 
@@ -126,6 +127,8 @@ class GaussianProcess : public GaussianProcessBaseClass,
     virtual void set_constraint_ball_radius(const double& radius){};
 
     virtual void set_constraint_ball_center(const std::vector<double>& center){};
+
+    virtual void set_hp_estimation(bool){};
    
 };
 

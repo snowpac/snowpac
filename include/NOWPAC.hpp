@@ -835,9 +835,9 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::update_trustregion (
  if ( noise_detection && scaling_factor >= 1e0) this->reset_noise_detection();
 
   delta *= scaling_factor;
-  std::cout << std::endl << "------------------------- " << std::endl;
+  /*std::cout << std::endl << "------------------------- " << std::endl;
   std::cout << "MAXNOISE " << max_noise << " sqrt = " << sqrt( max_noise ) << std::endl;
-  std::cout <<  "------------------------- " << std::endl;
+  std::cout <<  "------------------------- " << std::endl;*/
   if ( stochastic_optimization ) {
     double ar_tmp = acceptance_ratio;
     if ( ar_tmp < 0e0 ) ar_tmp = -ar_tmp;
@@ -1259,8 +1259,8 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
   std::cout.setf( std::ios::fixed, std:: ios::floatfield );
   std::cout << std::setprecision(8);
 
-//  std::random_device rand_dev;
-  int random_seed = 25041981;//rand_dev();
+  std::random_device rand_dev;
+  int random_seed = rand_dev(); //25041981;//
   std::mt19937 rand_generator(random_seed);
   std::normal_distribution<double> norm_dis(0e0,2e-1);
   //std::uniform_real_distribution<double> norm_dis(-2e0,2e0);
