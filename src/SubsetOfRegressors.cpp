@@ -18,19 +18,12 @@ SubsetOfRegressors::SubsetOfRegressors(int n, double &delta_input) :
 void SubsetOfRegressors::build(std::vector<std::vector<double> > const &nodes,
 		std::vector<double> const &values, std::vector<double> const &noise) {
 
-	int nb_u_nodes = compute_nb_u_nodes(nodes.size());
-	if(nb_u_nodes == cur_nb_u_nodes){
-		resample_u = false;
-	}else{
-		std::cout << "Decision for resample: " << nb_u_nodes << " " << cur_nb_u_nodes << std::endl;
-		resample_u = true;
-		cur_nb_u_nodes = nb_u_nodes;
-	}
+	int nb_u_nodes = u.rows();
 	std::cout << "In Build Gaussian with [" << nodes.size() << "," << nb_u_nodes
 			<< "]" << std::endl;
-	if (nb_u_nodes >= min_nb_u_nodes) {
+	if (nb_u_nodes > 0) {
 		//nb_u_nodes++;
-
+		
 		nb_gp_nodes = nodes.size();
 		gp_nodes.clear();
 		gp_noise.clear();
@@ -97,7 +90,8 @@ void SubsetOfRegressors::build(std::vector<std::vector<double> > const &nodes,
 //--------------------------------------------------------------------------------
 void SubsetOfRegressors::evaluate(std::vector<double> const &x, double &mean,
 		double &variance) {
-	if (u.size() > 0) {
+	int nb_u_nodes = u.rows();
+	if (nb_u_nodes > 0) {
 		int nb_u_nodes = u.rows();
 		VectorXd x_eigen;
 		x_eigen.resize(x.size());
@@ -130,7 +124,7 @@ void SubsetOfRegressors::evaluate(std::vector<double> const &x, double &mean,
 
 }
 
-void SubsetOfRegressors::run_optimizer(){
+void SubsetOfRegressors::run_optimizer(std::vector<double> const &values){
 	double optval;
 
   int exitflag;
@@ -138,7 +132,7 @@ void SubsetOfRegressors::run_optimizer(){
   nlopt::opt* local_opt;
   nlopt::opt* global_opt;
   int dimp1 = 1+dim+u.rows()*dim;
-  set_optimizer(local_opt, global_opt);
+  set_optimizer(values, local_opt, global_opt);
   std::vector<double> tol(dimp1);
   for(int i = 0; i < dimp1; ++i){
   	tol[i] = 0.0;
@@ -186,15 +180,22 @@ void SubsetOfRegressors::estimate_hyper_parameters ( std::vector< std::vector<do
                                                   std::vector<double> const &noise )
 {
   //std::cout << "in sor1" << std::endl;
+  if(u.rows() > 0){
   copy_data_to_members(nodes, values, noise);
 
   gp_pointer = this;
-
-  run_optimizer();
+  
+  std::cout << "UROWS:" << u.rows() << std::endl;
+  sample_u(u.rows());
+  
+  run_optimizer(values);
 
   update_induced_points();
 
   this->build(nodes, values, noise);
+  }else{
+  	GaussianProcess::estimate_hyper_parameters(nodes, values, noise);
+  }
 
   return;
 }

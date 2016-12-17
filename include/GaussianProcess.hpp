@@ -85,7 +85,7 @@ class GaussianProcess : public GaussianProcessBaseClass,
      \param function values 
      \param noise in function values
     */
-    void estimate_hyper_parameters ( std::vector< std::vector<double> > const&,
+    virtual void estimate_hyper_parameters ( std::vector< std::vector<double> > const&,
                                      std::vector<double> const&, 
                                      std::vector<double> const&);
     //! Build the Gaussian process
@@ -97,7 +97,7 @@ class GaussianProcess : public GaussianProcessBaseClass,
      \param noise in function values
      \see estimate_hyper_parameters
     */
-    void build ( std::vector< std::vector<double> > const&,
+    virtual void build ( std::vector< std::vector<double> > const&,
                  std::vector<double> const&, std::vector<double> const&);
     //! Update the Gaussian process
     /*!
@@ -106,7 +106,7 @@ class GaussianProcess : public GaussianProcessBaseClass,
      \param value new function value at new point
      \param noise new noise estimate at new function value
     */
-    void update ( std::vector<double> const&, double&, double& );
+    virtual void update ( std::vector<double> const&, double&, double& );
     //! Evaluate Gaussian process
     /*!
      Computes the mean and variance of the Gaussian process.\n
@@ -116,20 +116,29 @@ class GaussianProcess : public GaussianProcessBaseClass,
      \param variance variance of the Gaussina process at point x
      \see build
     */
-    void evaluate ( std::vector<double> const&, double&, double& );
+    virtual void evaluate ( std::vector<double> const&, double&, double& );
 
-    const std::vector<std::vector<double>> &getGp_nodes() const;
+    virtual const std::vector<std::vector<double>> &getGp_nodes() const;
 
     virtual void get_induced_nodes(std::vector< std::vector<double> >&) const;
 
-    void set_evaluations(const BlackBoxData &evaluations);
+    virtual void set_evaluations(const BlackBoxData &evaluations);
 
     virtual void set_constraint_ball_radius(const double& radius){};
 
     virtual void set_constraint_ball_center(const std::vector<double>& center){};
 
     virtual void set_hp_estimation(bool){};
-   
+
+    virtual void do_resample_u(){};
+
+    virtual bool test_for_parameter_estimation(const int& nb_values,
+                                                const int& update_interval_length,
+                                                const int& next_update,
+                                                const std::vector<int>& update_at_evaluations);
+
+    virtual void sample_u(const int &nb_u_nodes){exit(-1);};
+    virtual void clear_u(){exit(-1);};
 };
 
 #endif

@@ -28,8 +28,20 @@ class GaussianProcessSupport : protected VectorOperations {
     std::vector< std::vector<double> > noise;
     std::vector<std::shared_ptr<GaussianProcess>> gaussian_processes;
     std::vector<double> rescaled_node;
+
+    bool use_approx_gaussian_process = false;
+    bool approx_gaussian_process_active = false;
+    const double u_ratio = 0.2;
+    const int min_nb_u = 5;
+    int cur_nb_u_points = 0;
+
     void update_data ( BlackBoxData& );
     void update_gaussian_processes ( BlackBoxData& );
+
+    void update_gaussian_processes_for_agp( BlackBoxData&);
+    void update_gaussian_processes_for_gp (BlackBoxData&);
+
+    void do_resample_u(); //TODO check if able to remove this one
   public:
     void initialize ( const int, const int, double&,
                       std::vector<double> const&, int , const bool);

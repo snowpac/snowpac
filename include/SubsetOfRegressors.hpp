@@ -10,7 +10,7 @@
 class SubsetOfRegressors : public FullyIndependentTrainingConditional{
 
 protected:
-    void run_optimizer();
+    void run_optimizer(std::vector<double> const &values);
 public:
     //! Constructor
     /*!

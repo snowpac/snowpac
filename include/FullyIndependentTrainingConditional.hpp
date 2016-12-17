@@ -33,15 +33,11 @@ protected:
     VectorXd scaled_function_values_eigen;
     bool optimize_global = true;
     bool optimize_local = true;
-    double u_ratio = 0.1;
-    int min_nb_u_nodes = 1;
-    int cur_nb_u_nodes = 0;
     bool resample_u = true;
-    bool do_hp_estimation = false;
+    bool do_hp_estimation = true;
     int print = 0;
     double constraint_ball_radius;
     VectorXd constraint_ball_center;
-    void sample_u(const int &nb_u_nodes);
 	void compute_Kuf_and_Kuu();
 	void compute_Qff(const MatrixXd& K_f_u, VectorXd& diag_Q_f_f);
 	void compute_Kff(VectorXd& diag_K_f_f);
@@ -66,9 +62,9 @@ protected:
     virtual void copy_data_to_members( std::vector< std::vector<double> > const &nodes,
                                                   std::vector<double> const &values,
                                                   std::vector<double> const &noise);
-    void set_optimizer(nlopt::opt*& local_opt, nlopt::opt*& global_opt);
+    void set_optimizer(std::vector<double> const &values, nlopt::opt*& local_opt, nlopt::opt*& global_opt);
 
-    virtual void run_optimizer();
+    virtual void run_optimizer(std::vector<double> const &values);
 
     virtual void update_induced_points();
 
@@ -114,7 +110,6 @@ protected:
                                              int const &k,
                                         MatrixXd &deriv_matrix);
 
-    int compute_nb_u_nodes(int total_nb_nodes);
 public:
 
     void set_constraint_ball_radius(const double& radius);
@@ -131,6 +126,11 @@ public:
 
     //! Destructor
     ~FullyIndependentTrainingConditional() { };
+
+    bool test_for_parameter_estimation(const int& nb_values,
+                                                const int& update_interval_length,
+                                                const int& next_update,
+                                                const std::vector<int>& update_at_evaluations);
 
     //! Build the approximated Gaussian process
     /*!
@@ -182,6 +182,12 @@ public:
                                                            std::vector<double> &grad,
                                                            void *data);
     virtual void set_hp_estimation(bool);
+
+    void do_resample_u();
+
+    void sample_u(const int &nb_u_nodes);
+    
+    void clear_u();
 };
 
 

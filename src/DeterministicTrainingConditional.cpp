@@ -25,7 +25,7 @@ void DeterministicTrainingConditional::evaluate(std::vector<double> const &x, do
 	FullyIndependentTrainingConditional::evaluate(x, mean, variance);
 }
 
-void DeterministicTrainingConditional::run_optimizer(){
+void DeterministicTrainingConditional::run_optimizer(std::vector<double> const &values){
 	double optval;
 
   int exitflag;
@@ -34,7 +34,7 @@ void DeterministicTrainingConditional::run_optimizer(){
   nlopt::opt* global_opt;
 
   int dimp1 = 1+dim+u.rows()*dim;
-  set_optimizer(local_opt, global_opt);
+  set_optimizer(values, local_opt, global_opt);
   std::vector<double> tol(dimp1);
   for(int i = 0; i < dimp1; ++i){
   	tol[i] = 0.0;
@@ -81,18 +81,22 @@ void DeterministicTrainingConditional::estimate_hyper_parameters ( std::vector< 
                                                   std::vector<double> const &values,
                                                   std::vector<double> const &noise )
 {
-  //std::cout << "in dtc1" << std::endl;
+  if(u.rows() > 0){
   copy_data_to_members(nodes, values, noise);
 
   gp_pointer = this;
-
-  run_optimizer();
+  
+  std::cout << "UROWS:" << u.rows() << std::endl;
+  sample_u(u.rows());
+  
+  run_optimizer(values);
 
   update_induced_points();
-  
-  resample_u = false;
-  this->build(nodes, values, noise);
 
+  this->build(nodes, values, noise);
+  }else{
+  	GaussianProcess::estimate_hyper_parameters(nodes, values, noise);
+  }
   return;
 }
 

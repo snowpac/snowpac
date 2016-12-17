@@ -71,12 +71,32 @@ double GaussianProcess::d_evaluate_kernel ( std::vector<double> const &x,
 }
 //--------------------------------------------------------------------------------
 
+bool GaussianProcess::test_for_parameter_estimation(const int& nb_values,
+                                                const int& update_interval_length,
+                                                const int& next_update,
+                                                const std::vector<int>& update_at_evaluations){
+  bool do_parameter_estimation = false;
+
+  if ( nb_values >= next_update && update_interval_length > 0 ) {
+    do_parameter_estimation = true;
+    return do_parameter_estimation;
+  } 
+  if ( update_at_evaluations.size( ) > 0 ) {
+    if ( nb_values >= update_at_evaluations[0] ) {
+      do_parameter_estimation = true;
+    }
+  }
+
+  return do_parameter_estimation;
+}
+
 
 //--------------------------------------------------------------------------------
 void GaussianProcess::build ( std::vector< std::vector<double> > const &nodes,
                               std::vector<double> const &values,
                               std::vector<double> const &noise ) 
 {
+    std::cout << "GP build [" << nodes.size() << "]" << std::endl;
     nb_gp_nodes = nodes.size();
     gp_nodes.clear();
     gp_noise.clear();
@@ -125,6 +145,7 @@ void GaussianProcess::update ( std::vector<double> const &x,
                                double &value, 
                                double &noise )
 {
+  std::cout << "GP update [" << nb_gp_nodes+1 << "]" << std::endl;
   K0.resize( nb_gp_nodes );
   nb_gp_nodes += 1;
   gp_nodes.push_back( x );
@@ -158,6 +179,7 @@ void GaussianProcess::update ( std::vector<double> const &x,
 void GaussianProcess::evaluate ( std::vector<double> const &x,
                                  double &mean, double &variance ) 
 {
+  std::cout << "GP evalute [" << gp_nodes.size() <<"]" << std::endl;
 
   K0.resize( nb_gp_nodes );
     
@@ -183,6 +205,7 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
                                                   std::vector<double> const &values,
                                                   std::vector<double> const &noise ) 
 {
+  std::cout << "GP Estimator" << std::endl;
   nb_gp_nodes = nodes.size();
   gp_nodes.clear();
   gp_noise.clear();
@@ -259,12 +282,12 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
   opt.set_lower_bounds( lb );
   opt.set_upper_bounds( ub );
     
-  opt.set_max_objective( parameter_estimation_objective, gp_pointer);
+  opt.set_max_objective( GaussianProcess::parameter_estimation_objective, gp_pointer);
 
  // opt.set_xtol_abs(1e-2);
 //  opt.set_xtol_rel(1e-2);
 //set timeout to NLOPT_TIMEOUT seconds
-  opt.set_maxtime(30.0);
+  opt.set_maxtime(1.0);
   //perform optimization to get correction factors
 
     int exitflag=-20;

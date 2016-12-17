@@ -11,7 +11,7 @@
 //--------------------------------------------------------------------------------
 void GaussianProcessSupport::initialize ( const int dim, const int number_processes_input,
   double &delta_input, std::vector<double> const &update_at_evaluations_input,
-  int update_interval_length_input, const bool use_approx_gaussian_process ) 
+  int update_interval_length_input, const bool use_approx_gaussian_process_in ) 
 {
   nb_values = 0;
   delta = &delta_input;
@@ -25,8 +25,10 @@ void GaussianProcessSupport::initialize ( const int dim, const int number_proces
   values.resize( number_processes );
   noise.resize( number_processes );
   for ( int i = 0; i < number_processes; i++) {
-    if(use_approx_gaussian_process)
-      gaussian_processes.push_back ( std::shared_ptr<SubsetOfRegressors> (new SubsetOfRegressors(dim, *delta)) );
+    if(use_approx_gaussian_process_in){
+      use_approx_gaussian_process = true;
+      gaussian_processes.push_back ( std::shared_ptr<FullyIndependentTrainingConditional> (new FullyIndependentTrainingConditional(dim, *delta)) );
+    }
     else{
       gaussian_processes.push_back ( std::shared_ptr<GaussianProcess> (new GaussianProcess(dim, *delta)) );
     }
@@ -55,21 +57,21 @@ void GaussianProcessSupport::update_data ( BlackBoxData &evaluations )
 }
 //--------------------------------------------------------------------------------
 
-
-//--------------------------------------------------------------------------------
-void GaussianProcessSupport::update_gaussian_processes ( BlackBoxData &evaluations )
-{
+void GaussianProcessSupport::update_gaussian_processes_for_gp( BlackBoxData &evaluations){
+  do_parameter_estimation = false;
+  for(int i = 0; i < number_processes && !do_parameter_estimation; ++i){
+    do_parameter_estimation = gaussian_processes[i]->test_for_parameter_estimation(nb_values, update_interval_length, next_update, update_at_evaluations);
+  }
 
   if ( nb_values >= next_update && update_interval_length > 0 ) {
-    do_parameter_estimation = true;
     next_update += update_interval_length;
   } 
   if ( update_at_evaluations.size( ) > 0 ) {
     if ( nb_values >= update_at_evaluations[0] ) {
-      do_parameter_estimation = true;
       update_at_evaluations.erase( update_at_evaluations.begin() );
     }
   }
+
 
   if ( do_parameter_estimation ) {
     gaussian_process_active_index.clear( );
@@ -105,38 +107,6 @@ void GaussianProcessSupport::update_gaussian_processes ( BlackBoxData &evaluatio
                                    gaussian_process_values,
                                    gaussian_process_noise );
     }
-/*
-      std::vector<double> x_loc(2);
-      std::vector<double> x_loc_rescale(2);
-      std::vector<double> fvals(3);
-      std::ofstream outputfile ( "gp_data.dat" );
-      if ( outputfile.is_open( ) ) {
-          for (double igp = 0.5; igp <= 1.5; igp+=0.01) {
-              x_loc.at(0) = igp;
-              for (double jgp = 0.5; jgp <= 1.5; jgp+=0.01) {
-                  x_loc.at(1) = jgp;
-                  rescale ( 1e0/(delta_tmp), x_loc,
-                           evaluations.nodes[best_index], x_loc_rescale );
-                  gaussian_processes[0].evaluate( x_loc_rescale, fvals.at(0), variance );
-                  gaussian_processes[1].evaluate( x_loc_rescale, fvals.at(1), variance );
-                  gaussian_processes[2].evaluate( x_loc_rescale, fvals.at(2), variance );
-                  outputfile << x_loc.at(0) << "; " << x_loc.at(1) << "; " << fvals.at(0)<< "; " <<
-                  fvals.at(1)<< "; " << fvals.at(2) << std::endl;
-              }
-          }
-          outputfile.close( );
-      } else std::cout << "Unable to open file." << std::endl;
-
-      outputfile.open ( "gp_nodes.dat" );
-      if ( outputfile.is_open( ) ) {
-          for (int igp = 0; igp < gaussian_process_nodes.size(); ++igp) {
-              
-              outputfile << evaluations.nodes[gaussian_process_active_index[igp]].at(0) << "; " <<
-              evaluations.nodes[gaussian_process_active_index[igp]].at(1) << std::endl;
-          }
-          outputfile.close( );
-      } else std::cout << "Unable to open file." << std::endl;
-*/
 
       
   } else {
@@ -154,6 +124,199 @@ void GaussianProcessSupport::update_gaussian_processes ( BlackBoxData &evaluatio
           }
       }
 
+  }
+  return;
+}
+
+void GaussianProcessSupport::update_gaussian_processes_for_agp( BlackBoxData &evaluations ){
+
+    do_parameter_estimation = false;
+
+    gaussian_process_active_index.clear( );
+    gaussian_process_nodes.clear( );
+    delta_tmp = (*delta);// * 10e0;
+//    if (delta_tmp < 0.1) delta_tmp = 0.1;
+    best_index = evaluations.best_index;
+    for ( int j = 0; j < nb_values; ++j ) {
+      //if ( diff_norm ( evaluations.nodes[ j ],
+      //                 evaluations.nodes[ best_index ] ) <= 3e0 * (delta_tmp) ) {
+        gaussian_process_active_index.push_back ( j );
+        gaussian_process_nodes.push_back( evaluations.nodes[ j ] );
+      //}
+    }
+
+    int nb_u_points = (int) (gaussian_process_nodes.size()*u_ratio);
+    std::cout << "###Nb u nodes " << nb_u_points << " points###" << std::endl;
+
+    if(nb_u_points >= min_nb_u && !approx_gaussian_process_active){
+      cur_nb_u_points = nb_u_points;
+      approx_gaussian_process_active = true;
+      std::cout << "###Activating Approximate Gaussian Processes with " << nb_u_points << " points###" << std::endl;
+      for(int i = 0; i < number_processes; ++i){
+        gaussian_processes[i]->sample_u(cur_nb_u_points);
+        
+        gaussian_process_values.resize(gaussian_process_active_index.size());
+        gaussian_process_noise.resize(gaussian_process_active_index.size());
+        for ( unsigned int j = 0; j < gaussian_process_active_index.size(); ++j ) {
+          gaussian_process_values.at(j) = values[ i ].at( gaussian_process_active_index[j] );
+          gaussian_process_noise.at(j) = noise[ i ].at( gaussian_process_active_index[j] );
+        }
+        gaussian_processes[i]->build(gaussian_process_nodes,
+                                   gaussian_process_values,
+                                   gaussian_process_noise);
+      }
+      do_parameter_estimation = true;
+    }else if(nb_u_points < min_nb_u && approx_gaussian_process_active){
+      cur_nb_u_points = 0;
+      approx_gaussian_process_active = false;
+      std::cout << "###Deactivatin Approximate Gaussian Processes with " << nb_u_points << " points###" << std::endl;
+      for(int i = 0; i < number_processes; ++i){
+        gaussian_processes[i]->clear_u();
+
+        gaussian_process_values.resize(gaussian_process_active_index.size());
+        gaussian_process_noise.resize(gaussian_process_active_index.size());
+        for ( unsigned int j = 0; j < gaussian_process_active_index.size(); ++j ) {
+          gaussian_process_values.at(j) = values[ i ].at( gaussian_process_active_index[j] );
+          gaussian_process_noise.at(j) = noise[ i ].at( gaussian_process_active_index[j] );
+        }
+        gaussian_processes[i]->build(gaussian_process_nodes,
+                                   gaussian_process_values,
+                                   gaussian_process_noise);
+      }
+    }else if(nb_u_points > min_nb_u && cur_nb_u_points != nb_u_points && approx_gaussian_process_active){
+      std::cout << "###Nb u points has changed from " << cur_nb_u_points << " to " << nb_u_points << " points###" << std::endl;
+      cur_nb_u_points = nb_u_points;
+      for(int i = 0; i < number_processes; ++i){
+        gaussian_processes[i]->sample_u(cur_nb_u_points);
+        
+        gaussian_process_values.resize(gaussian_process_active_index.size());
+        gaussian_process_noise.resize(gaussian_process_active_index.size());
+        for ( unsigned int j = 0; j < gaussian_process_active_index.size(); ++j ) {
+          gaussian_process_values.at(j) = values[ i ].at( gaussian_process_active_index[j] );
+          gaussian_process_noise.at(j) = noise[ i ].at( gaussian_process_active_index[j] );
+        }
+        gaussian_processes[i]->build(gaussian_process_nodes,
+                                   gaussian_process_values,
+                                   gaussian_process_noise);
+      }
+      do_parameter_estimation = true;
+    }else{
+      std::cout << "###Nothing changed last update" << std::endl;
+    }
+
+    for(int i = 0; i < number_processes && !do_parameter_estimation; ++i){
+      do_parameter_estimation = gaussian_processes[i]->test_for_parameter_estimation(nb_values, update_interval_length, next_update, update_at_evaluations);
+    }
+
+    if ( nb_values >= next_update && update_interval_length > 0 ) {
+      next_update += update_interval_length;
+    } 
+    if ( update_at_evaluations.size( ) > 0 ) {
+      if ( nb_values >= update_at_evaluations[0] ) {
+        update_at_evaluations.erase( update_at_evaluations.begin() );
+      }
+    }
+    std::cout << "###Do parameter estimation: " << do_parameter_estimation << std::endl;
+
+
+    if ( do_parameter_estimation ) {
+
+
+      if(approx_gaussian_process_active){  
+        gaussian_process_active_index.clear( );
+        gaussian_process_nodes.clear( );
+        delta_tmp = (*delta);// * 10e0;
+    //    if (delta_tmp < 0.1) delta_tmp = 0.1;
+        best_index = evaluations.best_index;
+        for ( int i = 0; i < nb_values; ++i ) {
+        //if ( diff_norm ( evaluations.nodes[ i ],
+        //                 evaluations.nodes[ best_index ] ) <= 3e0 * (delta_tmp) ) {
+          gaussian_process_active_index.push_back ( i );
+          gaussian_process_nodes.push_back( evaluations.nodes[ i ] );
+        }
+        
+        gaussian_process_values.resize(gaussian_process_active_index.size());
+        gaussian_process_noise.resize(gaussian_process_active_index.size());
+          
+          
+        for ( int j = 0; j < number_processes; ++j ) {
+          for ( unsigned int i = 0; i < gaussian_process_active_index.size(); ++i ) {
+            gaussian_process_values.at(i) = values[ j ].at( gaussian_process_active_index[i] );
+            gaussian_process_noise.at(i) = noise[ j ].at( gaussian_process_active_index[i] );
+          }
+          gaussian_processes[j]->estimate_hyper_parameters( gaussian_process_nodes,
+                                                           gaussian_process_values,
+                                                           gaussian_process_noise );
+            //std::cout << "Update Gaussian Process: " << j << std::endl;
+          gaussian_processes[j]->build( gaussian_process_nodes,
+                                       gaussian_process_values,
+                                       gaussian_process_noise );
+        }
+
+      }else{
+        gaussian_process_active_index.clear( );
+        gaussian_process_nodes.clear( );
+        delta_tmp = (*delta);// * 10e0;
+    //    if (delta_tmp < 0.1) delta_tmp = 0.1;
+        best_index = evaluations.best_index;
+        for ( int i = 0; i < nb_values; ++i ) {
+          if ( diff_norm ( evaluations.nodes[ i ],
+                           evaluations.nodes[ best_index ] ) <= 3e0 * (delta_tmp) ) {
+            gaussian_process_active_index.push_back ( i );
+    //        rescale ( 1e0/(delta_tmp), evaluations.nodes[i], evaluations.nodes[best_index],
+    //                  rescaled_node);
+            gaussian_process_nodes.push_back( evaluations.nodes[ i ] );
+    //        gaussian_process_nodes.push_back( rescaled_node );
+          }
+        }
+
+        gaussian_process_values.resize(gaussian_process_active_index.size());
+        gaussian_process_noise.resize(gaussian_process_active_index.size());
+          
+          
+        for ( int j = 0; j < number_processes; ++j ) {
+          for ( unsigned int i = 0; i < gaussian_process_active_index.size(); ++i ) {
+            gaussian_process_values.at(i) = values[ j ].at( gaussian_process_active_index[i] );
+            gaussian_process_noise.at(i) = noise[ j ].at( gaussian_process_active_index[i] );
+          }
+          gaussian_processes[j]->estimate_hyper_parameters( gaussian_process_nodes,
+                                                           gaussian_process_values,
+                                                           gaussian_process_noise );
+            //std::cout << "Update Gaussian Process: " << j << std::endl;
+          gaussian_processes[j]->build( gaussian_process_nodes,
+                                       gaussian_process_values,
+                                       gaussian_process_noise );
+        }
+      }
+
+      
+  } else {
+      for (unsigned int i = last_included; i < values[0].size(); ++i) {
+          gaussian_process_active_index.push_back(i);
+//      rescale ( 1e0/(delta_tmp), evaluations.nodes[i], evaluations.nodes[best_index],
+//                rescaled_node);
+          for (int j = 0; j < number_processes; ++j) {
+              gaussian_processes[j]->update(evaluations.nodes[i],
+                                            values[j].at(i),
+                                            noise[j].at(i));
+//        gaussian_processes[j].update( rescaled_node,
+//                                      values[ j ].at( i ),
+//                                      noise[ j ].at( i ) );
+          }
+      }
+
+  }
+
+}
+
+//--------------------------------------------------------------------------------
+void GaussianProcessSupport::update_gaussian_processes ( BlackBoxData &evaluations )
+{
+
+  if(use_approx_gaussian_process){
+    update_gaussian_processes_for_agp(evaluations);
+  }else{
+    update_gaussian_processes_for_gp(evaluations);
   }
 
   last_included = evaluations.nodes.size();
@@ -265,6 +428,12 @@ void GaussianProcessSupport::set_constraint_ball_radius(const double& radius){
   for ( int j = 0; j < number_processes; ++j ) {
       gaussian_processes[j]->set_constraint_ball_radius(radius);
 
+    }
+}
+
+void GaussianProcessSupport::do_resample_u(){
+  for ( int j = 0; j < number_processes; ++j ) {
+      gaussian_processes[j]->do_resample_u();
     }
 }
 //--------------------------------------------------------------------------------
