@@ -501,8 +501,9 @@ bool FullyIndependentTrainingConditional::test_for_parameter_estimation(const in
   	for(int j = 0; j < u.cols(); ++j){
   		dist += (u(i,j)-constraint_ball_center(j))*(u(i,j)-constraint_ball_center(j));
   	}
-	if(sqrt(dist) >= constraint_ball_radius){
-  		std::cout << "Induced point out of bounds! Index: " << i << " Radius: " << constraint_ball_radius << std::endl;
+  	dist = sqrt(dist);
+	if(dist > (constraint_ball_radius*1.000001)){
+  		std::cout << "Induced point out of bounds! Index: " << i << " Radius: " << constraint_ball_radius << " Dist: " << dist << std::endl;
   		for(int j = 0; j < u.cols(); ++j){
   			std::cout << "u: " << u(i, j) << " |c: " << constraint_ball_center(j) << std::endl;
   		}
@@ -619,7 +620,7 @@ void FullyIndependentTrainingConditional::evaluate(std::vector<double> const &x,
 		double &mean, double &variance) {
 	int nb_u_nodes = u.rows();
 	if (nb_u_nodes > 0) {
-		std::cout << "FITC evalute [" << gp_nodes_eigen.rows() << "," << nb_u_nodes <<"]" << std::endl;
+		//std::cout << "FITC evalute [" << gp_nodes_eigen.rows() << "," << nb_u_nodes <<"]" << std::endl;
 		VectorXd x_eigen;
 		x_eigen.resize(x.size());
 		for(int i = 0; i < x.size(); ++i){
@@ -649,6 +650,7 @@ void FullyIndependentTrainingConditional::evaluate(std::vector<double> const &x,
 
 //		std::cout << "K**:" << evaluate_kernel(x,x) << std::endl;
 		variance = evaluate_kernel(x_eigen,x_eigen)-variance_term2+variance_term3;
+		 std::cout << "FITC evalute [" << gp_nodes_eigen.rows() << "," << nb_u_nodes <<"] mean,variance " << mean << ", " << variance << std::endl;
 //		std::cout << "variance:" << variance << std::endl;
 	} else {
 		GaussianProcess::evaluate(x, mean, variance);

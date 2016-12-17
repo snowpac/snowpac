@@ -179,7 +179,6 @@ void GaussianProcess::update ( std::vector<double> const &x,
 void GaussianProcess::evaluate ( std::vector<double> const &x,
                                  double &mean, double &variance ) 
 {
-  std::cout << "GP evalute [" << gp_nodes.size() <<"]" << std::endl;
 
   K0.resize( nb_gp_nodes );
     
@@ -195,6 +194,7 @@ void GaussianProcess::evaluate ( std::vector<double> const &x,
   
   variance = evaluate_kernel( x, x ) - VectorOperations::dot_product(K0, K0);
 
+  std::cout << "GP evalute [" << gp_nodes.size() <<"] mean,variance " << mean << ", " << variance << std::endl;
   return;
 
 }

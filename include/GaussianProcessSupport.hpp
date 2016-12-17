@@ -32,7 +32,7 @@ class GaussianProcessSupport : protected VectorOperations {
     bool use_approx_gaussian_process = false;
     bool approx_gaussian_process_active = false;
     const double u_ratio = 0.2;
-    const int min_nb_u = 5;
+    const int min_nb_u = 2;
     int cur_nb_u_points = 0;
 
     void update_data ( BlackBoxData& );

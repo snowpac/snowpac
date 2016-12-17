@@ -846,9 +846,8 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::update_trustregion (
  if ( noise_detection && scaling_factor >= 1e0) this->reset_noise_detection();
 
   delta *= scaling_factor;
-  /*std::cout << std::endl << "------------------------- " << std::endl;
+  std::cout << std::endl << "------------------------- " << std::endl;
   std::cout << "MAXNOISE " << max_noise << " sqrt = " << sqrt( max_noise ) << std::endl;
-  std::cout <<  "------------------------- " << std::endl;*/
   if ( stochastic_optimization ) {
     double ar_tmp = acceptance_ratio;
     if ( ar_tmp < 0e0 ) ar_tmp = -ar_tmp;
@@ -858,9 +857,13 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::update_trustregion (
     if ( delta < sqrt(1e0*max_noise)*1e0*ar_tmp  ) 
       delta = sqrt(1e0*max_noise) * 1e0 * ar_tmp; 
   }
-  if ( delta > delta_max ) delta = delta_max;
-  if ( delta < delta_min ) EXIT_FLAG = 0;
+  if ( delta > delta_max ){
+    std::cout << "Setting delta to delta_max: " << delta << " to " << delta_max << std::endl;
+   delta = delta_max;
+  }
+ if ( delta < delta_min ) EXIT_FLAG = 0;
 
+  std::cout <<  "------------------------- " << std::endl;
   /*if (use_approx_gaussian_process){
     gaussian_processes.set_constraint_ball_radius(1.5*delta);
   }*/
@@ -912,7 +915,7 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::write_to_file ( )
     for(int i = 0; i < nb_constraints; ++i) {
         fprintf(output_file, double_format, evaluations.values.at(i+1).at(evaluations.best_index));
     }
-    /*
+    
     // output variance of current value on gp
     double mean = -1;
     double var = -1;
@@ -925,7 +928,7 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::write_to_file ( )
     }
     // output the last value of the objective
     fprintf(output_file, double_format, evaluations.values.at(evaluations.values.size()-1).at(0));
-    */
+    
     fprintf(output_file, "\n");
     fflush(output_file);
 
@@ -1150,8 +1153,7 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::output_for_plotting ( con
 					outputfile.close();
 		} else std::cout << "Unable to open file." << std::endl;
 
-    bool approximated_gaussians = false;
-    if(approximated_gaussians) {
+    if(use_approx_gaussian_process) {
         outputfile.open(
                 "gp_induced_points_" + std::to_string(evaluation_step) + "_" + std::to_string(sub_index) + ".dat");
         if (outputfile.is_open()) {
