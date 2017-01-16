@@ -33,8 +33,8 @@ protected:
     VectorXd scaled_function_values_eigen;
     bool optimize_global = true;
     bool optimize_local = true;
-    bool resample_u = true;
-    bool do_hp_estimation = true;
+    //bool resample_u = true;
+    //bool do_hp_estimation = true;
     int print = 0;
     double constraint_ball_radius;
     VectorXd constraint_ball_center;
@@ -181,9 +181,9 @@ public:
     static void trust_region_constraint_w_gradients(std::vector<double> &c, std::vector<double> const &x,
                                                            std::vector<double> &grad,
                                                            void *data);
-    virtual void set_hp_estimation(bool);
+    //virtual void set_hp_estimation(bool);
 
-    void do_resample_u();
+    //void do_resample_u();
 
     void sample_u(const int &nb_u_nodes);
     

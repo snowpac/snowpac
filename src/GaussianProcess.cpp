@@ -194,7 +194,7 @@ void GaussianProcess::evaluate ( std::vector<double> const &x,
   
   variance = evaluate_kernel( x, x ) - VectorOperations::dot_product(K0, K0);
 
-  std::cout << "GP evalute [" << gp_nodes.size() <<"] mean,variance " << mean << ", " << variance << std::endl;
+  //std::cout << "GP evalute [" << gp_nodes.size() <<"] mean,variance " << mean << ", " << variance << std::endl;
   return;
 
 }

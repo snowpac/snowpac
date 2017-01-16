@@ -137,13 +137,19 @@ void GaussianProcessSupport::update_gaussian_processes_for_agp( BlackBoxData &ev
     delta_tmp = (*delta);// * 10e0;
 //    if (delta_tmp < 0.1) delta_tmp = 0.1;
     best_index = evaluations.best_index;
-    for ( int j = 0; j < nb_values; ++j ) {
-      //if ( diff_norm ( evaluations.nodes[ j ],
-      //                 evaluations.nodes[ best_index ] ) <= 3e0 * (delta_tmp) ) {
-        gaussian_process_active_index.push_back ( j );
-        gaussian_process_nodes.push_back( evaluations.nodes[ j ] );
-      //}
+    for ( int i = 0; i < nb_values; ++i ) {
+      if ( diff_norm ( evaluations.nodes[ i ],
+                       evaluations.nodes[ best_index ] ) <= 3e0 * (delta_tmp) ) {
+        gaussian_process_active_index.push_back ( i );
+//        rescale ( 1e0/(delta_tmp), evaluations.nodes[i], evaluations.nodes[best_index],
+//                  rescaled_node);
+        gaussian_process_nodes.push_back( evaluations.nodes[ i ] );
+//        gaussian_process_nodes.push_back( rescaled_node );
+      }
     }
+
+    gaussian_process_values.resize(gaussian_process_active_index.size());
+    gaussian_process_noise.resize(gaussian_process_active_index.size());
 
     int nb_u_points = (int) (gaussian_process_nodes.size()*u_ratio);
     std::cout << "###Nb u nodes " << nb_u_points << " points###" << std::endl;
@@ -358,7 +364,7 @@ void GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
       evaluations.noise[ j ].at( evaluations.active_index [ i ] ) = 
         weight * 2e0 * sqrt (variance)  + 
         (1e0-weight) * ( noise[ j ].at( evaluations.active_index [ i ] ) );
-
+     std::cout << "Smooth evalute [" << evaluations.active_index[i] << ", " << j <<"]: mean,variance " << evaluations.values[ j ].at( evaluations.active_index [ i ] ) << ", " << evaluations.noise[ j ].at( evaluations.active_index [ i ] )  << "\n" << std::endl;
     }
   }
   evaluations.active_index.erase( evaluations.active_index.end()-1 );
@@ -431,9 +437,11 @@ void GaussianProcessSupport::set_constraint_ball_radius(const double& radius){
     }
 }
 
+/*
 void GaussianProcessSupport::do_resample_u(){
   for ( int j = 0; j < number_processes; ++j ) {
       gaussian_processes[j]->do_resample_u();
     }
 }
+*/
 //--------------------------------------------------------------------------------

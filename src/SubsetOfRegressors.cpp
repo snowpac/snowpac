@@ -37,13 +37,14 @@ void SubsetOfRegressors::build(std::vector<std::vector<double> > const &nodes,
 			}
 			gp_noise_eigen(i) = noise[i];
 		}
-
+		/*
 		if (resample_u){
 			this->sample_u(nb_u_nodes);
 			if (do_hp_estimation)
 				this->estimate_hyper_parameters(nodes, values, noise);
   			resample_u = false;
 		}
+		*/
 
 		//Set up matrix K_u_f and K_f_u
 		compute_Kuf_and_Kuu();
@@ -181,18 +182,19 @@ void SubsetOfRegressors::estimate_hyper_parameters ( std::vector< std::vector<do
 {
   //std::cout << "in sor1" << std::endl;
   if(u.rows() > 0){
-  copy_data_to_members(nodes, values, noise);
+	  copy_data_to_members(nodes, values, noise);
 
-  gp_pointer = this;
-  
-  std::cout << "UROWS:" << u.rows() << std::endl;
-  sample_u(u.rows());
-  
-  run_optimizer(values);
+	  gp_pointer = this;
+	  
+	  std::cout << "UROWS:" << u.rows() << std::endl;
 
-  update_induced_points();
+	  sample_u(u.rows());
+	  
+	  run_optimizer(values);
 
-  this->build(nodes, values, noise);
+	  update_induced_points();
+
+	  this->build(nodes, values, noise);
   }else{
   	GaussianProcess::estimate_hyper_parameters(nodes, values, noise);
   }
@@ -589,7 +591,7 @@ void SubsetOfRegressors::trust_region_constraint(unsigned int m, double* c, unsi
   	  }
   	}
   	VectorXd c_intern(u_intern.rows());
-  	VectorXd dist(2);
+  	VectorXd dist(d->dim);
   	for (int i = 0; i < u_intern.rows(); ++i) {
   			for (int j = 0; j < d->dim; ++j) {
   				dist(j) = (u_intern(i, j)-d->constraint_ball_center(j));

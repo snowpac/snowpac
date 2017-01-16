@@ -460,7 +460,7 @@ void DeterministicTrainingConditional::trust_region_constraint(unsigned int m, d
   	  }
   	}
   	VectorXd c_intern(u_intern.rows());
-  	VectorXd dist(2);
+  	VectorXd dist(d->dim);
   	for (int i = 0; i < u_intern.rows(); ++i) {
   			for (int j = 0; j < d->dim; ++j) {
   				dist(j) = (u_intern(i, j)-d->constraint_ball_center(j));

@@ -128,9 +128,9 @@ class GaussianProcess : public GaussianProcessBaseClass,
 
     virtual void set_constraint_ball_center(const std::vector<double>& center){};
 
-    virtual void set_hp_estimation(bool){};
+    //virtual void set_hp_estimation(bool){};
 
-    virtual void do_resample_u(){};
+    //virtual void do_resample_u(){};
 
     virtual bool test_for_parameter_estimation(const int& nb_values,
                                                 const int& update_interval_length,

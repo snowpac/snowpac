@@ -102,7 +102,9 @@ SubproblemOptimization<TSurrogateModel>::SubproblemOptimization (
 //  SpD_prototype.vector.resize( dim );
 //  SpD_prototype.constraint_number = 0;
 //  SpD.push_back( SpD_prototype );
-  for (int i = 0; i < number_constraints; ++i ) {
+
+  int SpDlen = (number_constraints==0)?1:number_constraints;
+  for (int i = 0; i < SpDlen; ++i ) {
 //    SpD_prototype.constraint_number = i;
     SpD.push_back( SpD_prototype );
     SpD[ i ].constraint_number = i;
@@ -267,9 +269,9 @@ double SubproblemOptimization<TSurrogateModel>::compute_criticality_measure (
            (*surrogate_models)[i].gradient ( ), 
            criticality_gradient );
   }
-
+  int errmess = -2541981;
   try {
-  int errmess =  opt_criticality_measure.optimize ( x, optimization_result );
+   errmess =  opt_criticality_measure.optimize ( x, optimization_result );
   } catch ( ... ) {};
 
 

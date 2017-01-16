@@ -41,7 +41,7 @@ class GaussianProcessSupport : protected VectorOperations {
     void update_gaussian_processes_for_agp( BlackBoxData&);
     void update_gaussian_processes_for_gp (BlackBoxData&);
 
-    void do_resample_u(); //TODO check if able to remove this one
+    //void do_resample_u(); //TODO check if able to remove this one
   public:
     void initialize ( const int, const int, double&,
                       std::vector<double> const&, int , const bool);

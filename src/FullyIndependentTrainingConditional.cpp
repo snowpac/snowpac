@@ -650,7 +650,7 @@ void FullyIndependentTrainingConditional::evaluate(std::vector<double> const &x,
 
 //		std::cout << "K**:" << evaluate_kernel(x,x) << std::endl;
 		variance = evaluate_kernel(x_eigen,x_eigen)-variance_term2+variance_term3;
-		 std::cout << "FITC evalute [" << gp_nodes_eigen.rows() << "," << nb_u_nodes <<"] mean,variance " << mean << ", " << variance << std::endl;
+		 //std::cout << "FITC evalute [" << gp_nodes_eigen.rows() << "," << nb_u_nodes <<"] mean,variance " << mean << ", " << variance << std::endl;
 //		std::cout << "variance:" << variance << std::endl;
 	} else {
 		GaussianProcess::evaluate(x, mean, variance);
@@ -1379,6 +1379,7 @@ void FullyIndependentTrainingConditional::trust_region_constraint(unsigned int m
   	return;
 }
 
+/*
   void FullyIndependentTrainingConditional::set_hp_estimation(bool do_estimation){
 	do_hp_estimation = do_estimation;
   }
@@ -1386,3 +1387,4 @@ void FullyIndependentTrainingConditional::trust_region_constraint(unsigned int m
   void FullyIndependentTrainingConditional::do_resample_u(){
   	resample_u = true;
   }
+  */

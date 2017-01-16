@@ -916,19 +916,23 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::write_to_file ( )
         fprintf(output_file, double_format, evaluations.values.at(i+1).at(evaluations.best_index));
     }
     
-    // output variance of current value on gp
-    double mean = -1;
-    double var = -1;
-    gaussian_processes.evaluate_gaussian_process_at(0, evaluations.nodes.at(evaluations.best_index), mean, var);
-    fprintf(output_file, double_format, var);
-
     // output the last added design
     for(int i = 0; i < dim; ++i) {
         fprintf(output_file, double_format, evaluations.nodes.at(evaluations.nodes.size()-1).at(i));
     }
     // output the last value of the objective
     fprintf(output_file, double_format, evaluations.values.at(evaluations.values.size()-1).at(0));
-    
+  
+    if(stochastic_optimization){
+      // output mean and variance of current value of objective gp
+      double mean = -1;
+      double var = -1;
+      gaussian_processes.evaluate_gaussian_process_at(0, evaluations.nodes.at(evaluations.best_index), mean, var);
+      fprintf(output_file, double_format, mean);
+
+      fprintf(output_file, double_format, var);
+    }
+
     fprintf(output_file, "\n");
     fflush(output_file);
 
