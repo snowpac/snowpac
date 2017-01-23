@@ -135,6 +135,7 @@ SET ( NOWPAC_HEADER_FILES
     ${NOWPAC_SOURCE_DIR}/include/TransformNode.hpp
     ${NOWPAC_SOURCE_DIR}/include/TriangularMatrixOperations.hpp
     ${NOWPAC_SOURCE_DIR}/include/VectorOperations.hpp
+    ${NOWPAC_SOURCE_DIR}/include/PostProcessModels.hpp
 )
 SET ( NOWPAC_GTEST_HEADER_FILES
     ${NOWPAC_SOURCE_DIR}/test/include/gtest_basisforminimumfrobeniusnormmodel.hpp
