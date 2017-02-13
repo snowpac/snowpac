@@ -36,7 +36,7 @@ void DeterministicTrainingConditional::run_optimizer(std::vector<double> const &
   nlopt::opt* local_opt;
   nlopt::opt* global_opt;
 
-  int dimp1 = 1+dim+u.rows()*dim;
+  int dimp1 = gp_parameters_hp.size();
   set_optimizer(values, local_opt, global_opt);
   std::vector<double> tol(dimp1);
   for(int i = 0; i < dimp1; ++i){
@@ -48,14 +48,14 @@ void DeterministicTrainingConditional::run_optimizer(std::vector<double> const &
 	  exitflag=-20;
 	  global_opt->add_inequality_mconstraint(trust_region_constraint, gp_pointer, tol);
 	  global_opt->set_min_objective( parameter_estimation_objective, gp_pointer);
-	  exitflag = global_opt->optimize(gp_parameters, optval);
+	  exitflag = global_opt->optimize(gp_parameters_hp, optval);
 
 	  std::cout << "exitflag = "<< exitflag<<std::endl;
   	  std::cout << "Function calls: " << print << std::endl;
 	  std::cout << "OPTVAL .... " << optval << std::endl;
-	  for ( int i = 0; i < dim+1; ++i )
-	    std::cout << "gp_param = " << gp_parameters[i] << std::endl;
-	  std::cout << std::endl;
+	  //for ( int i = 0; i < dim+1; ++i )
+	  //  std::cout << "gp_param = " << gp_parameters_hp[i] << std::endl;
+	  //std::cout << std::endl;
   }
   if (optimize_local){
   	  print = 0;
@@ -64,14 +64,14 @@ void DeterministicTrainingConditional::run_optimizer(std::vector<double> const &
 	  //try {
 	  local_opt->add_inequality_mconstraint(trust_region_constraint, gp_pointer, tol);
 	  local_opt->set_min_objective( parameter_estimation_objective_w_gradients, gp_pointer);
-	  exitflag = local_opt->optimize(gp_parameters, optval);
+	  exitflag = local_opt->optimize(gp_parameters_hp, optval);
 
 	  std::cout << "exitflag = "<< exitflag<<std::endl;
   	  std::cout << "Function calls: " << print << std::endl;
 	  std::cout << "OPTVAL .... " << optval << std::endl;
-	  for ( int i = 0; i < dim+1; ++i )
-	    std::cout << "gp_param = " << gp_parameters[i] << std::endl;
-	  std::cout << std::endl;
+	  //for ( int i = 0; i < dim+1; ++i )
+	  //  std::cout << "gp_param = " << gp_parameters_hp[i] << std::endl;
+	  //std::cout << std::endl;
   }
   
   delete local_opt;
@@ -88,15 +88,44 @@ void DeterministicTrainingConditional::estimate_hyper_parameters ( std::vector< 
   copy_data_to_members(nodes, values, noise);
 
   gp_pointer = this;
-  
-  std::cout << "UROWS:" << u.rows() << std::endl;
+
   sample_u(u.rows());
-  
+
+  set_hyperparameters();
+
   run_optimizer(values);
 
-  update_induced_points();
+  copy_hyperparameters();
 
-  this->build(nodes, values, noise);
+  //this->build(nodes, values, noise);
+
+  for ( int i = 0; i < 1+dim; ++i )
+	    std::cout << "gp_param = " << gp_parameters[i] << std::endl;
+  }else{
+  	GaussianProcess::estimate_hyper_parameters(nodes, values, noise);
+  }
+  return;
+}
+
+void DeterministicTrainingConditional::estimate_hyper_parameters_induced_only ( std::vector< std::vector<double> > const &nodes,
+                                                  std::vector<double> const &values,
+                                                  std::vector<double> const &noise )
+{
+  if(u.rows() > 0){
+  copy_data_to_members(nodes, values, noise);
+
+  gp_pointer = this;
+
+  sample_u(u.rows());
+
+  set_hyperparameters_induced_only();
+
+  run_optimizer(values);
+
+  copy_hyperparameters();
+
+  //this->build(nodes, values, noise);
+
   }else{
   	GaussianProcess::estimate_hyper_parameters(nodes, values, noise);
   }
@@ -108,7 +137,19 @@ double DeterministicTrainingConditional::parameter_estimation_objective(std::vec
                                                        std::vector<double> &grad,
                                                        void *data){
   DeterministicTrainingConditional *d = reinterpret_cast<DeterministicTrainingConditional*>(data);
-  int offset = 1+d->dim;
+  int offset;
+  std::vector<double> local_params(d->dim+1);
+  if(x.size() > d->u.rows()*d->dim){
+  	offset = 1+d->dim;
+  	for(int i = 0; i < local_params.size(); ++i){
+  		local_params[i] = x[i];
+  	}
+  }else{
+  	offset = 0;
+  	for(int i = 0; i < local_params.size(); ++i){
+  		local_params[i] = d->gp_parameters[i];
+  	}
+  }
   int u_counter;
   double nugget = 0.00001;
   double nugget2 = 0.00001;
@@ -128,7 +169,7 @@ double DeterministicTrainingConditional::parameter_estimation_objective(std::vec
 	d->K_u_f.resize(nb_u_nodes, nb_gp_nodes);
 	for (int i = 0; i < nb_u_nodes; ++i) {
 		for (int j = 0; j < nb_gp_nodes; ++j) {
-			d->K_u_f(i,j) = d->evaluate_kernel(d->u.row(i), d->gp_nodes_eigen.row(j), x);
+			d->K_u_f(i,j) = d->evaluate_kernel(d->u.row(i), d->gp_nodes_eigen.row(j), local_params);
 		}
 	}
 	MatrixXd K_f_u = d->K_u_f.transpose();
@@ -138,7 +179,7 @@ double DeterministicTrainingConditional::parameter_estimation_objective(std::vec
 	d->K_u_u.resize(nb_u_nodes, nb_u_nodes);
 	for (int i = 0; i < nb_u_nodes; ++i) {
 		for (int j = 0; j < nb_u_nodes; ++j) {
-			d->K_u_u(i,j) = d->evaluate_kernel(d->u.row(i), d->u.row(j), x);
+			d->K_u_u(i,j) = d->evaluate_kernel(d->u.row(i), d->u.row(j), local_params);
 			if(i==j)
 				d->K_u_u(i,j) += nugget;
 		}
@@ -160,7 +201,7 @@ double DeterministicTrainingConditional::parameter_estimation_objective(std::vec
 	diag_K_f_f.resize(nb_gp_nodes);
 	for (int i = 0; i < nb_gp_nodes; ++i) {
 		diag_K_f_f(i) = d->evaluate_kernel(d->gp_nodes_eigen.row(i),
-									 d->gp_nodes_eigen.row(i), x);
+									 d->gp_nodes_eigen.row(i), local_params);
 	}
 	/*std::cout << "diag_K_f_f\n" << diag_K_f_f << std::endl;
 	std::cout << "diag_Q_f_f\n" << diag_Q_f_f << std::endl;*/
@@ -248,7 +289,19 @@ double DeterministicTrainingConditional::parameter_estimation_objective_w_gradie
 {
 
   DeterministicTrainingConditional *d = reinterpret_cast<DeterministicTrainingConditional*>(data);
-  int offset = 1+d->dim;
+  int offset;
+  std::vector<double> local_params(d->dim+1);
+  if(x.size() > d->u.rows()*d->dim){
+  	offset = 1+d->dim;
+  	for(int i = 0; i < local_params.size(); ++i){
+  		local_params[i] = x[i];
+  	}
+  }else{
+  	offset = 0;
+  	for(int i = 0; i < local_params.size(); ++i){
+  		local_params[i] = d->gp_parameters[i];
+  	}
+  }
   int u_counter;
   double nugget = 0.00001;
   double nugget2 = 0.00001;
@@ -268,7 +321,7 @@ double DeterministicTrainingConditional::parameter_estimation_objective_w_gradie
 	d->K_u_f.resize(nb_u_nodes, nb_gp_nodes);
 	for (int i = 0; i < nb_u_nodes; ++i) {
 		for (int j = 0; j < nb_gp_nodes; ++j) {
-			d->K_u_f(i,j) = d->evaluate_kernel(d->u.row(i), d->gp_nodes_eigen.row(j), x);
+			d->K_u_f(i,j) = d->evaluate_kernel(d->u.row(i), d->gp_nodes_eigen.row(j), local_params);
 		}
 	}
 	MatrixXd K_f_u = d->K_u_f.transpose();
@@ -278,7 +331,7 @@ double DeterministicTrainingConditional::parameter_estimation_objective_w_gradie
 	d->K_u_u.resize(nb_u_nodes, nb_u_nodes);
 	for (int i = 0; i < nb_u_nodes; ++i) {
 		for (int j = 0; j < nb_u_nodes; ++j) {
-			d->K_u_u(i,j) = d->evaluate_kernel(d->u.row(i), d->u.row(j), x);
+			d->K_u_u(i,j) = d->evaluate_kernel(d->u.row(i), d->u.row(j), local_params);
 			if(i==j)
 				d->K_u_u(i,j) += nugget;
 		}
@@ -300,7 +353,7 @@ double DeterministicTrainingConditional::parameter_estimation_objective_w_gradie
 	diag_K_f_f.resize(nb_gp_nodes);
 	for (int i = 0; i < nb_gp_nodes; ++i) {
 		diag_K_f_f(i) = d->evaluate_kernel(d->gp_nodes_eigen.row(i),
-									 d->gp_nodes_eigen.row(i), x);
+									 d->gp_nodes_eigen.row(i), local_params);
 	}
 	/*std::cout << "diag_K_f_f\n" << diag_K_f_f << std::endl;
 	std::cout << "diag_Q_f_f\n" << diag_Q_f_f << std::endl;*/
@@ -379,7 +432,7 @@ double DeterministicTrainingConditional::parameter_estimation_objective_w_gradie
 
 
 	//Gradient computation:
-	int dim_grad = 1+d->dim+d->u.rows()*d->dim;
+	int dim_grad = x.size();
 	grad.resize(dim_grad);
 
 	for(int i = 0; i < grad.size(); i++){
@@ -389,25 +442,36 @@ double DeterministicTrainingConditional::parameter_estimation_objective_w_gradie
 		MatrixXd Kfudot;
 		MatrixXd Kuudot;
 		VectorXd LambdaDot;
-		if(i == 0){//grad sigma_f
-			d->derivate_K_u_u_wrt_sigmaf(x, Kuudot);
-			d->derivate_K_f_f_wrt_sigmaf(x, Kffdot);
-			d->derivate_K_u_f_wrt_sigmaf(x, Kufdot);
-			Kfudot = Kufdot.transpose();
-		}else if(i > 0 && i < 1 + d->dim){//grad length parameter
-			d->derivate_K_u_u_wrt_l(x, i-1, Kuudot);
-			d->derivate_K_f_f_wrt_l(x, i-1, Kffdot);
-			d->derivate_K_u_f_wrt_l(x, i-1, Kufdot);
-			Kfudot = Kufdot.transpose();
-		}else{//grad u
-			int uidx = (i-offset)%d->u.rows();
+
+		if( dim_grad > d->u.rows()*d->dim){//if we optimize also for sigma_f and lengthscales
+			if(i == 0){//grad sigma_f
+				d->derivate_K_u_u_wrt_sigmaf(local_params, Kuudot);
+				d->derivate_K_f_f_wrt_sigmaf(local_params, Kffdot);
+				d->derivate_K_u_f_wrt_sigmaf(local_params, Kufdot);
+				Kfudot = Kufdot.transpose();
+			}else if(i > 0 && i < 1 + d->dim){//grad length parameter
+				d->derivate_K_u_u_wrt_l(local_params, i-1, Kuudot);
+				d->derivate_K_f_f_wrt_l(local_params, i-1, Kffdot);
+				d->derivate_K_u_f_wrt_l(local_params, i-1, Kufdot);
+				Kfudot = Kufdot.transpose();
+			}else{//grad u
+				int uidx = (i-offset)%d->u.rows();
+				int udim = (int) ((i-offset)/d->u.rows());
+				d->derivate_K_u_u_wrt_uik(local_params, uidx, udim, Kuudot);
+				d->derivate_K_u_f_wrt_uik(local_params, uidx, udim, Kufdot);
+				Kffdot.resize(nb_gp_nodes, nb_gp_nodes);
+				Kffdot.setZero();
+				Kfudot = Kufdot.transpose(); 
+			}
+	    }else{
+	    	int uidx = (i-offset)%d->u.rows();
 			int udim = (int) ((i-offset)/d->u.rows());
-			d->derivate_K_u_u_wrt_uik(x, uidx, udim, Kuudot);
-			d->derivate_K_u_f_wrt_uik(x, uidx, udim, Kufdot);
+			d->derivate_K_u_u_wrt_uik(local_params, uidx, udim, Kuudot);
+			d->derivate_K_u_f_wrt_uik(local_params, uidx, udim, Kufdot);
 			Kffdot.resize(nb_gp_nodes, nb_gp_nodes);
 			Kffdot.setZero();
 			Kfudot = Kufdot.transpose(); 
-		}
+	    }
 		VectorXd LambdaInv(nb_gp_nodes);
 		for(int j = 0; j < nb_gp_nodes; ++j){
 			LambdaInv(j) = 1.0/d->Lambda(j);
@@ -448,7 +512,12 @@ void DeterministicTrainingConditional::trust_region_constraint(unsigned int m, d
                                                      			void *data){
 	DeterministicTrainingConditional *d = reinterpret_cast<DeterministicTrainingConditional*>(data);
 
-	int offset = 1+d->dim;
+	int offset;
+	if(m > d->u.rows()*d->dim){
+	    offset = 1+d->dim;
+	}else{
+		offset = 0;
+	}
   	int u_counter;
 
   	for (int i = 0; i < offset; ++i) {

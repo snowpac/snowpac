@@ -90,6 +90,10 @@ class GaussianProcess : public GaussianProcessBaseClass,
     virtual void estimate_hyper_parameters ( std::vector< std::vector<double> > const&,
                                      std::vector<double> const&, 
                                      std::vector<double> const&);
+
+    virtual void estimate_hyper_parameters_induced_only ( std::vector< std::vector<double> > const&,
+                                     std::vector<double> const&, 
+                                     std::vector<double> const&);
     //! Build the Gaussian process
     /*!
      Computes the Gaussian process\n
@@ -141,6 +145,8 @@ class GaussianProcess : public GaussianProcessBaseClass,
 
     virtual void sample_u(const int &nb_u_nodes){exit(-1);};
     virtual void clear_u(){exit(-1);};
+
+    virtual std::vector<double> get_hyperparameters();
 };
 
 #endif

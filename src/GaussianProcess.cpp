@@ -317,8 +317,8 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
  // opt.set_xtol_abs(1e-2);
 //  opt.set_xtol_rel(1e-2);
 //set timeout to NLOPT_TIMEOUT seconds
-  opt.set_maxtime(60.0);
-  opt.set_maxeval(500);
+  opt.set_maxtime(300.0);
+  opt.set_maxeval(200000);
   //perform optimization to get correction factors
 
     int exitflag=-20;
@@ -341,7 +341,10 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
   return;
 }
 //--------------------------------------------------------------------------------
-
+void GaussianProcess::estimate_hyper_parameters_induced_only ( std::vector< std::vector<double> > const &nodes,
+                                                  std::vector<double> const &values,
+                                                  std::vector<double> const &noise ) 
+{ this->estimate_hyper_parameters(nodes, values, noise);}
 
 //--------------------------------------------------------------------------------
 double GaussianProcess::parameter_estimation_objective(std::vector<double> const &x, 
@@ -412,5 +415,9 @@ void GaussianProcess::get_induced_nodes(std::vector<std::vector<double> > &) con
 
 void GaussianProcess::set_evaluations(const BlackBoxData &evaluations) {
     this->evaluations = evaluations;
+}
+
+std::vector<double> GaussianProcess::get_hyperparameters(){
+    return this->gp_parameters;
 }
 //--------------------------------------------------------------------------------

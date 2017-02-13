@@ -690,7 +690,7 @@ void FullyIndependentTrainingConditional::sample_u(const int& nb_u_nodes) {
 	std::vector<int> u_idx_from_active;
 	//Set distribution for sampling the indices for the u samples
 	std::random_device rd;
-	int random_seed = rd();//rd();
+	int random_seed = 1;////rd();
 	std::mt19937 random_generator(random_seed);
 	std::vector<double> nodes_weights_vector;
 
@@ -764,35 +764,41 @@ void FullyIndependentTrainingConditional::copy_data_to_members( std::vector< std
   }
 
 }
+
 void FullyIndependentTrainingConditional::set_optimizer(std::vector<double> const &values, nlopt::opt*& local_opt, nlopt::opt*& global_opt){
 
   optimize_global = true;
-  optimize_local = false;
+  optimize_local = true;
 
-  int dimp1 = 1+dim+u.rows()*dim;
+  int dimp1 = gp_parameters_hp.size();
 
-  auto minmax = std::minmax_element(values.begin(), values.end());
-  min_function_value = values.at((minmax.first - values.begin()));
-  max_function_value = fabs(values.at((minmax.second - values.begin())));
-  if ( fabs(min_function_value) > max_function_value )
-    max_function_value = fabs( min_function_value );
   lb.resize(dimp1);
   ub.resize(dimp1);
-  lb[0] = 1e-1; 
-  ub[0] = 1e3;
-  lb[0] = max_function_value - 1e2;
-  if ( lb[0] < 1e-2 ) lb[0] = 1e-2;
-  ub[0] = max_function_value + 1e2;//*2.0 ;
-  if ( ub[0] > 1e2 ) ub[0] = 1e2;
-  //if (ub[0] < 1.0) ub[0] = 1.0;
-  double delta_threshold = *delta;
-  if (delta_threshold < 1e-2) delta_threshold = 1e-2;
-  for (int i = 0; i < dim; ++i) {
-      lb[i+1] = 1e-2 * delta_threshold; // 1e1
-      ub[i+1] = 2.0 * delta_threshold; // 1e2
+  
+  int offset;
+  if(gp_parameters_hp.size() > u.rows()*dim){ //optimizing also over lengthscale and sigma_f
+  	auto minmax = std::minmax_element(values.begin(), values.end());
+    min_function_value = values.at((minmax.first - values.begin()));
+    max_function_value = fabs(values.at((minmax.second - values.begin())));
+    if ( fabs(min_function_value) > max_function_value )
+    max_function_value = fabs( min_function_value );
+  	lb[0] = 1e-1; 
+	ub[0] = 1e3;
+	lb[0] = max_function_value - 1e2;
+	if ( lb[0] < 1e-2 ) lb[0] = 1e-2;
+	ub[0] = max_function_value + 1e2;//*2.0 ;
+	if ( ub[0] > 1e2 ) ub[0] = 1e2;
+	//if (ub[0] < 1.0) ub[0] = 1.0;
+	double delta_threshold = *delta;
+	if (delta_threshold < 1e-2) delta_threshold = 1e-2;
+	for (int i = 0; i < dim; ++i) {
+	    lb[i+1] = 1e-2 * delta_threshold; // 1e1
+	    ub[i+1] = 2.0 * delta_threshold; // 1e2
+	}
+    offset = 1+dim;
+  }else{
+  	offset = 0;
   }
-
-  int offset = 1+dim;
   //Set box constraints such that the constraint ball is inside
   std::vector<double> lb_u(dim);
   std::vector<double> ub_u(dim);
@@ -806,73 +812,61 @@ void FullyIndependentTrainingConditional::set_optimizer(std::vector<double> cons
           ub[j] = ub_u[i];
 	  }
   }
-  gp_parameters.resize(dimp1);
-  if (gp_parameters[0] < 0e0) {
-  	std::cout << "In here: " << gp_parameters[0] << std::endl;
-    gp_parameters[0] = max_function_value;
-    for (int i = 1; i < dim+1; ++i) {
-      gp_parameters[i] = (lb[i]*5e-1 + 5e-1*ub[i]);
-    }
-  } else {
-    for (int i = 0; i < dim+1; ++i) {
-      if ( gp_parameters[i] <= lb[i] ) {
-  			std::cout << "2Too small: " << gp_parameters[i] << std::endl;
-      		gp_parameters[i] = 1.0001 * lb[i];
-      	}
-      if ( gp_parameters[i] >= ub[i] ) {
-  			std::cout << "2Too big: " << gp_parameters[i] << std::endl;
-      		gp_parameters[i] = 0.9999 * ub[i];
-      }
-      if ( gp_parameters[i] <= lb[i] ||  gp_parameters[i] >= ub[i]){
-		std::cout << "2still in between: " << gp_parameters[i];
-      	gp_parameters[i] = lb[i] + (ub[i]-lb[i])/0.5;
-      	std::cout << "2fixed: "<< gp_parameters[i] << std::endl;
-      }
-    }
-  }
 
-  int u_counter;
-  for (int i = 0; i < dim; ++i) {
-  	  u_counter = 0;
-  	  for(int j = offset + i*u.rows(); j < offset + (i+1)*u.rows(); ++j){
-            gp_parameters[j] = u(u_counter,i);    		
-            u_counter++;
-  	  }
-  } 
+  if(gp_parameters_hp.size() > u.rows()*dim){//optimizing also over lengthscale and sigma_f
+	  if (gp_parameters_hp[0] < 0e0) {
+	  	std::cout << "In here: " << gp_parameters_hp[0] << std::endl;
+	    gp_parameters_hp[0] = max_function_value;
+	    for (int i = 1; i < dim+1; ++i) {
+	      gp_parameters_hp[i] = (lb[i]*5e-1 + 5e-1*ub[i]);
+	    }
+	  } else {
+	    for (int i = 0; i < dim+1; ++i) {
+	      if ( gp_parameters_hp[i] <= lb[i] ) {
+	  			std::cout << "2Too small: " << gp_parameters_hp[i] << std::endl;
+	      		gp_parameters_hp[i] = 1.0001 * lb[i];
+	      	}
+	      if ( gp_parameters_hp[i] >= ub[i] ) {
+	  			std::cout << "2Too big: " << gp_parameters_hp[i] << std::endl;
+	      		gp_parameters_hp[i] = 0.9999 * ub[i];
+	      }
+	      if ( gp_parameters_hp[i] <= lb[i] ||  gp_parameters_hp[i] >= ub[i]){
+			std::cout << "2still in between: " << gp_parameters_hp[i];
+	      	gp_parameters_hp[i] = lb[i] + (ub[i]-lb[i])/0.5;
+	      	std::cout << "2fixed: "<< gp_parameters_hp[i] << std::endl;
+	      }
+	    }
+	  }
+	}
 
   for (int i = offset; i < dimp1; ++i) {
-      if ( gp_parameters[i] <= lb[i] ) {
-  			std::cout << "U Too small: " << gp_parameters[i] << std::endl;
-      		gp_parameters[i] = 1.0001 * lb[i];
+      if ( gp_parameters_hp[i] <= lb[i] ) {
+  			std::cout << "U Too small: " << gp_parameters_hp[i] << std::endl;
+      		gp_parameters_hp[i] = 1.0001 * lb[i];
       	}
-      if ( gp_parameters[i] >= ub[i] ) {
-  			std::cout << "U Too big: " << gp_parameters[i] << std::endl;
-      		gp_parameters[i] = 0.9999 * ub[i];
+      if ( gp_parameters_hp[i] >= ub[i] ) {
+  			std::cout << "U Too big: " << gp_parameters_hp[i] << std::endl;
+      		gp_parameters_hp[i] = 0.9999 * ub[i];
       }
-      if ( gp_parameters[i] <= lb[i] ||  gp_parameters[i] >= ub[i]){
-		std::cout << "U still in between: " << gp_parameters[i];
-      	gp_parameters[i] = lb[i] + (ub[i]-lb[i])/0.5;
-      	std::cout << "U fixed: "<< gp_parameters[i] << std::endl;
+      if ( gp_parameters_hp[i] <= lb[i] ||  gp_parameters_hp[i] >= ub[i]){
+		std::cout << "U still in between: " << gp_parameters_hp[i];
+      	gp_parameters_hp[i] = lb[i] + (ub[i]-lb[i])/0.5;
+      	std::cout << "U fixed: "<< gp_parameters_hp[i] << std::endl;
       }
     }
-  
-
-  //for ( int i = 0; i < dimp1; ++i )
-  //    std::cout << "[i,lb,ub]= [" << i << ", " << lb[i] << ", " << ub[i] <<"] [" << gp_parameters[i] << "]" << std::endl;
-
 
   local_opt = new nlopt::opt(nlopt::LD_MMA, dimp1);
   global_opt = new nlopt::opt(nlopt::GN_ISRES, dimp1);
 
   global_opt->set_lower_bounds( lb );
   global_opt->set_upper_bounds( ub );
-  global_opt->set_maxtime(60.0);
-  global_opt->set_maxeval(500);
+  global_opt->set_maxtime(300.0);
+  global_opt->set_maxeval(200000);
 
   local_opt->set_lower_bounds( lb );
   local_opt->set_upper_bounds( ub );
   local_opt->set_maxtime(60.0);
-  local_opt->set_maxeval(500);
+  local_opt->set_maxeval(200000);
 }
 
 void FullyIndependentTrainingConditional::run_optimizer(std::vector<double> const &values){
@@ -883,7 +877,8 @@ void FullyIndependentTrainingConditional::run_optimizer(std::vector<double> cons
   nlopt::opt* local_opt;
   nlopt::opt* global_opt;
 
-  int dimp1 = 1+dim+u.rows()*dim;
+  int dimp1 = gp_parameters_hp.size();
+
   set_optimizer(values, local_opt, global_opt);
 
   std::vector<double> tol(dimp1);
@@ -896,14 +891,14 @@ void FullyIndependentTrainingConditional::run_optimizer(std::vector<double> cons
 	  exitflag=-20;
 	  global_opt->add_inequality_mconstraint(trust_region_constraint, gp_pointer, tol);
 	  global_opt->set_min_objective( parameter_estimation_objective, gp_pointer);
-	  exitflag = global_opt->optimize(gp_parameters, optval);
+	  exitflag = global_opt->optimize(gp_parameters_hp, optval);
 
 	  std::cout << "exitflag = "<< exitflag<<std::endl;
   	  std::cout << "Function calls: " << print << std::endl;
 	  std::cout << "OPTVAL .... " << optval << std::endl;
-	  for ( int i = 0; i < 1+dim; ++i )
-	    std::cout << "gp_param = " << gp_parameters[i] << std::endl;
-	  std::cout << std::endl;
+	  //for ( int i = 0; i < 1+dim; ++i )
+	    //std::cout << "gp_param = " << gp_parameters_hp[i] << std::endl;
+	  //std::cout << std::endl;
   }
   if (optimize_local){
   	  print = 0;
@@ -912,14 +907,14 @@ void FullyIndependentTrainingConditional::run_optimizer(std::vector<double> cons
 	  //try {
 	  local_opt->add_inequality_mconstraint(trust_region_constraint, gp_pointer, tol);
 	  local_opt->set_min_objective( parameter_estimation_objective_w_gradients, gp_pointer);
-	  exitflag = local_opt->optimize(gp_parameters, optval);
+	  exitflag = local_opt->optimize(gp_parameters_hp, optval);
 
 	  std::cout << "exitflag = "<< exitflag<<std::endl;
   	  std::cout << "Function calls: " << print << std::endl;
 	  std::cout << "OPTVAL .... " << optval << std::endl;
-	  for ( int i = 0; i < 1+dim; ++i )
-	    std::cout << "gp_param = " << gp_parameters[i] << std::endl;
-	  std::cout << std::endl;
+	  //for ( int i = 0; i < 1+dim; ++i )
+	    //std::cout << "gp_param = " << gp_parameters_hp[i] << std::endl;
+	  //std::cout << std::endl;
   }
   
   delete local_opt;
@@ -952,9 +947,38 @@ void FullyIndependentTrainingConditional::estimate_hyper_parameters ( std::vecto
 
 	  sample_u(u.rows());
 
+	  set_hyperparameters();
+
 	  run_optimizer(values);
 
-	  update_induced_points();
+	  get_hyperparameters();
+
+	  for ( int i = 0; i < 1+dim; ++i )
+	    std::cout << "gp_param = " << gp_parameters[i] << std::endl;
+  }else{
+		GaussianProcess::estimate_hyper_parameters(nodes, values, noise);
+  }
+
+  return;
+}
+
+void FullyIndependentTrainingConditional::estimate_hyper_parameters_induced_only ( std::vector< std::vector<double> > const &nodes,
+                                                  std::vector<double> const &values,
+                                                  std::vector<double> const &noise )
+{
+  if (u.rows() > 0) {	
+	  std::cout << "FITC Estimator" << std::endl;
+	  copy_data_to_members(nodes, values, noise);
+
+	  gp_pointer = this;
+
+	  sample_u(u.rows());
+
+	  set_hyperparameters_induced_only();
+
+	  run_optimizer(values);
+
+	  copy_hyperparameters();
 
   }else{
 		GaussianProcess::estimate_hyper_parameters(nodes, values, noise);
@@ -964,13 +988,79 @@ void FullyIndependentTrainingConditional::estimate_hyper_parameters ( std::vecto
 }
 //--------------------------------------------------------------------------------
 
+void FullyIndependentTrainingConditional::set_hyperparameters(){
+  int dimp1 = 1+dim+u.rows()*dim;	
+  gp_parameters_hp.resize(dimp1);
+  int u_counter;
+  int offset = dim + 1;
+  for (int i = 0; i < dim + 1; ++i){
+  	gp_parameters_hp[i] = gp_parameters[i];
+  }
+  for (int i = 0; i < dim; ++i) {
+  	  u_counter = 0;
+  	  for(int j = offset + i*u.rows(); j < offset + (i+1)*u.rows(); ++j){
+            gp_parameters_hp[j] = u(u_counter,i);    		
+            u_counter++;
+  	  }
+  }
+  return;
+}
+
+void FullyIndependentTrainingConditional::set_hyperparameters_induced_only(){
+  int dimp1 = u.rows()*dim;	
+  gp_parameters_hp.resize(dimp1);
+  int u_counter;
+  for (int i = 0; i < dim; ++i) {
+  	  u_counter = 0;
+  	  for(int j = i*u.rows(); j < (i+1)*u.rows(); ++j){
+            gp_parameters_hp[j] = u(u_counter,i);    		
+            u_counter++;
+  	  }
+  }
+  return;
+}
+
+void FullyIndependentTrainingConditional::copy_hyperparameters(){
+  int dimp1 = gp_parameters_hp.size();
+  int u_counter;
+  int offset;
+  if(gp_parameters_hp.size() > u.rows()*dim){//optimizing also over lengthscale and sigma_f, copy them back
+    for (int i = 0; i < dim + 1; ++i){
+  	  gp_parameters[i] = gp_parameters_hp[i];
+    }
+    offset = 1+dim;
+  }else{
+  	offset = 0;
+  }
+  for (int i = 0; i < dim; ++i) {
+  	  u_counter = 0;
+  	  for(int j = offset + i*u.rows(); j < offset + (i+1)*u.rows(); ++j){
+        u(u_counter,i) = gp_parameters_hp[j];
+        u_counter++;
+  	  }
+  }
+  return;
+}
+
 //--------------------------------------------------------------------------------
 double FullyIndependentTrainingConditional::parameter_estimation_objective(std::vector<double> const &x,
                                                        std::vector<double> &grad,
                                                        void *data)
 {
   FullyIndependentTrainingConditional *d = reinterpret_cast<FullyIndependentTrainingConditional*>(data);
-  int offset = 1+d->dim;
+  int offset;
+  std::vector<double> local_params(d->dim+1);
+  if(x.size() > d->u.rows()*d->dim){
+  	offset = 1+d->dim;
+  	for(int i = 0; i < local_params.size(); ++i){
+  		local_params[i] = x[i];
+  	}
+  }else{
+  	offset = 0;
+  	for(int i = 0; i < local_params.size(); ++i){
+  		local_params[i] = d->gp_parameters[i];
+  	}
+  }
   int u_counter;
   double nugget = 0.00001;
   double nugget2 = 0.00001;
@@ -991,7 +1081,7 @@ double FullyIndependentTrainingConditional::parameter_estimation_objective(std::
 	//std::cout << d->u.rows() << " " << nb_gp_nodes << " " << d->gp_nodes_eigen.rows() << std::endl;
 	for (int i = 0; i < nb_u_nodes; ++i) {
 		for (int j = 0; j < nb_gp_nodes; ++j) {
-			d->K_u_f(i,j) = d->evaluate_kernel(d->u.row(i), d->gp_nodes_eigen.row(j), x);
+			d->K_u_f(i,j) = d->evaluate_kernel(d->u.row(i), d->gp_nodes_eigen.row(j), local_params);
 		}
 	}
 	MatrixXd K_f_u = d->K_u_f.transpose();
@@ -1001,7 +1091,7 @@ double FullyIndependentTrainingConditional::parameter_estimation_objective(std::
 	d->K_u_u.resize(nb_u_nodes, nb_u_nodes);
 	for (int i = 0; i < nb_u_nodes; ++i) {
 		for (int j = 0; j < nb_u_nodes; ++j) {
-			d->K_u_u(i,j) = d->evaluate_kernel(d->u.row(i), d->u.row(j), x);
+			d->K_u_u(i,j) = d->evaluate_kernel(d->u.row(i), d->u.row(j), local_params);
 			if(i==j)
 				d->K_u_u(i,j) += nugget;
 		}
@@ -1023,7 +1113,7 @@ double FullyIndependentTrainingConditional::parameter_estimation_objective(std::
 	diag_K_f_f.resize(nb_gp_nodes);
 	for (int i = 0; i < nb_gp_nodes; ++i) {
 		diag_K_f_f(i) = d->evaluate_kernel(d->gp_nodes_eigen.row(i),
-									 d->gp_nodes_eigen.row(i), x);
+									 d->gp_nodes_eigen.row(i), local_params);
 	}
 
 	d->Lambda.resize(nb_gp_nodes);
@@ -1109,7 +1199,19 @@ double FullyIndependentTrainingConditional::parameter_estimation_objective_w_gra
 {
 
   FullyIndependentTrainingConditional *d = reinterpret_cast<FullyIndependentTrainingConditional*>(data);
-  int offset = 1+d->dim;
+  int offset;
+  std::vector<double> local_params(d->dim+1);
+  if(x.size() > d->u.rows()*d->dim){
+  	offset = 1+d->dim;
+  	for(int i = 0; i < local_params.size(); ++i){
+  		local_params[i] = x[i];
+  	}
+  }else{
+  	offset = 0;
+  	for(int i = 0; i < local_params.size(); ++i){
+  		local_params[i] = d->gp_parameters[i];
+  	}
+  }
   int u_counter;
   double nugget = 0.00001;
   double nugget2 = 0.00001;
@@ -1129,7 +1231,7 @@ double FullyIndependentTrainingConditional::parameter_estimation_objective_w_gra
 	d->K_u_f.resize(nb_u_nodes, nb_gp_nodes);
 	for (int i = 0; i < nb_u_nodes; ++i) {
 		for (int j = 0; j < nb_gp_nodes; ++j) {
-			d->K_u_f(i,j) = d->evaluate_kernel(d->u.row(i), d->gp_nodes_eigen.row(j), x);
+			d->K_u_f(i,j) = d->evaluate_kernel(d->u.row(i), d->gp_nodes_eigen.row(j), local_params);
 		}
 	}
 	MatrixXd K_f_u = d->K_u_f.transpose();
@@ -1139,7 +1241,7 @@ double FullyIndependentTrainingConditional::parameter_estimation_objective_w_gra
 	d->K_u_u.resize(nb_u_nodes, nb_u_nodes);
 	for (int i = 0; i < nb_u_nodes; ++i) {
 		for (int j = 0; j < nb_u_nodes; ++j) {
-			d->K_u_u(i,j) = d->evaluate_kernel(d->u.row(i), d->u.row(j), x);
+			d->K_u_u(i,j) = d->evaluate_kernel(d->u.row(i), d->u.row(j), local_params);
 			if(i==j)
 				d->K_u_u(i,j) += nugget;
 		}
@@ -1161,7 +1263,7 @@ double FullyIndependentTrainingConditional::parameter_estimation_objective_w_gra
 	diag_K_f_f.resize(nb_gp_nodes);
 	for (int i = 0; i < nb_gp_nodes; ++i) {
 		diag_K_f_f(i) = d->evaluate_kernel(d->gp_nodes_eigen.row(i),
-									 d->gp_nodes_eigen.row(i), x);
+									 d->gp_nodes_eigen.row(i), local_params);
 	}
 	/*std::cout << "diag_K_f_f\n" << diag_K_f_f << std::endl;
 	std::cout << "diag_Q_f_f\n" << diag_Q_f_f << std::endl;*/
@@ -1238,7 +1340,7 @@ double FullyIndependentTrainingConditional::parameter_estimation_objective_w_gra
   }
 
 	//Gradient computation:
-	int dim_grad = 1+d->dim+d->u.rows()*d->dim;
+	int dim_grad = x.size();
 	grad.resize(dim_grad);
 
 	for(int i = 0; i < grad.size(); i++){
@@ -1248,43 +1350,36 @@ double FullyIndependentTrainingConditional::parameter_estimation_objective_w_gra
 		MatrixXd Kfudot;
 		MatrixXd Kuudot;
 		VectorXd LambdaDot;
-		if(i == 0){//grad sigma_f
-			d->derivate_K_u_u_wrt_sigmaf(x, Kuudot);
-			d->derivate_K_f_f_wrt_sigmaf(x, Kffdot);
-			d->derivate_K_u_f_wrt_sigmaf(x, Kufdot);
-			Kfudot = Kufdot.transpose();
-		}else if(i > 0 && i < 1 + d->dim){//grad length parameter
-			d->derivate_K_u_u_wrt_l(x, i-1, Kuudot);
-			d->derivate_K_f_f_wrt_l(x, i-1, Kffdot);
-			d->derivate_K_u_f_wrt_l(x, i-1, Kufdot);
-			Kfudot = Kufdot.transpose();
-		}else{//grad u
+		if( dim_grad > d->u.rows()*d->dim){//if we optimize also for sigma_f and lengthscales
+			if(i == 0){//grad sigma_f
+				d->derivate_K_u_u_wrt_sigmaf(local_params, Kuudot);
+				d->derivate_K_f_f_wrt_sigmaf(local_params, Kffdot);
+				d->derivate_K_u_f_wrt_sigmaf(local_params, Kufdot);
+				Kfudot = Kufdot.transpose();
+			}else if(i > 0 && i < 1 + d->dim){//grad length parameter
+				d->derivate_K_u_u_wrt_l(local_params, i-1, Kuudot);
+				d->derivate_K_f_f_wrt_l(local_params, i-1, Kffdot);
+				d->derivate_K_u_f_wrt_l(local_params, i-1, Kufdot);
+				Kfudot = Kufdot.transpose();
+			}else{//grad u
+				int uidx = (i-offset)%d->u.rows();
+				int udim = (int) ((i-offset)/d->u.rows());
+				d->derivate_K_u_u_wrt_uik(local_params, uidx, udim, Kuudot);
+				d->derivate_K_u_f_wrt_uik(local_params, uidx, udim, Kufdot);
+				Kffdot.resize(nb_gp_nodes, nb_gp_nodes);
+				Kffdot.setZero();
+				Kfudot = Kufdot.transpose(); 
+			}
+		}else{
 			int uidx = (i-offset)%d->u.rows();
 			int udim = (int) ((i-offset)/d->u.rows());
-			d->derivate_K_u_u_wrt_uik(x, uidx, udim, Kuudot);
-			d->derivate_K_u_f_wrt_uik(x, uidx, udim, Kufdot);
+			d->derivate_K_u_u_wrt_uik(local_params, uidx, udim, Kuudot);
+			d->derivate_K_u_f_wrt_uik(local_params, uidx, udim, Kufdot);
 			Kffdot.resize(nb_gp_nodes, nb_gp_nodes);
 			Kffdot.setZero();
 			Kfudot = Kufdot.transpose(); 
 		}
 		d->compute_LambdaDot(Kffdot, Kufdot, Kfudot, Kuudot, LambdaDot);
-		/*
-		IOFormat HeavyFmt(FullPrecision, 0, ", ", ";\n", "", "", "[", "]");
-		std::cout << "Kuudot\n" << Kuudot.format(HeavyFmt) << std::endl;
-		std::cout << "Kffdot\n" << Kffdot.format(HeavyFmt) << std::endl;
-		std::cout << "Kufdot\n" << Kufdot.format(HeavyFmt) << std::endl;
-		std::cout << "LambdaDot\n" << LambdaDot.format(HeavyFmt) << std::endl;
-		std::cout << "Kuu\n" << d->K_u_u.format(HeavyFmt) << std::endl;
-		std::cout << "Kuf\n" << d->K_u_f.format(HeavyFmt) << std::endl;
-		std::cout << "Qff\n" << Q_f_f.format(HeavyFmt) << std::endl;
-		std::cout << "Lambda\n" << d->Lambda.format(HeavyFmt) << std::endl;
-		std::cout << "noise:\n" << std::endl;
-		for (int i = 0; i < nb_gp_nodes; ++i) {
-			std::cout << (pow( d->gp_noise.at(i) / 2e0 + d->noise_regularization, 2e0 )) << std::endl;
-		}		
-		std::cout << std::endl;
-		std::cout << "y:\n" << d->scaled_function_values_eigen << std::endl;
-		*/
 
 		//L1-term: dL3/dtheta = d(Lambda+noise^2)/dtheta = tr((Lambda+noise^2)^(-1)*LambdaDot)
 		double dL1 = 0.0;
@@ -1361,7 +1456,12 @@ void FullyIndependentTrainingConditional::trust_region_constraint(unsigned int m
                                                      			void *data){
 	FullyIndependentTrainingConditional *d = reinterpret_cast<FullyIndependentTrainingConditional*>(data);
 
-	int offset = 1+d->dim;
+	int offset;
+	if(m > d->u.rows()*d->dim){
+	    offset = 1+d->dim;
+	}else{
+		offset = 0;
+	}
   	int u_counter;
 
   	for (int i = 0; i < offset; ++i) {

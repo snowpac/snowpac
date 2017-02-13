@@ -31,6 +31,7 @@ protected:
     MatrixXd gp_nodes_eigen;
     VectorXd gp_noise_eigen;
     VectorXd scaled_function_values_eigen;
+    std::vector<double> gp_parameters_hp;
     bool optimize_global = true;
     bool optimize_local = true;
     //bool resample_u = true;
@@ -112,6 +113,11 @@ protected:
                                              int const &k,
                                         MatrixXd &deriv_matrix);
 
+    void set_hyperparameters();
+    void set_hyperparameters_induced_only();
+
+    void copy_hyperparameters();
+
 public:
 
     void set_constraint_ball_radius(const double& radius);
@@ -168,6 +174,10 @@ public:
     void evaluate ( std::vector<double> const&, double&, double& );
    
     void estimate_hyper_parameters ( std::vector< std::vector<double> > const &nodes,
+                                                      std::vector<double> const &values,
+                                                      std::vector<double> const &noise );
+
+    void estimate_hyper_parameters_induced_only ( std::vector< std::vector<double> > const &nodes,
                                                       std::vector<double> const &values,
                                                       std::vector<double> const &noise );
 
