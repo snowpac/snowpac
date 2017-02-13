@@ -19,6 +19,8 @@ public:
     */
     DeterministicTrainingConditional( int, double& );
 
+    DeterministicTrainingConditional( int, double& , std::vector<double> );
+
     //! Destructor
     ~DeterministicTrainingConditional() { };
 

@@ -75,6 +75,8 @@ class GaussianProcess : public GaussianProcessBaseClass,
      \param n dimension of the Gaussian process.
     */
     GaussianProcess( int, double& );
+
+    GaussianProcess( int, double& , std::vector<double> );
     //! Destructor
     ~GaussianProcess() { }
     //! Estimation of hyper parameters

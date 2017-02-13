@@ -13,15 +13,22 @@ SubsetOfRegressors::SubsetOfRegressors(int n, double &delta_input) :
 		FullyIndependentTrainingConditional(n, delta_input) {
 }
 //--------------------------------------------------------------------------------
-
+SubsetOfRegressors::SubsetOfRegressors(int n, double &delta_input, std::vector<double> gp_parameters_input) :
+		FullyIndependentTrainingConditional(n, delta_input, gp_parameters_input) {
+}
 //--------------------------------------------------------------------------------
 void SubsetOfRegressors::build(std::vector<std::vector<double> > const &nodes,
 		std::vector<double> const &values, std::vector<double> const &noise) {
 
 	int nb_u_nodes = u.rows();
-	std::cout << "In Build Gaussian with [" << nodes.size() << "," << nb_u_nodes
-			<< "]" << std::endl;
+	
 	if (nb_u_nodes > 0) {
+		std::cout << "SoR build with [" << nodes.size() << "," << nb_u_nodes
+			<< "]" << std::endl;
+		std::cout << "With Parameters: " << std::endl;
+	    for ( int i = 0; i < dim+1; ++i )
+	      std::cout << "gp_param = " << gp_parameters[i] << std::endl;
+	    std::cout << std::endl;
 		//nb_u_nodes++;
 		
 		nb_gp_nodes = nodes.size();
@@ -149,7 +156,7 @@ void SubsetOfRegressors::run_optimizer(std::vector<double> const &values){
 	  std::cout << "exitflag = "<< exitflag<<std::endl;
   	  std::cout << "Function calls: " << print << std::endl;
 	  std::cout << "OPTVAL .... " << optval << std::endl;
-	  for ( int i = 0; i < dimp1; ++i )
+	  for ( int i = 0; i < 1+dim; ++i )
 	    std::cout << "gp_param = " << gp_parameters[i] << std::endl;
 	  std::cout << std::endl;
   }
@@ -165,7 +172,7 @@ void SubsetOfRegressors::run_optimizer(std::vector<double> const &values){
 	  std::cout << "exitflag = "<< exitflag<<std::endl;
   	  std::cout << "Function calls: " << print << std::endl;
 	  std::cout << "OPTVAL .... " << optval << std::endl;
-	  for ( int i = 0; i < dimp1; ++i )
+	  for ( int i = 0; i < 1+dim; ++i )
 	    std::cout << "gp_param = " << gp_parameters[i] << std::endl;
 	  std::cout << std::endl;
   }

@@ -36,6 +36,8 @@ protected:
     //bool resample_u = true;
     //bool do_hp_estimation = true;
     int print = 0;
+    double K_u_u_nugget = 0.00000001;
+
     double constraint_ball_radius;
     VectorXd constraint_ball_center;
 	void compute_Kuf_and_Kuu();
@@ -123,6 +125,8 @@ public:
      \param n dimension of the Approximated Gaussian process.
     */
     FullyIndependentTrainingConditional( int, double& );
+
+    FullyIndependentTrainingConditional( int, double& , std::vector<double> );
 
     //! Destructor
     ~FullyIndependentTrainingConditional() { };

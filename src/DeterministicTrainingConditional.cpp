@@ -13,6 +13,9 @@ DeterministicTrainingConditional::DeterministicTrainingConditional(int n, double
 		SubsetOfRegressors(n, delta_input) {
 }
 //--------------------------------------------------------------------------------
+DeterministicTrainingConditional::DeterministicTrainingConditional(int n, double &delta_input, std::vector<double> gp_parameters_input) :
+		SubsetOfRegressors(n, delta_input, gp_parameters_input) {
+}
 
 //--------------------------------------------------------------------------------
 void DeterministicTrainingConditional::build(std::vector<std::vector<double> > const &nodes,
@@ -50,7 +53,7 @@ void DeterministicTrainingConditional::run_optimizer(std::vector<double> const &
 	  std::cout << "exitflag = "<< exitflag<<std::endl;
   	  std::cout << "Function calls: " << print << std::endl;
 	  std::cout << "OPTVAL .... " << optval << std::endl;
-	  for ( int i = 0; i < dimp1; ++i )
+	  for ( int i = 0; i < dim+1; ++i )
 	    std::cout << "gp_param = " << gp_parameters[i] << std::endl;
 	  std::cout << std::endl;
   }
@@ -66,7 +69,7 @@ void DeterministicTrainingConditional::run_optimizer(std::vector<double> const &
 	  std::cout << "exitflag = "<< exitflag<<std::endl;
   	  std::cout << "Function calls: " << print << std::endl;
 	  std::cout << "OPTVAL .... " << optval << std::endl;
-	  for ( int i = 0; i < dimp1; ++i )
+	  for ( int i = 0; i < dim+1; ++i )
 	    std::cout << "gp_param = " << gp_parameters[i] << std::endl;
 	  std::cout << std::endl;
   }

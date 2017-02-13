@@ -22,6 +22,30 @@ GaussianProcess::GaussianProcess ( int n, double &delta_input ) :
 } 
 //--------------------------------------------------------------------------------
 
+//--------------------------------------------------------------------------------
+GaussianProcess::GaussianProcess ( int n, double &delta_input, std::vector<double> gp_parameters_input ) : 
+  TriangularMatrixOperations ( n ),
+  dim( n )
+{
+  if(gp_parameters_input.size() != n+1){
+    std::cout << "gp_parameters_input wrong size! Should be: " << n+1 << ", is: " << gp_parameters_input.size() << std::endl;
+    exit(-1);
+  }
+
+  lb.reserve( n+1 );
+  ub.reserve( n+1 );
+  gp_parameters.reserve(n+1);
+  for (int i = 0; i < n+1; i++) {
+    lb.push_back( 0e0  );
+    ub.push_back( 10e0 );
+    gp_parameters.push_back( gp_parameters_input[i] );
+  }
+  nb_gp_nodes = 0;
+  gp_pointer = NULL;
+  delta = &delta_input;
+} 
+//--------------------------------------------------------------------------------
+
 
 //--------------------------------------------------------------------------------
 double GaussianProcess::evaluate_kernel ( std::vector<double> const &x,
@@ -97,6 +121,11 @@ void GaussianProcess::build ( std::vector< std::vector<double> > const &nodes,
                               std::vector<double> const &noise ) 
 {
     std::cout << "GP build [" << nodes.size() << "]" << std::endl;
+    std::cout << "With Parameters: " << std::endl;
+    for ( int i = 0; i < dim+1; ++i )
+      std::cout << "gp_param = " << gp_parameters[i] << std::endl;
+    std::cout << std::endl;
+
     nb_gp_nodes = nodes.size();
     gp_nodes.clear();
     gp_noise.clear();
@@ -247,10 +276,11 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
 //      max_noise = gp_noise.at( i );
 //  }
   lb[0] = 1e-1; 
-  ub[0] = 1e4;
+  ub[0] = 1e3;
   lb[0] = max_function_value - 1e2;
   if ( lb[0] < 1e-2 ) lb[0] = 1e-2;
-  ub[0] = max_function_value + 1e2;
+  ub[0] = max_function_value + 1e2; //+ 1e2;
+  if ( ub[0] > 1e2 ) ub[0] = 1e2;
   double delta_threshold = *delta;
   if (delta_threshold < 1e-2) delta_threshold = 1e-2;
   for (int i = 0; i < dim; ++i) {
@@ -287,7 +317,8 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
  // opt.set_xtol_abs(1e-2);
 //  opt.set_xtol_rel(1e-2);
 //set timeout to NLOPT_TIMEOUT seconds
-  opt.set_maxtime(1.0);
+  opt.set_maxtime(60.0);
+  opt.set_maxeval(500);
   //perform optimization to get correction factors
 
     int exitflag=-20;

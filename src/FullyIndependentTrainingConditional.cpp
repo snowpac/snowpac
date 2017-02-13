@@ -21,6 +21,12 @@ FullyIndependentTrainingConditional::FullyIndependentTrainingConditional(int n,
 
 }
 //--------------------------------------------------------------------------------
+FullyIndependentTrainingConditional::FullyIndependentTrainingConditional(int n,
+		double &delta_input, std::vector<double> gp_parameters_input) :
+		GaussianProcess(n, delta_input, gp_parameters_input) {
+
+}
+//--------------------------------------------------------------------------------
 double FullyIndependentTrainingConditional::evaluate_kernel ( VectorXd const &x,
                                           VectorXd const &y )
 {
@@ -378,7 +384,7 @@ void FullyIndependentTrainingConditional::compute_Kuf_and_Kuu() {
 		for (int j = 0; j < nb_u_nodes; ++j) {
 			K_u_u(i, j) = evaluate_kernel(u.row(i), u.row(j));
 			if (i == j)
-				K_u_u(i, j) += 0.00001;
+				K_u_u(i, j) += K_u_u_nugget;
 		}
 	}
 	LLTofK_u_u.compute(K_u_u);
@@ -526,6 +532,10 @@ void FullyIndependentTrainingConditional::build(
 	if (nb_u_nodes > 0) {
 		std::cout << "FITC build with [" << nodes.size() << "," << nb_u_nodes
 			<< "]" << std::endl;
+		std::cout << "With Parameters: " << std::endl;
+	    for ( int i = 0; i < dim+1; ++i )
+	      std::cout << "gp_param = " << gp_parameters[i] << std::endl;
+	    std::cout << std::endl;
 		nb_gp_nodes = nodes.size();
 		gp_nodes.clear();
 		gp_noise.clear();
@@ -699,10 +709,10 @@ void FullyIndependentTrainingConditional::sample_u(const int& nb_u_nodes) {
 			radius = 0.0;
 			for(int j = 0; j < dim; ++j){
 				cur_u(j) = dis_trust_radius(random_generator);
-				radius = cur_u(j) *cur_u(j);
+				radius += cur_u(j) *cur_u(j);
 			}
 			radius = sqrt(radius);
-			if(radius <= constraint_ball_radius){
+			if(radius < constraint_ball_radius){
 				for(int j = 0; j < dim; ++j){
 					u(i, j) = cur_u(j) + constraint_ball_center(j);
 				}
@@ -757,7 +767,7 @@ void FullyIndependentTrainingConditional::copy_data_to_members( std::vector< std
 void FullyIndependentTrainingConditional::set_optimizer(std::vector<double> const &values, nlopt::opt*& local_opt, nlopt::opt*& global_opt){
 
   optimize_global = true;
-  optimize_local = true;
+  optimize_local = false;
 
   int dimp1 = 1+dim+u.rows()*dim;
 
@@ -769,10 +779,12 @@ void FullyIndependentTrainingConditional::set_optimizer(std::vector<double> cons
   lb.resize(dimp1);
   ub.resize(dimp1);
   lb[0] = 1e-1; 
-  ub[0] = 1e4;
+  ub[0] = 1e3;
   lb[0] = max_function_value - 1e2;
   if ( lb[0] < 1e-2 ) lb[0] = 1e-2;
-  ub[0] = max_function_value + 1e2;
+  ub[0] = max_function_value + 1e2;//*2.0 ;
+  if ( ub[0] > 1e2 ) ub[0] = 1e2;
+  //if (ub[0] < 1.0) ub[0] = 1.0;
   double delta_threshold = *delta;
   if (delta_threshold < 1e-2) delta_threshold = 1e-2;
   for (int i = 0; i < dim; ++i) {
@@ -854,11 +866,13 @@ void FullyIndependentTrainingConditional::set_optimizer(std::vector<double> cons
 
   global_opt->set_lower_bounds( lb );
   global_opt->set_upper_bounds( ub );
-  global_opt->set_maxtime(1.0);
+  global_opt->set_maxtime(60.0);
+  global_opt->set_maxeval(500);
 
   local_opt->set_lower_bounds( lb );
   local_opt->set_upper_bounds( ub );
-  local_opt->set_maxtime(1.0);
+  local_opt->set_maxtime(60.0);
+  local_opt->set_maxeval(500);
 }
 
 void FullyIndependentTrainingConditional::run_optimizer(std::vector<double> const &values){
@@ -887,7 +901,7 @@ void FullyIndependentTrainingConditional::run_optimizer(std::vector<double> cons
 	  std::cout << "exitflag = "<< exitflag<<std::endl;
   	  std::cout << "Function calls: " << print << std::endl;
 	  std::cout << "OPTVAL .... " << optval << std::endl;
-	  for ( int i = 0; i < dim; ++i )
+	  for ( int i = 0; i < 1+dim; ++i )
 	    std::cout << "gp_param = " << gp_parameters[i] << std::endl;
 	  std::cout << std::endl;
   }
@@ -903,7 +917,7 @@ void FullyIndependentTrainingConditional::run_optimizer(std::vector<double> cons
 	  std::cout << "exitflag = "<< exitflag<<std::endl;
   	  std::cout << "Function calls: " << print << std::endl;
 	  std::cout << "OPTVAL .... " << optval << std::endl;
-	  for ( int i = 0; i < dim; ++i )
+	  for ( int i = 0; i < 1+dim; ++i )
 	    std::cout << "gp_param = " << gp_parameters[i] << std::endl;
 	  std::cout << std::endl;
   }

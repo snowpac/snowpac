@@ -19,6 +19,8 @@ public:
     */
     SubsetOfRegressors( int, double& );
 
+    SubsetOfRegressors( int, double& , std::vector<double> );
+
     //! Destructor
     ~SubsetOfRegressors() { };
 
