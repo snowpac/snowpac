@@ -317,8 +317,8 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
  // opt.set_xtol_abs(1e-2);
 //  opt.set_xtol_rel(1e-2);
 //set timeout to NLOPT_TIMEOUT seconds
-  opt.set_maxtime(300.0);
-  opt.set_maxeval(200000);
+  opt.set_maxtime(120.0);
+  opt.set_maxeval(10000);
   //perform optimization to get correction factors
 
     int exitflag=-20;

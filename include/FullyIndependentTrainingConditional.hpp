@@ -39,6 +39,13 @@ protected:
     int print = 0;
     double K_u_u_nugget = 0.00000001;
 
+    double Kuu_opt_nugget = 0.00000001;
+    double Lambda_opt_nugget = 0.00000001;
+    double Qff_opt_nugget = 0.00000001;
+    double nugget_max = 1e-5;
+    double nugget_min = 1e-10;
+
+
     double constraint_ball_radius;
     VectorXd constraint_ball_center;
 	void compute_Kuf_and_Kuu();

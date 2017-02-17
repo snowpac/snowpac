@@ -151,9 +151,7 @@ double DeterministicTrainingConditional::parameter_estimation_objective(std::vec
   	}
   }
   int u_counter;
-  double nugget = 0.00001;
-  double nugget2 = 0.00001;
-  double nuggetQff = 0.00001;
+  
   for (int i = 0; i < d->dim; ++i) {
   	  u_counter = 0;
   	  for(int j = offset + i*d->u.rows(); j < offset + (i+1)*d->u.rows(); ++j){
@@ -181,7 +179,7 @@ double DeterministicTrainingConditional::parameter_estimation_objective(std::vec
 		for (int j = 0; j < nb_u_nodes; ++j) {
 			d->K_u_u(i,j) = d->evaluate_kernel(d->u.row(i), d->u.row(j), local_params);
 			if(i==j)
-				d->K_u_u(i,j) += nugget;
+				d->K_u_u(i,j) += d->Kuu_opt_nugget;
 		}
 	}
 	//std::cout << "Kuu\n" << d->K_u_u << std::endl;
@@ -217,7 +215,7 @@ double DeterministicTrainingConditional::parameter_estimation_objective(std::vec
 	Lambda_K_f_u.resize(nb_gp_nodes, nb_u_nodes);
 	for(int i = 0; i < nb_gp_nodes; i++){
 		for(int j = 0; j < nb_u_nodes; j++){
-			Lambda_K_f_u(i,j) = ((1.0/(d->Lambda(i) + nugget2)) * K_f_u(i,j));
+			Lambda_K_f_u(i,j) = ((1.0/(d->Lambda(i) + d->Lambda_opt_nugget)) * K_f_u(i,j));
 		}
 	}
 	MatrixXd K_u_f_Lambda_f_u;
@@ -253,7 +251,7 @@ double DeterministicTrainingConditional::parameter_estimation_objective(std::vec
 
 	MatrixXd Q_f_f = K_f_u*K_u_u_u_f;
 	for(int i = 0; i < nb_gp_nodes; i++){
-		Q_f_f(i,i) += d->Lambda(i)+ nuggetQff;
+		Q_f_f(i,i) += d->Lambda(i)+ d->Qff_opt_nugget;
 	}
 	LLT<MatrixXd> LLTofQ_f_f(Q_f_f);
 	double L2 = 0.5*d->scaled_function_values_eigen.dot(LLTofQ_f_f.solve(d->scaled_function_values_eigen));
@@ -264,10 +262,21 @@ double DeterministicTrainingConditional::parameter_estimation_objective(std::vec
   if (isinf(result) || isnan(result)){
   	std::cout << "Result is inf or nan" << std::endl;
   	std::cout << "L11 " << L11 << " " << 'x' << std::endl;
-    std::cout << "L12 " << L12 << " "  << log(d->K_u_u.determinant()) << std::endl;
-    std::cout << "L13 " << det_Leigen << " " << log(Sigma.determinant()) << std::endl;
+    std::cout << "L12 " << L12 << std::endl; //<< " " << log(d->K_u_u.determinant()) << std::endl;
+    std::cout << "L13 " << det_Leigen << std::endl;// << " " << log(Sigma.determinant()) << std::endl;
     std::cout << L1 << ' ' << L2 << std::endl;
   	result = std::numeric_limits<double>::infinity();
+  	if(d->Kuu_opt_nugget < d->nugget_max){
+  		d->Kuu_opt_nugget *= 10;
+  		d->Lambda_opt_nugget *= 10;
+  		d->Qff_opt_nugget *= 10;
+  	}
+  }else{
+  	if(d->Kuu_opt_nugget > d->nugget_min){
+  		d->Kuu_opt_nugget *= 0.1;
+  		d->Lambda_opt_nugget *= 0.1;
+  		d->Qff_opt_nugget *= 0.1;
+  	}
   }
   if ((d->print%1000)==0){
 	  /*for ( int i = 0; i < d->dim + 1; ++i )
@@ -303,9 +312,6 @@ double DeterministicTrainingConditional::parameter_estimation_objective_w_gradie
   	}
   }
   int u_counter;
-  double nugget = 0.00001;
-  double nugget2 = 0.00001;
-  double nuggetQff = 0.00001;
   for (int i = 0; i < d->dim; ++i) {
   	  u_counter = 0;
   	  for(int j = offset + i*d->u.rows(); j < offset + (i+1)*d->u.rows(); ++j){
@@ -333,7 +339,7 @@ double DeterministicTrainingConditional::parameter_estimation_objective_w_gradie
 		for (int j = 0; j < nb_u_nodes; ++j) {
 			d->K_u_u(i,j) = d->evaluate_kernel(d->u.row(i), d->u.row(j), local_params);
 			if(i==j)
-				d->K_u_u(i,j) += nugget;
+				d->K_u_u(i,j) += d->Kuu_opt_nugget;
 		}
 	}
 	//std::cout << "Kuu\n" << d->K_u_u << std::endl;
@@ -369,7 +375,7 @@ double DeterministicTrainingConditional::parameter_estimation_objective_w_gradie
 	Lambda_K_f_u.resize(nb_gp_nodes, nb_u_nodes);
 	for(int i = 0; i < nb_gp_nodes; i++){
 		for(int j = 0; j < nb_u_nodes; j++){
-			Lambda_K_f_u(i,j) = ((1.0/(d->Lambda(i) + nugget2)) * K_f_u(i,j));
+			Lambda_K_f_u(i,j) = ((1.0/(d->Lambda(i) + d->Lambda_opt_nugget)) * K_f_u(i,j));
 		}
 	}
 	MatrixXd K_u_f_Lambda_f_u;
@@ -405,7 +411,7 @@ double DeterministicTrainingConditional::parameter_estimation_objective_w_gradie
 
 	MatrixXd Q_f_f = K_f_u*K_u_u_u_f;
 	for(int i = 0; i < nb_gp_nodes; i++){
-		Q_f_f(i,i) += d->Lambda(i)+ nuggetQff;
+		Q_f_f(i,i) += d->Lambda(i)+ d->Qff_opt_nugget;
 	}
 	LLT<MatrixXd> LLTofQ_f_f(Q_f_f);
 	double L2 = 0.5*d->scaled_function_values_eigen.dot(LLTofQ_f_f.solve(d->scaled_function_values_eigen));
@@ -416,10 +422,21 @@ double DeterministicTrainingConditional::parameter_estimation_objective_w_gradie
   if (isinf(result) || isnan(result)){
   	std::cout << "Result is inf or nan" << std::endl;
   	std::cout << "L11 " << L11 << " " << 'x' << std::endl;
-    std::cout << "L12 " << L12 << " "  << log(d->K_u_u.determinant()) << std::endl;
-    std::cout << "L13 " << det_Leigen << " " << log(Sigma.determinant()) << std::endl;
+    std::cout << "L12 " << L12 << std::endl; //<< " " << log(d->K_u_u.determinant()) << std::endl;
+    std::cout << "L13 " << det_Leigen << std::endl;// << " " << log(Sigma.determinant()) << std::endl;
     std::cout << L1 << ' ' << L2 << std::endl;
   	result = std::numeric_limits<double>::infinity();
+  	if(d->Kuu_opt_nugget < d->nugget_max){
+  		d->Kuu_opt_nugget *= 10;
+  		d->Lambda_opt_nugget *= 10;
+  		d->Qff_opt_nugget *= 10;
+  	}
+  }else{
+  	if(d->Kuu_opt_nugget > d->nugget_min){
+  		d->Kuu_opt_nugget *= 0.1;
+  		d->Lambda_opt_nugget *= 0.1;
+  		d->Qff_opt_nugget *= 0.1;
+  	}
   }
   if ((d->print%1000)==0){
 	  /*for ( int i = 0; i < d->dim + 1; ++i )
