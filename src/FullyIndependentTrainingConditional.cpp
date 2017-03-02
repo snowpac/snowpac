@@ -768,7 +768,7 @@ void FullyIndependentTrainingConditional::copy_data_to_members( std::vector< std
 void FullyIndependentTrainingConditional::set_optimizer(std::vector<double> const &values, nlopt::opt*& local_opt, nlopt::opt*& global_opt){
 
   optimize_global = true;
-  optimize_local = true;
+  optimize_local = false;
 
   int dimp1 = gp_parameters_hp.size();
 
@@ -776,70 +776,110 @@ void FullyIndependentTrainingConditional::set_optimizer(std::vector<double> cons
   ub.resize(dimp1);
   
   int offset;
-  if(gp_parameters_hp.size() > u.rows()*dim){ //optimizing also over lengthscale and sigma_f
-  	auto minmax = std::minmax_element(values.begin(), values.end());
-    min_function_value = values.at((minmax.first - values.begin()));
-    max_function_value = fabs(values.at((minmax.second - values.begin())));
-    if ( fabs(min_function_value) > max_function_value )
-    max_function_value = fabs( min_function_value );
-  	lb[0] = 1e-1; 
-	ub[0] = 1e3;
-	lb[0] = max_function_value - 1e2;
-	if ( lb[0] < 1e-2 ) lb[0] = 1e-2;
-	ub[0] = max_function_value + 1e2;//*2.0 ;
-	if ( ub[0] > 1e2 ) ub[0] = 1e2;
-	//if (ub[0] < 1.0) ub[0] = 1.0;
-	double delta_threshold = *delta;
-	if (delta_threshold < 1e-2) delta_threshold = 1e-2;
-	for (int i = 0; i < dim; ++i) {
-	    lb[i+1] = 1e-2 * delta_threshold; // 1e1
-	    ub[i+1] = 2.0 * delta_threshold; // 1e2
-	}
-    offset = 1+dim;
-  }else{
-  	offset = 0;
-  }
-  //Set box constraints such that the constraint ball is inside
-  std::vector<double> lb_u(dim);
-  std::vector<double> ub_u(dim);
-  for (int i = 0; i < dim; ++i) {
-      lb_u[i] = constraint_ball_center[i] - 1.5*constraint_ball_radius;
-      ub_u[i] = constraint_ball_center[i] + 1.5*constraint_ball_radius;
-  }
-  for (int i = 0; i < dim; ++i) {
-	  for(int j = offset + i*u.rows(); j < offset + (i+1)*u.rows(); ++j){
-          lb[j] = lb_u[i];
-          ub[j] = ub_u[i];
-	  }
-  }
-
-  if(gp_parameters_hp.size() > u.rows()*dim){//optimizing also over lengthscale and sigma_f
-	  if (gp_parameters_hp[0] < 0e0) {
-	  	std::cout << "In here: " << gp_parameters_hp[0] << std::endl;
-	    gp_parameters_hp[0] = max_function_value;
-	    for (int i = 1; i < dim+1; ++i) {
-	      gp_parameters_hp[i] = (lb[i]*5e-1 + 5e-1*ub[i]);
-	    }
-	  } else {
-	    for (int i = 0; i < dim+1; ++i) {
-	      if ( gp_parameters_hp[i] <= lb[i] ) {
-	  			std::cout << "2Too small: " << gp_parameters_hp[i] << std::endl;
-	      		gp_parameters_hp[i] = 1.0001 * lb[i];
-	      	}
+  if(dimp1==1 + dim){
+  		auto minmax = std::minmax_element(values.begin(), values.end());
+	    min_function_value = values.at((minmax.first - values.begin()));
+	    max_function_value = fabs(values.at((minmax.second - values.begin())));
+	    if ( fabs(min_function_value) > max_function_value )
+	    max_function_value = fabs( min_function_value );
+	  	
+		  lb[0] = 1e-3; 
+		  ub[0] = 1e3;
+		  lb[0] = max_function_value - 1e2;
+		  if ( lb[0] < 1e-3 ) lb[0] = 1e-3;
+		  ub[0] = max_function_value + 1e2; 
+		  if ( ub[0] > 1e3 ) ub[0] = 1e3;
+		  if ( ub[0] <= lb[0]) lb[0] = 1e-3;
+		//if (ub[0] < 1.0) ub[0] = 1.0;
+		double delta_threshold = *delta;
+		if (delta_threshold < 1e-2) delta_threshold = 1e-2;
+		for (int i = 0; i < dim; ++i) {
+		    lb[i+1] = 1e-2 * delta_threshold; // 1e1
+		    ub[i+1] = 2.0 * delta_threshold; // 1e2
+		}
+	  	for (int i = 0; i < dim+1; ++i) {
+  		  if ( gp_parameters_hp[i] <= lb[i] ) {
+  			std::cout << "LS Too small: " << gp_parameters_hp[i] << " for " << lb[i] << std::endl;
+      		gp_parameters_hp[i] = 1.0001 * lb[i];
+      		}
 	      if ( gp_parameters_hp[i] >= ub[i] ) {
-	  			std::cout << "2Too big: " << gp_parameters_hp[i] << std::endl;
+	  			std::cout << "LS Too big: " << gp_parameters_hp[i] << " for " << ub[i] << std::endl;
 	      		gp_parameters_hp[i] = 0.9999 * ub[i];
 	      }
 	      if ( gp_parameters_hp[i] <= lb[i] ||  gp_parameters_hp[i] >= ub[i]){
-			std::cout << "2still in between: " << gp_parameters_hp[i];
+			std::cout << "LS still in between: " << gp_parameters_hp[i];
 	      	gp_parameters_hp[i] = lb[i] + (ub[i]-lb[i])/0.5;
-	      	std::cout << "2fixed: "<< gp_parameters_hp[i] << std::endl;
-	      }
-	    }
+	      	std::cout << "LS fixed: "<< gp_parameters_hp[i] << std::endl;
+        	}
+        }
+	  	
+  }else{
+	  if(gp_parameters_hp.size() > u.rows()*dim){ //optimizing also over lengthscale and sigma_f
+	  	auto minmax = std::minmax_element(values.begin(), values.end());
+	    min_function_value = values.at((minmax.first - values.begin()));
+	    max_function_value = fabs(values.at((minmax.second - values.begin())));
+	    if ( fabs(min_function_value) > max_function_value )
+	    max_function_value = fabs( min_function_value );
+	  	lb[0] = 1e-3; 
+		  ub[0] = 1e3;
+		  lb[0] = max_function_value - 1e2;
+		  if ( lb[0] < 1e-3 ) lb[0] = 1e-3;
+		  ub[0] = max_function_value + 1e2; 
+		  if ( ub[0] > 1e3 ) ub[0] = 1e3;
+		  if ( ub[0] <= lb[0]) lb[0] = 1e-3;
+		//if (ub[0] < 1.0) ub[0] = 1.0;
+		double delta_threshold = *delta;
+		if (delta_threshold < 1e-2) delta_threshold = 1e-2;
+		for (int i = 0; i < dim; ++i) {
+		    lb[i+1] = 1e-2 * delta_threshold; // 1e1
+		    ub[i+1] = 2.0 * delta_threshold; // 1e2
+		}
+	    offset = 1+dim;
+	  }else{
+	  	offset = 0;
 	  }
-	}
+	  //Set box constraints such that the constraint ball is inside
+	  std::vector<double> lb_u(dim);
+	  std::vector<double> ub_u(dim);
+	  for (int i = 0; i < dim; ++i) {
+	      lb_u[i] = constraint_ball_center[i] - 1.5*constraint_ball_radius;
+	      ub_u[i] = constraint_ball_center[i] + 1.5*constraint_ball_radius;
+	  }
+	  for (int i = 0; i < dim; ++i) {
+		  for(int j = offset + i*u.rows(); j < offset + (i+1)*u.rows(); ++j){
+	          lb[j] = lb_u[i];
+	          ub[j] = ub_u[i];
+		  }
+	  }
 
-  for (int i = offset; i < dimp1; ++i) {
+	  
+	  if(gp_parameters_hp.size() > u.rows()*dim){//optimizing also over lengthscale and sigma_f
+		  if (gp_parameters_hp[0] < 0e0) {
+		  	std::cout << "In here: " << gp_parameters_hp[0] << std::endl;
+		    gp_parameters_hp[0] = max_function_value;
+		    for (int i = 1; i < dim+1; ++i) {
+		      gp_parameters_hp[i] = (lb[i]*5e-1 + 5e-1*ub[i]);
+		    }
+		  } else {
+		    for (int i = 0; i < dim+1; ++i) {
+		      if ( gp_parameters_hp[i] <= lb[i] ) {
+		  			std::cout << "2Too small: " << gp_parameters_hp[i] << std::endl;
+		      		gp_parameters_hp[i] = 1.0001 * lb[i];
+		      	}
+		      if ( gp_parameters_hp[i] >= ub[i] ) {
+		  			std::cout << "2Too big: " << gp_parameters_hp[i] << std::endl;
+		      		gp_parameters_hp[i] = 0.9999 * ub[i];
+		      }
+		      if ( gp_parameters_hp[i] <= lb[i] ||  gp_parameters_hp[i] >= ub[i]){
+				std::cout << "2still in between: " << gp_parameters_hp[i];
+		      	gp_parameters_hp[i] = lb[i] + (ub[i]-lb[i])/0.5;
+		      	std::cout << "2fixed: "<< gp_parameters_hp[i] << std::endl;
+		      }
+		    }
+		  }
+		}
+		
+	for (int i = offset; i < dimp1; ++i) {
       if ( gp_parameters_hp[i] <= lb[i] ) {
   			std::cout << "U Too small: " << gp_parameters_hp[i] << std::endl;
       		gp_parameters_hp[i] = 1.0001 * lb[i];
@@ -853,14 +893,16 @@ void FullyIndependentTrainingConditional::set_optimizer(std::vector<double> cons
       	gp_parameters_hp[i] = lb[i] + (ub[i]-lb[i])/0.5;
       	std::cout << "U fixed: "<< gp_parameters_hp[i] << std::endl;
       }
-    }
+    	}
+	}
+  
 
   local_opt = new nlopt::opt(nlopt::LD_MMA, dimp1);
   global_opt = new nlopt::opt(nlopt::GN_ISRES, dimp1);
 
   global_opt->set_lower_bounds( lb );
   global_opt->set_upper_bounds( ub );
-  global_opt->set_maxtime(120.0);
+  global_opt->set_maxtime(60.0);
   global_opt->set_maxeval(10000);
 
   local_opt->set_lower_bounds( lb );
@@ -877,9 +919,9 @@ void FullyIndependentTrainingConditional::run_optimizer(std::vector<double> cons
   nlopt::opt* local_opt;
   nlopt::opt* global_opt;
 
-  int dimp1 = gp_parameters_hp.size();
-
   set_optimizer(values, local_opt, global_opt);
+
+  int dimp1 = gp_parameters_hp.size();
 
   std::vector<double> tol(dimp1);
   for(int i = 0; i < dimp1; ++i){
@@ -937,6 +979,12 @@ void FullyIndependentTrainingConditional::update_induced_points(){
 
 void FullyIndependentTrainingConditional::estimate_hyper_parameters ( std::vector< std::vector<double> > const &nodes,
                                                   std::vector<double> const &values,
+                                                  std::vector<double> const &noise ){
+	this->estimate_hyper_parameters_ls_only(nodes, values, noise);
+}
+
+void FullyIndependentTrainingConditional::estimate_hyper_parameters_all ( std::vector< std::vector<double> > const &nodes,
+                                                  std::vector<double> const &values,
                                                   std::vector<double> const &noise )
 {
   if (u.rows() > 0) {	
@@ -951,7 +999,7 @@ void FullyIndependentTrainingConditional::estimate_hyper_parameters ( std::vecto
 
 	  run_optimizer(values);
 
-	  get_hyperparameters();
+	  copy_hyperparameters();
 
 	  for ( int i = 0; i < 1+dim; ++i )
 	    std::cout << "gp_param = " << gp_parameters[i] << std::endl;
@@ -980,6 +1028,35 @@ void FullyIndependentTrainingConditional::estimate_hyper_parameters_induced_only
 
 	  copy_hyperparameters();
 
+	  for ( int i = 0; i < 1+dim; ++i )
+	    std::cout << "gp_param = " << gp_parameters[i] << std::endl;
+
+  }else{
+		GaussianProcess::estimate_hyper_parameters(nodes, values, noise);
+  }
+
+  return;
+}
+void FullyIndependentTrainingConditional::estimate_hyper_parameters_ls_only ( std::vector< std::vector<double> > const &nodes,
+                                                      std::vector<double> const &values,
+                                                      std::vector<double> const &noise ){
+  if (u.rows() > 0) {	
+	  std::cout << "FITC Estimator" << std::endl;
+	  copy_data_to_members(nodes, values, noise);
+
+	  gp_pointer = this;
+
+	  sample_u(u.rows());
+
+	  set_hyperparameters_ls_only();
+
+	  run_optimizer(values);
+
+	  copy_hyperparameters();
+
+	  for ( int i = 0; i < 1+dim; ++i )
+	    std::cout << "gp_param = " << gp_parameters[i] << std::endl;
+
   }else{
 		GaussianProcess::estimate_hyper_parameters(nodes, values, noise);
   }
@@ -1006,6 +1083,15 @@ void FullyIndependentTrainingConditional::set_hyperparameters(){
   return;
 }
 
+void FullyIndependentTrainingConditional::set_hyperparameters_ls_only(){
+  int dimp1 = dim+1;	
+  gp_parameters_hp.resize(dimp1);
+  for (int i = 0; i < dimp1; ++i){
+  	gp_parameters_hp[i] = gp_parameters[i];
+  }
+  return;
+}
+
 void FullyIndependentTrainingConditional::set_hyperparameters_induced_only(){
   int dimp1 = u.rows()*dim;	
   gp_parameters_hp.resize(dimp1);
@@ -1024,20 +1110,26 @@ void FullyIndependentTrainingConditional::copy_hyperparameters(){
   int dimp1 = gp_parameters_hp.size();
   int u_counter;
   int offset;
-  if(gp_parameters_hp.size() > u.rows()*dim){//optimizing also over lengthscale and sigma_f, copy them back
-    for (int i = 0; i < dim + 1; ++i){
+  if(gp_parameters_hp.size()==dim+1){
+	for (int i = 0; i < dim + 1; ++i){
   	  gp_parameters[i] = gp_parameters_hp[i];
     }
-    offset = 1+dim;
   }else{
-  	offset = 0;
-  }
-  for (int i = 0; i < dim; ++i) {
-  	  u_counter = 0;
-  	  for(int j = offset + i*u.rows(); j < offset + (i+1)*u.rows(); ++j){
-        u(u_counter,i) = gp_parameters_hp[j];
-        u_counter++;
-  	  }
+	  if(gp_parameters_hp.size() > u.rows()*dim){//optimizing also over lengthscale and sigma_f, copy them back
+	    for (int i = 0; i < dim + 1; ++i){
+	  	  gp_parameters[i] = gp_parameters_hp[i];
+	    }
+	    offset = 1+dim;
+	  }else{
+	  	offset = 0;
+	  }
+	  for (int i = 0; i < dim; ++i) {
+	  	  u_counter = 0;
+	  	  for(int j = offset + i*u.rows(); j < offset + (i+1)*u.rows(); ++j){
+	        u(u_counter,i) = gp_parameters_hp[j];
+	        u_counter++;
+	  	  }
+	  }
   }
   return;
 }
@@ -1050,24 +1142,31 @@ double FullyIndependentTrainingConditional::parameter_estimation_objective(std::
   FullyIndependentTrainingConditional *d = reinterpret_cast<FullyIndependentTrainingConditional*>(data);
   int offset;
   std::vector<double> local_params(d->dim+1);
-  if(x.size() > d->u.rows()*d->dim){
-  	offset = 1+d->dim;
-  	for(int i = 0; i < local_params.size(); ++i){
-  		local_params[i] = x[i];
-  	}
-  }else{
-  	offset = 0;
-  	for(int i = 0; i < local_params.size(); ++i){
-  		local_params[i] = d->gp_parameters[i];
-  	}
-  }
-  int u_counter;
-  for (int i = 0; i < d->dim; ++i) {
-  	  u_counter = 0;
-  	  for(int j = offset + i*d->u.rows(); j < offset + (i+1)*d->u.rows(); ++j){
-            d->u(u_counter,i) = x[j];
-            u_counter++;
+  if(x.size()==1+d->dim){
+  	  offset = 0;
+  	  for(int i = 0; i < local_params.size(); ++i){
+	  		local_params[i] = x[i];
   	  }
+  }else{
+	  if(x.size() > d->u.rows()*d->dim){
+	  	offset = 1+d->dim;
+	  	for(int i = 0; i < local_params.size(); ++i){
+	  		local_params[i] = x[i];
+	  	}
+	  }else{
+	  	offset = 0;
+	  	for(int i = 0; i < local_params.size(); ++i){
+	  		local_params[i] = d->gp_parameters[i];
+	  	}
+	  }
+	  int u_counter;
+	  for (int i = 0; i < d->dim; ++i) {
+	  	  u_counter = 0;
+	  	  for(int j = offset + i*d->u.rows(); j < offset + (i+1)*d->u.rows(); ++j){
+	            d->u(u_counter,i) = x[j];
+	            u_counter++;
+	  	  }
+	  }
   }
 
   //Compute Kuf, Kuu
@@ -1209,24 +1308,31 @@ double FullyIndependentTrainingConditional::parameter_estimation_objective_w_gra
   FullyIndependentTrainingConditional *d = reinterpret_cast<FullyIndependentTrainingConditional*>(data);
   int offset;
   std::vector<double> local_params(d->dim+1);
-  if(x.size() > d->u.rows()*d->dim){
-  	offset = 1+d->dim;
-  	for(int i = 0; i < local_params.size(); ++i){
-  		local_params[i] = x[i];
-  	}
-  }else{
-  	offset = 0;
-  	for(int i = 0; i < local_params.size(); ++i){
-  		local_params[i] = d->gp_parameters[i];
-  	}
-  }
-  int u_counter;
-  for (int i = 0; i < d->dim; ++i) {
-  	  u_counter = 0;
-  	  for(int j = offset + i*d->u.rows(); j < offset + (i+1)*d->u.rows(); ++j){
-            d->u(u_counter,i) = x[j];
-            u_counter++;
+  if(x.size()==1+d->dim){
+  	  offset = 0;
+  	  for(int i = 0; i < local_params.size(); ++i){
+	  		local_params[i] = x[i];
   	  }
+  }else{
+	  if(x.size() > d->u.rows()*d->dim){
+	  	offset = 1+d->dim;
+	  	for(int i = 0; i < local_params.size(); ++i){
+	  		local_params[i] = x[i];
+	  	}
+	  }else{
+	  	offset = 0;
+	  	for(int i = 0; i < local_params.size(); ++i){
+	  		local_params[i] = d->gp_parameters[i];
+	  	}
+	  }
+	  int u_counter;
+	  for (int i = 0; i < d->dim; ++i) {
+	  	  u_counter = 0;
+	  	  for(int j = offset + i*d->u.rows(); j < offset + (i+1)*d->u.rows(); ++j){
+	            d->u(u_counter,i) = x[j];
+	            u_counter++;
+	  	  }
+	  }
   }
 
   //Compute Kuf, Kuu
@@ -1366,35 +1472,49 @@ double FullyIndependentTrainingConditional::parameter_estimation_objective_w_gra
 		MatrixXd Kfudot;
 		MatrixXd Kuudot;
 		VectorXd LambdaDot;
-		if( dim_grad > d->u.rows()*d->dim){//if we optimize also for sigma_f and lengthscales
+		if(dim_grad == d->dim + 1){
 			if(i == 0){//grad sigma_f
 				d->derivate_K_u_u_wrt_sigmaf(local_params, Kuudot);
 				d->derivate_K_f_f_wrt_sigmaf(local_params, Kffdot);
 				d->derivate_K_u_f_wrt_sigmaf(local_params, Kufdot);
 				Kfudot = Kufdot.transpose();
-			}else if(i > 0 && i < 1 + d->dim){//grad length parameter
+			}else{//grad length parameter
 				d->derivate_K_u_u_wrt_l(local_params, i-1, Kuudot);
 				d->derivate_K_f_f_wrt_l(local_params, i-1, Kffdot);
 				d->derivate_K_u_f_wrt_l(local_params, i-1, Kufdot);
 				Kfudot = Kufdot.transpose();
-			}else{//grad u
-				int uidx = (i-offset)%d->u.rows();
+			}
+		}else{
+			if( dim_grad > d->u.rows()*d->dim){//if we optimize also for sigma_f and lengthscales
+				if(i == 0){//grad sigma_f
+					d->derivate_K_u_u_wrt_sigmaf(local_params, Kuudot);
+					d->derivate_K_f_f_wrt_sigmaf(local_params, Kffdot);
+					d->derivate_K_u_f_wrt_sigmaf(local_params, Kufdot);
+					Kfudot = Kufdot.transpose();
+				}else if(i > 0 && i < 1 + d->dim){//grad length parameter
+					d->derivate_K_u_u_wrt_l(local_params, i-1, Kuudot);
+					d->derivate_K_f_f_wrt_l(local_params, i-1, Kffdot);
+					d->derivate_K_u_f_wrt_l(local_params, i-1, Kufdot);
+					Kfudot = Kufdot.transpose();
+				}else{//grad u
+					int uidx = (i-offset)%d->u.rows();
+					int udim = (int) ((i-offset)/d->u.rows());
+					d->derivate_K_u_u_wrt_uik(local_params, uidx, udim, Kuudot);
+					d->derivate_K_u_f_wrt_uik(local_params, uidx, udim, Kufdot);
+					Kffdot.resize(nb_gp_nodes, nb_gp_nodes);
+					Kffdot.setZero();
+					Kfudot = Kufdot.transpose(); 
+				}
+		    }else{
+		    	int uidx = (i-offset)%d->u.rows();
 				int udim = (int) ((i-offset)/d->u.rows());
 				d->derivate_K_u_u_wrt_uik(local_params, uidx, udim, Kuudot);
 				d->derivate_K_u_f_wrt_uik(local_params, uidx, udim, Kufdot);
 				Kffdot.resize(nb_gp_nodes, nb_gp_nodes);
 				Kffdot.setZero();
 				Kfudot = Kufdot.transpose(); 
-			}
-		}else{
-			int uidx = (i-offset)%d->u.rows();
-			int udim = (int) ((i-offset)/d->u.rows());
-			d->derivate_K_u_u_wrt_uik(local_params, uidx, udim, Kuudot);
-			d->derivate_K_u_f_wrt_uik(local_params, uidx, udim, Kufdot);
-			Kffdot.resize(nb_gp_nodes, nb_gp_nodes);
-			Kffdot.setZero();
-			Kfudot = Kufdot.transpose(); 
-		}
+		    }
+	    }
 		d->compute_LambdaDot(Kffdot, Kufdot, Kfudot, Kuudot, LambdaDot);
 
 		//L1-term: dL3/dtheta = d(Lambda+noise^2)/dtheta = tr((Lambda+noise^2)^(-1)*LambdaDot)
@@ -1473,39 +1593,45 @@ void FullyIndependentTrainingConditional::trust_region_constraint(unsigned int m
 	FullyIndependentTrainingConditional *d = reinterpret_cast<FullyIndependentTrainingConditional*>(data);
 
 	int offset;
-	if(m > d->u.rows()*d->dim){
-	    offset = 1+d->dim;
+	if(m == d->dim + 1){
+		for (int i = 0; i < d->dim+1; ++i) {
+			c[i] = -1;
+		}
 	}else{
-		offset = 0;
-	}
-  	int u_counter;
+		if(m > d->u.rows()*d->dim){
+		    offset = 1+d->dim;
+		}else{
+			offset = 0;
+		}
+		int u_counter;
 
-  	for (int i = 0; i < offset; ++i) {
-  		c[i] = -1;
-  	}
-  	MatrixXd u_intern(d->u.rows(), d->u.cols());
-  	for (int i = 0; i < d->dim; ++i) {
-  	  u_counter = 0;
-  	  for(int j = offset + i*d->u.rows(); j < offset + (i+1)*d->u.rows(); ++j){
-            u_intern(u_counter, i) = x[j];
-            u_counter++;
-  	  }
-  	}
-  	VectorXd c_intern(u_intern.rows());
-  	VectorXd dist(d->dim);
-  	for (int i = 0; i < u_intern.rows(); ++i) {
-  			for (int j = 0; j < d->dim; ++j) {
-  				dist(j) = (u_intern(i, j)-d->constraint_ball_center(j));
-  			}
-    	    c_intern(i) = sqrt( dist.dot(dist) ) - d->constraint_ball_radius;
-    }
-  	for (int i = 0; i < d->dim; ++i) {
-  	    u_counter = 0;
-  	  	for(int j = offset + i*d->u.rows(); j < offset + (i+1)*d->u.rows(); ++j){
-    	    c[j] = c_intern(u_counter);
-            u_counter++;
-  	  	}
-  	}
+		for (int i = 0; i < offset; ++i) {
+			c[i] = -1;
+		}
+		MatrixXd u_intern(d->u.rows(), d->u.cols());
+		for (int i = 0; i < d->dim; ++i) {
+		  u_counter = 0;
+		  for(int j = offset + i*d->u.rows(); j < offset + (i+1)*d->u.rows(); ++j){
+	        u_intern(u_counter, i) = x[j];
+	        u_counter++;
+		  }
+		}
+		VectorXd c_intern(u_intern.rows());
+		VectorXd dist(d->dim);
+		for (int i = 0; i < u_intern.rows(); ++i) {
+			for (int j = 0; j < d->dim; ++j) {
+				dist(j) = (u_intern(i, j)-d->constraint_ball_center(j));
+			}
+	    	c_intern(i) = sqrt( dist.dot(dist) ) - d->constraint_ball_radius;
+		}
+		for (int i = 0; i < d->dim; ++i) {
+		    u_counter = 0;
+		  	for(int j = offset + i*d->u.rows(); j < offset + (i+1)*d->u.rows(); ++j){
+		    c[j] = c_intern(u_counter);
+	        u_counter++;
+		  	}
+		}
+	}
   	return;
 }
 

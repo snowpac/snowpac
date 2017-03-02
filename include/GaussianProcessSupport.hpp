@@ -31,7 +31,7 @@ class GaussianProcessSupport : protected VectorOperations {
 
     bool use_approx_gaussian_process = false;
     bool approx_gaussian_process_active = false;
-    const double u_ratio = 0.2;
+    const double u_ratio = 0.15;
     const int min_nb_u = 2;
     int cur_nb_u_points = 0;
 
@@ -44,7 +44,7 @@ class GaussianProcessSupport : protected VectorOperations {
     //void do_resample_u(); //TODO check if able to remove this one
   public:
     void initialize ( const int, const int, double&,
-                      std::vector<double> const&, int , const bool);
+                      std::vector<double> const&, int , const std::string);
     void smooth_data ( BlackBoxData& );
     double evaluate_objective ( BlackBoxData const& );
 

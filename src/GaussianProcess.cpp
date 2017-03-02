@@ -275,12 +275,13 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
 //    if (gp_noise.at( i ) > max_noise)
 //      max_noise = gp_noise.at( i );
 //  }
-  lb[0] = 1e-1; 
-  ub[0] = 1e3;
-  lb[0] = max_function_value - 1e2;
-  if ( lb[0] < 1e-2 ) lb[0] = 1e-2;
-  ub[0] = max_function_value + 1e2; //+ 1e2;
-  if ( ub[0] > 1e2 ) ub[0] = 1e2;
+  lb[0] = 1e-3; 
+      ub[0] = 1e3;
+      lb[0] = max_function_value - 1e2;
+      if ( lb[0] < 1e-3 ) lb[0] = 1e-3;
+      ub[0] = max_function_value + 1e2; 
+      if ( ub[0] > 1e3 ) ub[0] = 1e3;
+      if ( ub[0] <= lb[0]) lb[0] = 1e-3;
   double delta_threshold = *delta;
   if (delta_threshold < 1e-2) delta_threshold = 1e-2;
   for (int i = 0; i < dim; ++i) {
@@ -317,7 +318,7 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
  // opt.set_xtol_abs(1e-2);
 //  opt.set_xtol_rel(1e-2);
 //set timeout to NLOPT_TIMEOUT seconds
-  opt.set_maxtime(120.0);
+  opt.set_maxtime(60.0);
   opt.set_maxeval(10000);
   //perform optimization to get correction factors
 
@@ -342,6 +343,11 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
 }
 //--------------------------------------------------------------------------------
 void GaussianProcess::estimate_hyper_parameters_induced_only ( std::vector< std::vector<double> > const &nodes,
+                                                  std::vector<double> const &values,
+                                                  std::vector<double> const &noise ) 
+{ this->estimate_hyper_parameters(nodes, values, noise);}
+
+void GaussianProcess::estimate_hyper_parameters_ls_only ( std::vector< std::vector<double> > const &nodes,
                                                   std::vector<double> const &values,
                                                   std::vector<double> const &noise ) 
 { this->estimate_hyper_parameters(nodes, values, noise);}

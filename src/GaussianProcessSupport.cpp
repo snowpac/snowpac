@@ -11,7 +11,7 @@
 //--------------------------------------------------------------------------------
 void GaussianProcessSupport::initialize ( const int dim, const int number_processes_input,
   double &delta_input, std::vector<double> const &update_at_evaluations_input,
-  int update_interval_length_input, const bool use_approx_gaussian_process_in ) 
+  int update_interval_length_input, const std::string gaussian_process_type ) 
 {
   nb_values = 0;
   delta = &delta_input;
@@ -25,11 +25,21 @@ void GaussianProcessSupport::initialize ( const int dim, const int number_proces
   values.resize( number_processes );
   noise.resize( number_processes );
   for ( int i = 0; i < number_processes; i++) {
-    if(use_approx_gaussian_process_in){
+    if( gaussian_process_type.compare( "GP" ) == 0){
+      gaussian_processes.push_back ( std::shared_ptr<GaussianProcess> (new GaussianProcess(dim, *delta)) );
+      use_approx_gaussian_process = false;
+    }else if( gaussian_process_type.compare( "SOR" ) == 0){
+      use_approx_gaussian_process = true;
+      gaussian_processes.push_back ( std::shared_ptr<SubsetOfRegressors> (new SubsetOfRegressors(dim, *delta)) );
+    }else if( gaussian_process_type.compare( "DTC" ) == 0){
+      use_approx_gaussian_process = true;
+      gaussian_processes.push_back ( std::shared_ptr<DeterministicTrainingConditional> (new DeterministicTrainingConditional(dim, *delta)) );
+    }else if( gaussian_process_type.compare( "FITC" ) == 0){
       use_approx_gaussian_process = true;
       gaussian_processes.push_back ( std::shared_ptr<FullyIndependentTrainingConditional> (new FullyIndependentTrainingConditional(dim, *delta)) );
-    }
-    else{
+    }else{
+      std::cout << "No value set for GP type. Set to default Full Gaussian Process." << std::endl;
+      use_approx_gaussian_process = false;
       gaussian_processes.push_back ( std::shared_ptr<GaussianProcess> (new GaussianProcess(dim, *delta)) );
     }
   }

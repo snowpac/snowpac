@@ -183,7 +183,7 @@ void SubsetOfRegressors::run_optimizer(std::vector<double> const &values){
   return;
 }
 
-void SubsetOfRegressors::estimate_hyper_parameters ( std::vector< std::vector<double> > const &nodes,
+void SubsetOfRegressors::estimate_hyper_parameters_all ( std::vector< std::vector<double> > const &nodes,
                                                   std::vector<double> const &values,
                                                   std::vector<double> const &noise )
 {
@@ -215,7 +215,7 @@ void SubsetOfRegressors::estimate_hyper_parameters_induced_only ( std::vector< s
                                                   std::vector<double> const &values,
                                                   std::vector<double> const &noise )
 {
-  //std::cout << "in sor1" << std::endl;
+  //std::cout << "in sor1" << "u size:" << u.rows() << std::endl;
   if(u.rows() > 0){
 	  copy_data_to_members(nodes, values, noise);
 
@@ -230,6 +230,35 @@ void SubsetOfRegressors::estimate_hyper_parameters_induced_only ( std::vector< s
 	  copy_hyperparameters();
 
 	  //this->build(nodes, values, noise);
+	  for ( int i = 0; i < 1+dim; ++i )
+	    std::cout << "gp_param = " << gp_parameters[i] << std::endl;
+  }else{
+  	GaussianProcess::estimate_hyper_parameters(nodes, values, noise);
+  }
+
+  return;
+}
+
+void SubsetOfRegressors::estimate_hyper_parameters_ls_only ( std::vector< std::vector<double> > const &nodes,
+                                                  std::vector<double> const &values,
+                                                  std::vector<double> const &noise )
+{
+  if(u.rows() > 0){
+	  copy_data_to_members(nodes, values, noise);
+
+	  gp_pointer = this;
+
+	  sample_u(u.rows());
+
+	  set_hyperparameters_ls_only();
+
+	  run_optimizer(values);
+
+	  copy_hyperparameters();
+
+	  //this->build(nodes, values, noise);
+	  for ( int i = 0; i < 1+dim; ++i )
+	    std::cout << "gp_param = " << gp_parameters[i] << std::endl;
   }else{
   	GaussianProcess::estimate_hyper_parameters(nodes, values, noise);
   }
@@ -246,24 +275,31 @@ double SubsetOfRegressors::parameter_estimation_objective(std::vector<double> co
   SubsetOfRegressors *d = reinterpret_cast<SubsetOfRegressors*>(data);
   int offset;
   std::vector<double> local_params(d->dim+1);
-  if(x.size() > d->u.rows()*d->dim){
-  	offset = 1+d->dim;
-  	for(int i = 0; i < local_params.size(); ++i){
-  		local_params[i] = x[i];
-  	}
-  }else{
-  	offset = 0;
-  	for(int i = 0; i < local_params.size(); ++i){
-  		local_params[i] = d->gp_parameters[i];
-  	}
-  }
-  int u_counter;
-  for (int i = 0; i < d->dim; ++i) {
-  	  u_counter = 0;
-  	  for(int j = offset + i*d->u.rows(); j < offset + (i+1)*d->u.rows(); ++j){
-            d->u(u_counter,i) = x[j];
-            u_counter++;
+  if(x.size()==1+d->dim){
+  	  offset = 0;
+  	  for(int i = 0; i < local_params.size(); ++i){
+	  		local_params[i] = x[i];
   	  }
+  }else{
+	  if(x.size() > d->u.rows()*d->dim){
+	  	offset = 1+d->dim;
+	  	for(int i = 0; i < local_params.size(); ++i){
+	  		local_params[i] = x[i];
+	  	}
+	  }else{
+	  	offset = 0;
+	  	for(int i = 0; i < local_params.size(); ++i){
+	  		local_params[i] = d->gp_parameters[i];
+	  	}
+	  }
+	  int u_counter;
+	  for (int i = 0; i < d->dim; ++i) {
+	  	  u_counter = 0;
+	  	  for(int j = offset + i*d->u.rows(); j < offset + (i+1)*d->u.rows(); ++j){
+	            d->u(u_counter,i) = x[j];
+	            u_counter++;
+	  	  }
+	  }
   }
 
   //Compute Kuf, Kuu
@@ -409,24 +445,31 @@ double SubsetOfRegressors::parameter_estimation_objective_w_gradients(std::vecto
   SubsetOfRegressors *d = reinterpret_cast<SubsetOfRegressors*>(data);
   int offset;
   std::vector<double> local_params(d->dim+1);
-  if(x.size() > d->u.rows()*d->dim){
-  	offset = 1+d->dim;
-  	for(int i = 0; i < local_params.size(); ++i){
-  		local_params[i] = x[i];
-  	}
-  }else{
-  	offset = 0;
-  	for(int i = 0; i < local_params.size(); ++i){
-  		local_params[i] = d->gp_parameters[i];
-  	}
-  }
-  int u_counter;
-  for (int i = 0; i < d->dim; ++i) {
-  	  u_counter = 0;
-  	  for(int j = offset + i*d->u.rows(); j < offset + (i+1)*d->u.rows(); ++j){
-            d->u(u_counter,i) = x[j];
-            u_counter++;
+  if(x.size()==1+d->dim){
+  	  offset = 0;
+  	  for(int i = 0; i < local_params.size(); ++i){
+	  		local_params[i] = x[i];
   	  }
+  }else{
+	  if(x.size() > d->u.rows()*d->dim){
+	  	offset = 1+d->dim;
+	  	for(int i = 0; i < local_params.size(); ++i){
+	  		local_params[i] = x[i];
+	  	}
+	  }else{
+	  	offset = 0;
+	  	for(int i = 0; i < local_params.size(); ++i){
+	  		local_params[i] = d->gp_parameters[i];
+	  	}
+	  }
+	  int u_counter;
+	  for (int i = 0; i < d->dim; ++i) {
+	  	  u_counter = 0;
+	  	  for(int j = offset + i*d->u.rows(); j < offset + (i+1)*d->u.rows(); ++j){
+	            d->u(u_counter,i) = x[j];
+	            u_counter++;
+	  	  }
+	  }
   }
 
   //Compute Kuf, Kuu
@@ -568,34 +611,48 @@ double SubsetOfRegressors::parameter_estimation_objective_w_gradients(std::vecto
 		MatrixXd Kfudot;
 		MatrixXd Kuudot;
 		VectorXd LambdaDot;
-		if( dim_grad > d->u.rows()*d->dim){//if we optimize also for sigma_f and lengthscales
+		if(dim_grad == d->dim + 1){
 			if(i == 0){//grad sigma_f
 				d->derivate_K_u_u_wrt_sigmaf(local_params, Kuudot);
 				d->derivate_K_f_f_wrt_sigmaf(local_params, Kffdot);
 				d->derivate_K_u_f_wrt_sigmaf(local_params, Kufdot);
 				Kfudot = Kufdot.transpose();
-			}else if(i > 0 && i < 1 + d->dim){//grad length parameter
+			}else{//grad length parameter
 				d->derivate_K_u_u_wrt_l(local_params, i-1, Kuudot);
 				d->derivate_K_f_f_wrt_l(local_params, i-1, Kffdot);
 				d->derivate_K_u_f_wrt_l(local_params, i-1, Kufdot);
 				Kfudot = Kufdot.transpose();
-			}else{//grad u
-				int uidx = (i-offset)%d->u.rows();
+			}
+		}else{
+			if( dim_grad > d->u.rows()*d->dim){//if we optimize also for sigma_f and lengthscales
+				if(i == 0){//grad sigma_f
+					d->derivate_K_u_u_wrt_sigmaf(local_params, Kuudot);
+					d->derivate_K_f_f_wrt_sigmaf(local_params, Kffdot);
+					d->derivate_K_u_f_wrt_sigmaf(local_params, Kufdot);
+					Kfudot = Kufdot.transpose();
+				}else if(i > 0 && i < 1 + d->dim){//grad length parameter
+					d->derivate_K_u_u_wrt_l(local_params, i-1, Kuudot);
+					d->derivate_K_f_f_wrt_l(local_params, i-1, Kffdot);
+					d->derivate_K_u_f_wrt_l(local_params, i-1, Kufdot);
+					Kfudot = Kufdot.transpose();
+				}else{//grad u
+					int uidx = (i-offset)%d->u.rows();
+					int udim = (int) ((i-offset)/d->u.rows());
+					d->derivate_K_u_u_wrt_uik(local_params, uidx, udim, Kuudot);
+					d->derivate_K_u_f_wrt_uik(local_params, uidx, udim, Kufdot);
+					Kffdot.resize(nb_gp_nodes, nb_gp_nodes);
+					Kffdot.setZero();
+					Kfudot = Kufdot.transpose(); 
+				}
+		    }else{
+		    	int uidx = (i-offset)%d->u.rows();
 				int udim = (int) ((i-offset)/d->u.rows());
 				d->derivate_K_u_u_wrt_uik(local_params, uidx, udim, Kuudot);
 				d->derivate_K_u_f_wrt_uik(local_params, uidx, udim, Kufdot);
 				Kffdot.resize(nb_gp_nodes, nb_gp_nodes);
 				Kffdot.setZero();
 				Kfudot = Kufdot.transpose(); 
-			}
-	    }else{
-	    	int uidx = (i-offset)%d->u.rows();
-			int udim = (int) ((i-offset)/d->u.rows());
-			d->derivate_K_u_u_wrt_uik(local_params, uidx, udim, Kuudot);
-			d->derivate_K_u_f_wrt_uik(local_params, uidx, udim, Kufdot);
-			Kffdot.resize(nb_gp_nodes, nb_gp_nodes);
-			Kffdot.setZero();
-			Kfudot = Kufdot.transpose(); 
+		    }
 	    }
 		VectorXd LambdaInv(nb_gp_nodes);
 		for(int j = 0; j < nb_gp_nodes; ++j){
@@ -661,38 +718,44 @@ void SubsetOfRegressors::trust_region_constraint(unsigned int m, double* c, unsi
 	SubsetOfRegressors *d = reinterpret_cast<SubsetOfRegressors*>(data);
 
 	int offset;
-	if(m > d->u.rows()*d->dim){
-	    offset = 1+d->dim;
+	if(m == d->dim + 1){
+		for (int i = 0; i < d->dim+1; ++i) {
+			c[i] = -1;
+		}
 	}else{
-		offset = 0;
-	}
-  	int u_counter;
+		if(m > d->u.rows()*d->dim){
+		    offset = 1+d->dim;
+		}else{
+			offset = 0;
+		}
+		int u_counter;
 
-  	for (int i = 0; i < offset; ++i) {
-  		c[i] = -1;
-  	}
-  	MatrixXd u_intern(d->u.rows(), d->u.cols());
-  	for (int i = 0; i < d->dim; ++i) {
-  	  u_counter = 0;
-  	  for(int j = offset + i*d->u.rows(); j < offset + (i+1)*d->u.rows(); ++j){
-            u_intern(u_counter, i) = x[j];
-            u_counter++;
-  	  }
-  	}
-  	VectorXd c_intern(u_intern.rows());
-  	VectorXd dist(d->dim);
-  	for (int i = 0; i < u_intern.rows(); ++i) {
-  			for (int j = 0; j < d->dim; ++j) {
-  				dist(j) = (u_intern(i, j)-d->constraint_ball_center(j));
-  			}
-    	    c_intern(i) = sqrt( dist.dot(dist) ) - d->constraint_ball_radius;
-    }
-  	for (int i = 0; i < d->dim; ++i) {
-  	    u_counter = 0;
-  	  	for(int j = offset + i*d->u.rows(); j < offset + (i+1)*d->u.rows(); ++j){
-    	    c[j] = c_intern(u_counter);
-            u_counter++;
-  	  	}
-  	}
+		for (int i = 0; i < offset; ++i) {
+			c[i] = -1;
+		}
+		MatrixXd u_intern(d->u.rows(), d->u.cols());
+		for (int i = 0; i < d->dim; ++i) {
+		  u_counter = 0;
+		  for(int j = offset + i*d->u.rows(); j < offset + (i+1)*d->u.rows(); ++j){
+	        u_intern(u_counter, i) = x[j];
+	        u_counter++;
+		  }
+		}
+		VectorXd c_intern(u_intern.rows());
+		VectorXd dist(d->dim);
+		for (int i = 0; i < u_intern.rows(); ++i) {
+			for (int j = 0; j < d->dim; ++j) {
+				dist(j) = (u_intern(i, j)-d->constraint_ball_center(j));
+			}
+	    	c_intern(i) = sqrt( dist.dot(dist) ) - d->constraint_ball_radius;
+		}
+		for (int i = 0; i < d->dim; ++i) {
+		    u_counter = 0;
+		  	for(int j = offset + i*d->u.rows(); j < offset + (i+1)*d->u.rows(); ++j){
+		    c[j] = c_intern(u_counter);
+	        u_counter++;
+		  	}
+		}
+	}
   	return;
 }

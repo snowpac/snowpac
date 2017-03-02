@@ -94,6 +94,10 @@ class GaussianProcess : public GaussianProcessBaseClass,
     virtual void estimate_hyper_parameters_induced_only ( std::vector< std::vector<double> > const&,
                                      std::vector<double> const&, 
                                      std::vector<double> const&);
+
+    virtual void estimate_hyper_parameters_ls_only ( std::vector< std::vector<double> > const&,
+                                     std::vector<double> const&, 
+                                     std::vector<double> const&);
     //! Build the Gaussian process
     /*!
      Computes the Gaussian process\n

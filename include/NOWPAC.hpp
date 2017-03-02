@@ -115,6 +115,7 @@ class NOWPAC : protected NoiseDetection<TSurrogateModel> {
     int NOEXIT;
     double tmp_dbl1 = -1;
     bool use_approx_gaussian_process = false;
+    std::string gaussian_process_type = "GP";
     double nonlinear_radius_factor = 1.5;
 
     int output_steps = 1;
@@ -224,6 +225,16 @@ public:
      \param option_value value of the option to be set
     */
     void set_option ( std::string const&, std::vector<int> const& );
+
+    //! Function to set option for optimizer
+    /*!
+     Function to set option for optimizer:
+      - "Approximate GP"
+     \param option_name name of the option to be set (see documentation)
+     \param option_value value of the option to be set
+    */
+    void set_option ( std::string const&, std::string const& );
+
     //! Function to set user data for black box evaluator 
     /*!
      Function to set user data for black box evaluator. The optimizer does not have 
@@ -401,10 +412,6 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_option (
     return;
   } 
 
-  if ( option_name.compare( "approximated_gaussian_gp" ) == 0 ) {
-    use_approx_gaussian_process = option_value;
-    return;
-  } 
   std::cout << "Warning : Unknown parameter (" << option_name << ")"<< std::endl;
   return;
 }
@@ -441,6 +448,32 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_option (
   if ( option_name.compare( "GP_adaption_steps" ) == 0 ) { 
     for ( int i = 0; i < option_value.size(); ++i )
       update_at_evaluations.push_back( option_value.at( i ) );
+    return;
+  }
+  std::cout << "Warning : Unknown parameter (" << option_name << ")"<< std::endl;
+  return;
+}
+//--------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------
+template<class TSurrogateModel, class TBasisForSurrogateModel>
+void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_option ( 
+  std::string const &option_name, std::string const &option_value )
+{
+  if ( option_name.compare( "GP_type" ) == 0 ) {
+    if( option_name.compare( "GP" ) == 0){
+      use_approx_gaussian_process = false;
+    }else if( option_name.compare( "SOR" ) == 0){
+      use_approx_gaussian_process = true;
+    }else if( option_name.compare( "DTC" ) == 0){
+      use_approx_gaussian_process = true;
+    }else if( option_name.compare( "FITC" ) == 0){
+      use_approx_gaussian_process = true;
+    }else{
+      std::cout << "No value set for GP type. Set to default Full Gaussian Process." << std::endl;
+      use_approx_gaussian_process = false;
+    }
+    use_approx_gaussian_process = true;
+    gaussian_process_type = option_value;
     return;
   }
   std::cout << "Warning : Unknown parameter (" << option_name << ")"<< std::endl;
@@ -1309,7 +1342,7 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
 
     if ( stochastic_optimization )
       gaussian_processes.initialize ( dim, nb_constraints + 1, delta,
-                                      update_at_evaluations, update_interval_length, use_approx_gaussian_process );
+                                      update_at_evaluations, update_interval_length, gaussian_process_type );
 
     if ( verbose >= 2 ) { std::cout << "Initial evaluation of black box functions" << std::endl; }
     // initial evaluations 

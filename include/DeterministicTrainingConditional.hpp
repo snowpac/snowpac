@@ -47,11 +47,18 @@ public:
     */
     void evaluate ( std::vector<double> const&, double&, double& );
 
-    void estimate_hyper_parameters ( std::vector< std::vector<double> > const &nodes,
+    //void estimate_hyper_parameters ( std::vector< std::vector<double> > const &nodes,
+    //                                              std::vector<double> const &values,
+    //                                              std::vector<double> const &noise );
+
+    void estimate_hyper_parameters_all ( std::vector< std::vector<double> > const &nodes,
                                                   std::vector<double> const &values,
                                                   std::vector<double> const &noise );
 
     void estimate_hyper_parameters_induced_only ( std::vector< std::vector<double> > const &nodes,
+                                                  std::vector<double> const &values,
+                                                  std::vector<double> const &noise );
+    void estimate_hyper_parameters_ls_only ( std::vector< std::vector<double> > const &nodes,
                                                   std::vector<double> const &values,
                                                   std::vector<double> const &noise );
 
