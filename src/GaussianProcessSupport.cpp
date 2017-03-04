@@ -11,7 +11,7 @@
 //--------------------------------------------------------------------------------
 void GaussianProcessSupport::initialize ( const int dim, const int number_processes_input,
   double &delta_input, std::vector<double> const &update_at_evaluations_input,
-  int update_interval_length_input, const std::string gaussian_process_type ) 
+  int update_interval_length_input, const std::string gaussian_process_type, const int exitconst) 
 {
   nb_values = 0;
   delta = &delta_input;
@@ -44,6 +44,7 @@ void GaussianProcessSupport::initialize ( const int dim, const int number_proces
     }
   }
   rescaled_node.resize( dim );
+  NOEXIT = exitconst;
   return;
 }
 //--------------------------------------------------------------------------------
@@ -342,7 +343,7 @@ void GaussianProcessSupport::update_gaussian_processes ( BlackBoxData &evaluatio
 
 
 //--------------------------------------------------------------------------------
-void GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
+int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
 {
 
   for(int i = 0; i < number_processes; ++i){
@@ -351,34 +352,56 @@ void GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
 
   update_data( evaluations );
 
-  update_gaussian_processes( evaluations );
+  bool negative_variance_found;
+  do{
+    negative_variance_found = false;
+    update_gaussian_processes( evaluations );
 
+    evaluations.active_index.push_back( evaluations.nodes.size()-1 );
+    for ( unsigned int i = 0; i < evaluations.active_index.size( ); ++i ) {
+  //    rescale ( 1e0/(delta_tmp), evaluations.nodes[evaluations.active_index[i]], 
+  //              evaluations.nodes[best_index], rescaled_node );
+      for ( int j = 0; j < number_processes; ++j ) {
+  //      gaussian_processes[j].evaluate( rescaled_node, mean, variance );
 
-  evaluations.active_index.push_back( evaluations.nodes.size()-1 );
-  for ( unsigned int i = 0; i < evaluations.active_index.size( ); ++i ) {
-//    rescale ( 1e0/(delta_tmp), evaluations.nodes[evaluations.active_index[i]], 
-//              evaluations.nodes[best_index], rescaled_node );
-    for ( int j = 0; j < number_processes; ++j ) {
-//      gaussian_processes[j].evaluate( rescaled_node, mean, variance );
+         // std::cout << "Smooth Gaussian Process: " << j << std::endl;
+        gaussian_processes[j]->evaluate( evaluations.nodes[evaluations.active_index[i]], mean, variance );
 
-       // std::cout << "Smooth Gaussian Process: " << j << std::endl;
-      gaussian_processes[j]->evaluate( evaluations.nodes[evaluations.active_index[i]], mean, variance );
+        if (variance < 0e0){
+          negative_variance_found = true;
+          break;
+        }
 
-      assert ( variance >= 0e0 );
+        weight = exp( - 2e0*sqrt(variance) );
 
-      weight = exp( - 2e0*sqrt(variance) );
-
-      evaluations.values[ j ].at( evaluations.active_index [ i ] ) = 
-        weight * mean  + 
-        (1e0-weight) * ( values[ j ].at( evaluations.active_index [ i ] ) );
-      evaluations.noise[ j ].at( evaluations.active_index [ i ] ) = 
-        weight * 2e0 * sqrt (variance)  + 
-        (1e0-weight) * ( noise[ j ].at( evaluations.active_index [ i ] ) );
-     std::cout << "Smooth evalute [" << evaluations.active_index[i] << ", " << j <<"]: mean,variance " << evaluations.values[ j ].at( evaluations.active_index [ i ] ) << ", " << evaluations.noise[ j ].at( evaluations.active_index [ i ] )  << "\n" << std::endl;
+        evaluations.values[ j ].at( evaluations.active_index [ i ] ) = 
+          weight * mean  + 
+          (1e0-weight) * ( values[ j ].at( evaluations.active_index [ i ] ) );
+        evaluations.noise[ j ].at( evaluations.active_index [ i ] ) = 
+          weight * 2e0 * sqrt (variance)  + 
+          (1e0-weight) * ( noise[ j ].at( evaluations.active_index [ i ] ) );
+       std::cout << "Smooth evalute [" << evaluations.active_index[i] << ", " << j <<"]: mean,variance " << evaluations.values[ j ].at( evaluations.active_index [ i ] ) << ", " << evaluations.noise[ j ].at( evaluations.active_index [ i ] )  << "\n" << std::endl;
+      }
+      if (variance < 0e0){
+          negative_variance_found = true;
+          break;
+      }
     }
-  }
-  evaluations.active_index.erase( evaluations.active_index.end()-1 );
-
+    if(!negative_variance_found){
+      evaluations.active_index.erase( evaluations.active_index.end()-1 );
+      for ( int j = 0; j < number_processes; ++j ) {
+        gaussian_processes[j]->decrease_nugget();
+      }
+    }
+    if(negative_variance_found){
+      for ( int j = 0; j < number_processes; ++j ) {
+        bool max_nugget_reached = gaussian_processes[j]->increase_nugget();
+        if(max_nugget_reached){
+          return -7;
+        }
+      }
+    }
+  }while(negative_variance_found);
 /*
   for ( unsigned int i = 0; i < evaluations.nodes.size( ); ++i ) {
 //    rescale ( 1e0/(delta_tmp), evaluations.nodes[ i ], 
@@ -404,7 +427,7 @@ void GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
   do_parameter_estimation = false;
 
 
-  return;
+  return NOEXIT;
 }
 //--------------------------------------------------------------------------------
 

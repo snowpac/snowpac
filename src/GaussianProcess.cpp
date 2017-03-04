@@ -426,4 +426,10 @@ void GaussianProcess::set_evaluations(const BlackBoxData &evaluations) {
 std::vector<double> GaussianProcess::get_hyperparameters(){
     return this->gp_parameters;
 }
+void GaussianProcess::decrease_nugget(){
+  return;
+}
+bool GaussianProcess::increase_nugget(){
+  return true;
+}
 //--------------------------------------------------------------------------------

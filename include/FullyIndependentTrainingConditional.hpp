@@ -37,7 +37,9 @@ protected:
     //bool resample_u = true;
     //bool do_hp_estimation = true;
     int print = 0;
-    double K_u_u_nugget = 0.00000001;
+    double K_u_u_nugget = 0.00001;
+    double K_u_u_nugget_min = 1e-6;
+    double K_u_u_nugget_max = 1e-2;
 
     double Kuu_opt_nugget = 0.00000001;
     double Lambda_opt_nugget = 0.00000001;
@@ -219,6 +221,8 @@ public:
     void sample_u(const int &nb_u_nodes);
     
     void clear_u();
+    void decrease_nugget();
+    bool increase_nugget();
 };
 
 

@@ -151,6 +151,9 @@ class GaussianProcess : public GaussianProcessBaseClass,
     virtual void clear_u(){exit(-1);};
 
     virtual std::vector<double> get_hyperparameters();
+
+    virtual void decrease_nugget();
+    virtual bool increase_nugget();
 };
 
 #endif

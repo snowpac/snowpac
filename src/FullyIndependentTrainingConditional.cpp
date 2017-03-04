@@ -1635,12 +1635,18 @@ void FullyIndependentTrainingConditional::trust_region_constraint(unsigned int m
   	return;
 }
 
-/*
-  void FullyIndependentTrainingConditional::set_hp_estimation(bool do_estimation){
-	do_hp_estimation = do_estimation;
-  }
-
-  void FullyIndependentTrainingConditional::do_resample_u(){
-  	resample_u = true;
-  }
-  */
+void FullyIndependentTrainingConditional::decrease_nugget(){
+	if(K_u_u_nugget > K_u_u_nugget_min){
+		K_u_u_nugget *= 0.1;
+	}
+  return;
+}
+bool FullyIndependentTrainingConditional::increase_nugget(){
+	if(K_u_u_nugget <= K_u_u_nugget_max){
+		K_u_u_nugget *= 10;
+	}
+	if(K_u_u_nugget > K_u_u_nugget_max){
+		return true;
+	}
+  return false;
+}

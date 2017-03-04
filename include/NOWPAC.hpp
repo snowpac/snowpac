@@ -705,7 +705,7 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::blackbox_evaluator (
           gaussian_processes.set_constraint_ball_center(evaluations.nodes[evaluations.best_index]);
           gaussian_processes.set_constraint_ball_radius(nonlinear_radius_factor*delta);
     }
-    gaussian_processes.smooth_data ( evaluations );
+    EXIT_FLAG = gaussian_processes.smooth_data ( evaluations );
   }
 
   write_to_file();
@@ -772,7 +772,7 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::blackbox_evaluator ( )
           gaussian_processes.set_constraint_ball_center(evaluations.nodes[evaluations.best_index]);
           gaussian_processes.set_constraint_ball_radius(nonlinear_radius_factor*delta);
     } 
-    gaussian_processes.smooth_data ( evaluations );
+    EXIT_FLAG = gaussian_processes.smooth_data ( evaluations );
   }
 
 
@@ -921,7 +921,7 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::add_trial_node ( )
           gaussian_processes.set_constraint_ball_center(evaluations.nodes[evaluations.best_index]);
           gaussian_processes.set_constraint_ball_radius(nonlinear_radius_factor*delta);
     } 
-    gaussian_processes.smooth_data ( evaluations );
+    EXIT_FLAG = gaussian_processes.smooth_data ( evaluations );
   }
   return;
 }
@@ -1342,7 +1342,7 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
 
     if ( stochastic_optimization )
       gaussian_processes.initialize ( dim, nb_constraints + 1, delta,
-                                      update_at_evaluations, update_interval_length, gaussian_process_type );
+                                      update_at_evaluations, update_interval_length, gaussian_process_type, NOEXIT );
 
     if ( verbose >= 2 ) { std::cout << "Initial evaluation of black box functions" << std::endl; }
     // initial evaluations 
@@ -1517,6 +1517,7 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
           replace_node_index = surrogate_nodes->replace_node( evaluations.best_index, 
                                                              evaluations, x_trial );
           add_trial_node( );
+          if ( EXIT_FLAG != NOEXIT ) break;
         }
         //output_for_plotting( number_accepted_steps ) ;
         update_trustregion( theta );
@@ -1581,6 +1582,7 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
         replace_node_index = surrogate_nodes->replace_node( -1, 
                                                            evaluations, x_trial );
         add_trial_node( );
+        if ( EXIT_FLAG != NOEXIT ) break;
         evaluations.best_index = evaluations.nodes.size()-1;
         /*if(use_approx_gaussian_process){
           gaussian_processes.set_constraint_ball_center(evaluations.nodes[evaluations.best_index]);
@@ -1604,6 +1606,7 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
                                                              evaluations, x_trial );
           assert ( evaluations.active_index[replace_node_index] != evaluations.best_index);
           add_trial_node( );
+          if ( EXIT_FLAG != NOEXIT ) break;
           update_surrogate_models( );
         }
         if ( stochastic_optimization ) {
@@ -1701,6 +1704,8 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
       std::cout << " Black box returned invalid value" << std::endl;
     if ( EXIT_FLAG == -6 )
       std::cout << " Other termination reason" << std::endl;
+    if ( EXIT_FLAG == -7 )
+      std::cout << " Negative variance in GP estimation due to ill-conditioning" << std::endl;
     std::cout << "*********************************************" << std::endl << std::endl << std::flush;
   }
 

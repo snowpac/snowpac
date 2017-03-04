@@ -35,6 +35,8 @@ class GaussianProcessSupport : protected VectorOperations {
     const int min_nb_u = 2;
     int cur_nb_u_points = 0;
 
+    int NOEXIT;
+
     void update_data ( BlackBoxData& );
     void update_gaussian_processes ( BlackBoxData& );
 
@@ -44,8 +46,8 @@ class GaussianProcessSupport : protected VectorOperations {
     //void do_resample_u(); //TODO check if able to remove this one
   public:
     void initialize ( const int, const int, double&,
-                      std::vector<double> const&, int , const std::string);
-    void smooth_data ( BlackBoxData& );
+                      std::vector<double> const&, int , const std::string, const int exitconst);
+    int smooth_data ( BlackBoxData& );
     double evaluate_objective ( BlackBoxData const& );
 
     void evaluate_gaussian_process_at(const int&, std::vector<double> const&, double&, double&);
