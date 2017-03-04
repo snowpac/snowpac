@@ -459,20 +459,21 @@ template<class TSurrogateModel, class TBasisForSurrogateModel>
 void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_option ( 
   std::string const &option_name, std::string const &option_value )
 {
+  std::cout << option_value << std::endl;
   if ( option_name.compare( "GP_type" ) == 0 ) {
-    if( option_name.compare( "GP" ) == 0){
+    use_approx_gaussian_process = false;
+    if( option_value.compare( "GP" ) == 0){
       use_approx_gaussian_process = false;
-    }else if( option_name.compare( "SOR" ) == 0){
+    }else if( option_value.compare( "SOR" ) == 0){
       use_approx_gaussian_process = true;
-    }else if( option_name.compare( "DTC" ) == 0){
+    }else if( option_value.compare( "DTC" ) == 0){
       use_approx_gaussian_process = true;
-    }else if( option_name.compare( "FITC" ) == 0){
+    }else if( option_value.compare( "FITC" ) == 0){
       use_approx_gaussian_process = true;
     }else{
-      std::cout << "No value set for GP type. Set to default Full Gaussian Process." << std::endl;
+      std::cout << "NOWPAC: No value set for GP type. Set to default Full Gaussian Process." << std::endl;
       use_approx_gaussian_process = false;
     }
-    use_approx_gaussian_process = true;
     gaussian_process_type = option_value;
     return;
   }
