@@ -25,6 +25,7 @@ void GaussianProcessSupport::initialize ( const int dim, const int number_proces
   values.resize( number_processes );
   noise.resize( number_processes );
   for ( int i = 0; i < number_processes; i++) {
+    std::cout << gaussian_process_type << std::endl;
     if( gaussian_process_type.compare( "GP" ) == 0){
       gaussian_processes.push_back ( std::shared_ptr<GaussianProcess> (new GaussianProcess(dim, *delta)) );
       use_approx_gaussian_process = false;
@@ -38,7 +39,7 @@ void GaussianProcessSupport::initialize ( const int dim, const int number_proces
       use_approx_gaussian_process = true;
       gaussian_processes.push_back ( std::shared_ptr<FullyIndependentTrainingConditional> (new FullyIndependentTrainingConditional(dim, *delta)) );
     }else{
-      std::cout << "No value set for GP type. Set to default Full Gaussian Process." << std::endl;
+      std::cout << "GPSupport: No value set for GP type. Set to default Full Gaussian Process." << std::endl;
       use_approx_gaussian_process = false;
       gaussian_processes.push_back ( std::shared_ptr<GaussianProcess> (new GaussianProcess(dim, *delta)) );
     }
