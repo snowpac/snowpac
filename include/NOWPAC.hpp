@@ -116,7 +116,7 @@ class NOWPAC : protected NoiseDetection<TSurrogateModel> {
     double tmp_dbl1 = -1;
     bool use_approx_gaussian_process = false;
     std::string gaussian_process_type = "GP";
-    double nonlinear_radius_factor = 3.0; //3.0 matches with GP active index points
+    double nonlinear_radius_factor = 1.5; //3.0 matches with GP active index points
 
     int output_steps = 1;
 public:
@@ -386,7 +386,7 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_option (
       return;
     } 
   }
-  std::cout << "Warning : Unknown parameter (" << option_name << ")"<< std::endl;
+  std::cout << "Warning : Unknown parameter double(" << option_name << ")"<< std::endl;
   return;
 }
 //--------------------------------------------------------------------------------
@@ -412,7 +412,7 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_option (
     return;
   } 
 
-  std::cout << "Warning : Unknown parameter (" << option_name << ")"<< std::endl;
+  std::cout << "Warning : Unknown parameter bool(" << option_name << ")"<< std::endl;
   return;
 }
 //--------------------------------------------------------------------------------
@@ -435,7 +435,7 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_option (
       return; 
     }
   }
-  std::cout << "Warning : Unknown parameter (" << option_name << ")"<< std::endl;
+  std::cout << "Warning : Unknown parameter std::vector<double>(" << option_name << ")"<< std::endl;
   return;
 }
 //--------------------------------------------------------------------------------
@@ -450,7 +450,7 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_option (
       update_at_evaluations.push_back( option_value.at( i ) );
     return;
   }
-  std::cout << "Warning : Unknown parameter (" << option_name << ")"<< std::endl;
+  std::cout << "Warning : Unknown parameter std::vector<int>(" << option_name << ")"<< std::endl;
   return;
 }
 //--------------------------------------------------------------------------------
@@ -459,7 +459,6 @@ template<class TSurrogateModel, class TBasisForSurrogateModel>
 void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_option ( 
   std::string const &option_name, std::string const &option_value )
 {
-  std::cout << option_value << std::endl;
   if ( option_name.compare( "GP_type" ) == 0 ) {
     use_approx_gaussian_process = false;
     if( option_value.compare( "GP" ) == 0){
@@ -477,7 +476,7 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_option (
     gaussian_process_type = option_value;
     return;
   }
-  std::cout << "Warning : Unknown parameter (" << option_name << ")"<< std::endl;
+  std::cout << "Warning : Unknown parameter std::string(" << option_name << ")"<< std::endl;
   return;
 }
 //--------------------------------------------------------------------------------

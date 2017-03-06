@@ -92,7 +92,14 @@ void GaussianProcessSupport::update_gaussian_processes_for_gp( BlackBoxData &eva
 //    if (delta_tmp < 0.1) delta_tmp = 0.1;
     best_index = evaluations.best_index;
     for ( int i = 0; i < nb_values; ++i ) {
-      if ( diff_norm ( evaluations.nodes[ i ],
+      bool idx_is_active = false;
+      for(int j = 0; j < evaluations.active_index.size(); ++j){
+        if(i == evaluations.active_index[j]){
+          idx_is_active = true;
+          break;
+        }
+      }
+      if ( idx_is_active || diff_norm ( evaluations.nodes[ i ],
                        evaluations.nodes[ best_index ] ) <= 3e0 * (delta_tmp) ) {
         gaussian_process_active_index.push_back ( i );
 //        rescale ( 1e0/(delta_tmp), evaluations.nodes[i], evaluations.nodes[best_index],
@@ -347,10 +354,6 @@ void GaussianProcessSupport::update_gaussian_processes ( BlackBoxData &evaluatio
 int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
 {
 
-  for(int i = 0; i < number_processes; ++i){
-    gaussian_processes[i]->set_evaluations(evaluations);
-  }
-
   update_data( evaluations );
 
   bool negative_variance_found;
@@ -381,15 +384,17 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
         evaluations.noise[ j ].at( evaluations.active_index [ i ] ) = 
           weight * 2e0 * sqrt (variance)  + 
           (1e0-weight) * ( noise[ j ].at( evaluations.active_index [ i ] ) );
-       std::cout << "Smooth evalute [" << evaluations.active_index[i] << ", " << j <<"]: mean,variance " << evaluations.values[ j ].at( evaluations.active_index [ i ] ) << ", " << evaluations.noise[ j ].at( evaluations.active_index [ i ] )  << "\n" << std::endl;
+        std::cout << "Smooth evaluate var: [" << noise[ j ].at( evaluations.active_index [ i ]) << ", " << 2e0 *sqrt(variance) << "]\n" << std::endl;
+       std::cout << "Smooth evaluate [" << evaluations.active_index[i] << ", " << j <<"]: mean,variance " << evaluations.values[ j ].at( evaluations.active_index [ i ] ) << ", " << evaluations.noise[ j ].at( evaluations.active_index [ i ] )  << "\n" << std::endl;
       }
       if (variance < 0e0){
           negative_variance_found = true;
           break;
       }
     }
+
+    evaluations.active_index.erase( evaluations.active_index.end()-1 );
     if(!negative_variance_found){
-      evaluations.active_index.erase( evaluations.active_index.end()-1 );
       for ( int j = 0; j < number_processes; ++j ) {
         gaussian_processes[j]->decrease_nugget();
       }

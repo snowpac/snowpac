@@ -128,10 +128,10 @@ void GaussianProcess::build ( std::vector< std::vector<double> > const &nodes,
 
     nb_gp_nodes = nodes.size();
     gp_nodes.clear();
-    gp_noise.clear();
+    //gp_noise.clear();
     for ( int i = 0; i < nb_gp_nodes; ++i ) {
       gp_nodes.push_back ( nodes.at(i) );
-      gp_noise.push_back( noise.at(i) );
+      //gp_noise.push_back( noise.at(i) );
     }
 
 
@@ -178,7 +178,7 @@ void GaussianProcess::update ( std::vector<double> const &x,
   K0.resize( nb_gp_nodes );
   nb_gp_nodes += 1;
   gp_nodes.push_back( x );
-  gp_noise.push_back( noise );
+  //gp_noise.push_back( noise );
   scaled_function_values.push_back ( value );
 //  scaled_function_values.push_back ( ( value -  min_function_value ) / 
 //                                     ( 5e-1*( max_function_value-min_function_value ) ) - 1e0 );
@@ -208,7 +208,6 @@ void GaussianProcess::update ( std::vector<double> const &x,
 void GaussianProcess::evaluate ( std::vector<double> const &x,
                                  double &mean, double &variance ) 
 {
-
   K0.resize( nb_gp_nodes );
     
   for (int i = 0; i < nb_gp_nodes; i++)
@@ -248,12 +247,13 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
 //  auto minmax = std::minmax_element(values.begin(), values.end());
 //  min_function_value = values.at((minmax.first - values.begin()));
 //  max_function_value = values.at((minmax.second - values.begin()));
+  /* 
   auto minmax = std::minmax_element(values.begin(), values.end());
   min_function_value = values.at((minmax.first - values.begin()));
   max_function_value = fabs(values.at((minmax.second - values.begin())));
   if ( fabs(min_function_value) > max_function_value )
     max_function_value = fabs( min_function_value );
-
+  */
   L.clear();
   L.resize( nb_gp_nodes );
   for ( int i = 0; i < nb_gp_nodes; ++i)
@@ -275,7 +275,9 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
 //    if (gp_noise.at( i ) > max_noise)
 //      max_noise = gp_noise.at( i );
 //  }
-  lb[0] = 1e-3; 
+  
+  //My Version
+  /*lb[0] = 1e-3; 
       ub[0] = 1e3;
       lb[0] = max_function_value - 1e2;
       if ( lb[0] < 1e-3 ) lb[0] = 1e-3;
@@ -287,10 +289,34 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
   for (int i = 0; i < dim; ++i) {
       lb[i+1] = 1e-2 * delta_threshold; // 1e1
       ub[i+1] = 2.0 * delta_threshold; // 1e2
+  }*/
+  
+
+  //Florians old version1:
+  /*lb[0] = 1e-1; 
+  ub[0] = 1e1;
+  lb[0] = max_function_value - 1e2;
+  if ( lb[0] < 1e-2 ) lb[0] = 1e-2;
+  ub[0] = max_function_value + 1e2;
+  double delta_threshold = *delta;
+  if (delta_threshold < 1e-2) delta_threshold = 1e-2;
+  for (int i = 0; i < dim; ++i) {
+      lb[i+1] = 1e-2 * delta_threshold; // 1e1
+      ub[i+1] = 2.0 * delta_threshold; // 1e2
+  }*/
+  //Florians old version2:
+  lb[0] = 1e-1; // * pow(1000e0 * max_noise / 2e0, 2e0);
+  ub[0] = 1e1;// * pow(1000e0 * max_noise / 2e0, 2e0);
+  double delta_threshold = *delta;
+  if (delta_threshold < 1e-2) delta_threshold = 1e-2;
+  for (int i = 0; i < dim; ++i) {
+      lb[i+1] = 1e1 * delta_threshold;
+      ub[i+1] = 1e2 * delta_threshold;
   }
 
   if (gp_parameters[0] < 0e0) {
-    gp_parameters[0] = max_function_value;
+    //gp_parameters[0] = max_function_value;
+    gp_parameters[0] = lb[0]*5e-1 + 5e-1*ub[0];
     for (int i = 1; i < dim+1; ++i) {
       gp_parameters[i] = (lb[i]*5e-1 + 5e-1*ub[i]);
     }
@@ -319,7 +345,7 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
 //  opt.set_xtol_rel(1e-2);
 //set timeout to NLOPT_TIMEOUT seconds
   opt.set_maxtime(1.0);
-  opt.set_maxeval(10000);
+  //opt.set_maxeval(10000);
   //perform optimization to get correction factors
 
     int exitflag=-20;
@@ -417,10 +443,6 @@ const std::vector<std::vector<double>> &GaussianProcess::getGp_nodes() const {
 
 void GaussianProcess::get_induced_nodes(std::vector<std::vector<double> > &) const {
     return;
-}
-
-void GaussianProcess::set_evaluations(const BlackBoxData &evaluations) {
-    this->evaluations = evaluations;
 }
 
 std::vector<double> GaussianProcess::get_hyperparameters(){

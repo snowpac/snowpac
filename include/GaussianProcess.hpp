@@ -42,9 +42,6 @@ class GaussianProcess : public GaussianProcessBaseClass,
     int dim, nb_gp_nodes;
     double *delta;
     double noise_regularization = 1e-6;
-    bool induced_point_recently_added = false;
-
-    BlackBoxData evaluations;
 
     //for gradient based estimation
 //    Eigen::MatrixXd dK;
@@ -131,8 +128,6 @@ class GaussianProcess : public GaussianProcessBaseClass,
     virtual const std::vector<std::vector<double>> &getGp_nodes() const;
 
     virtual void get_induced_nodes(std::vector< std::vector<double> >&) const;
-
-    virtual void set_evaluations(const BlackBoxData &evaluations);
 
     virtual void set_constraint_ball_radius(const double& radius){};
 
