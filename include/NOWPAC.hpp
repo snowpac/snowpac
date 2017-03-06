@@ -116,7 +116,7 @@ class NOWPAC : protected NoiseDetection<TSurrogateModel> {
     double tmp_dbl1 = -1;
     bool use_approx_gaussian_process = false;
     std::string gaussian_process_type = "GP";
-    double nonlinear_radius_factor = 1.5;
+    double nonlinear_radius_factor = 3.0; //3.0 matches with GP active index points
 
     int output_steps = 1;
 public:

@@ -690,7 +690,7 @@ void FullyIndependentTrainingConditional::sample_u(const int& nb_u_nodes) {
 	std::vector<int> u_idx_from_active;
 	//Set distribution for sampling the indices for the u samples
 	std::random_device rd;
-	int random_seed = 1;////rd();
+	int random_seed = rd();//1;////rd();
 	std::mt19937 random_generator(random_seed);
 	std::vector<double> nodes_weights_vector;
 
@@ -902,7 +902,7 @@ void FullyIndependentTrainingConditional::set_optimizer(std::vector<double> cons
 
   global_opt->set_lower_bounds( lb );
   global_opt->set_upper_bounds( ub );
-  global_opt->set_maxtime(60.0);
+  global_opt->set_maxtime(1.0);
   global_opt->set_maxeval(10000);
 
   local_opt->set_lower_bounds( lb );
@@ -1639,12 +1639,14 @@ void FullyIndependentTrainingConditional::decrease_nugget(){
 	if(K_u_u_nugget > K_u_u_nugget_min){
 		K_u_u_nugget *= 0.1;
 	}
+	std::cout << "FITC: Decrease nugget to " << K_u_u_nugget << std::endl;
   return;
 }
 bool FullyIndependentTrainingConditional::increase_nugget(){
 	if(K_u_u_nugget <= K_u_u_nugget_max){
 		K_u_u_nugget *= 10;
 	}
+	std::cout << "FITC: Increase nugget to " << K_u_u_nugget << std::endl;
 	if(K_u_u_nugget > K_u_u_nugget_max){
 		return true;
 	}
