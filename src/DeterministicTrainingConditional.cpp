@@ -7,6 +7,7 @@
 #include <random>
 #include <algorithm>
 #include <iostream>
+#include <cmath>
 
 //--------------------------------------------------------------------------------
 DeterministicTrainingConditional::DeterministicTrainingConditional(int n, double &delta_input) :
@@ -295,7 +296,7 @@ double DeterministicTrainingConditional::parameter_estimation_objective(std::vec
   	//std::cout << d->scaled_function_values_eigen << std::endl;
   double result = L1 + L2;
  
-  if (isinf(result) || isnan(result)){
+  if (std::isinf(result) || std::isnan(result)){
   	std::cout << "Result is inf or nan" << std::endl;
   	std::cout << "L11 " << L11 << " " << 'x' << std::endl;
     std::cout << "L12 " << L12 << std::endl; //<< " " << log(d->K_u_u.determinant()) << std::endl;
@@ -462,7 +463,7 @@ double DeterministicTrainingConditional::parameter_estimation_objective_w_gradie
   	//std::cout << d->scaled_function_values_eigen << std::endl;
   double result = L1 + L2;
  
-  if (isinf(result) || isnan(result)){
+  if (std::isinf(result) || std::isnan(result)){
   	std::cout << "Result is inf or nan" << std::endl;
   	std::cout << "L11 " << L11 << " " << 'x' << std::endl;
     std::cout << "L12 " << L12 << std::endl; //<< " " << log(d->K_u_u.determinant()) << std::endl;

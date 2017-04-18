@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <iostream>
 #include <limits.h>
+#include <cmath>
 
  #include <Eigen/Dense>
 
@@ -903,7 +904,7 @@ void FullyIndependentTrainingConditional::set_optimizer(std::vector<double> cons
   global_opt->set_lower_bounds( lb );
   global_opt->set_upper_bounds( ub );
   global_opt->set_maxtime(1.0);
-  global_opt->set_maxeval(10000);
+  //global_opt->set_maxeval(10000);
 
   local_opt->set_lower_bounds( lb );
   local_opt->set_upper_bounds( ub );
@@ -1267,7 +1268,7 @@ double FullyIndependentTrainingConditional::parameter_estimation_objective(std::
   	//std::cout << d->scaled_function_values_eigen << std::endl;
   double result = L1 + L2;
  
-  if (isinf(result) || isnan(result)){
+  if (std::isinf(result) || std::isnan(result)){
   	std::cout << "Result is inf or nan" << std::endl;
   	std::cout << "L11 " << L11 << " " << 'x' << std::endl;
     std::cout << "L12 " << L12 << std::endl; //<< " " << log(d->K_u_u.determinant()) << std::endl;
@@ -1433,7 +1434,7 @@ double FullyIndependentTrainingConditional::parameter_estimation_objective_w_gra
   	//std::cout << d->scaled_function_values_eigen << std::endl;
   double result = L1 + L2;
  
-  if (isinf(result) || isnan(result)){
+  if (std::isinf(result) || std::isnan(result)){
   	std::cout << "Result is inf or nan" << std::endl;
   	std::cout << "L11 " << L11 << " " << 'x' << std::endl;
     std::cout << "L12 " << L12 << std::endl; //<< " " << log(d->K_u_u.determinant()) << std::endl;
