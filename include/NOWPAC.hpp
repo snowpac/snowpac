@@ -117,6 +117,7 @@ class NOWPAC : protected NoiseDetection<TSurrogateModel> {
     bool use_approx_gaussian_process = false;
     std::string gaussian_process_type = "GP";
     double nonlinear_radius_factor = 1.5; //3.0 matches with GP active index points
+    int fixed_seed = -1;
 
     int output_steps = 1;
 public:
@@ -507,6 +508,14 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_option (
   if ( option_name.compare( "max_nb_accepted_steps" ) == 0 ) {
     max_number_accepted_steps_is_set = true;
     max_number_accepted_steps = option_value;
+    return;
+  }
+  if ( option_name.compare( "seed" ) == 0 ){
+    if(option_value < 0){
+      std::cout << "Error: Given seed value has to be equal or larger than 0! Exit!" << std::endl;
+      exit(-1);
+    }
+    fixed_seed = option_value;
     return;
   }
   std::cout << "Warning : Unknown parameter (" << option_name << ")"<< std::endl;
@@ -1316,7 +1325,7 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
   std::cout << std::setprecision(8);
 
   std::random_device rand_dev;
-  int random_seed = rand_dev(); //25041981;//
+  int random_seed = (fixed_seed != -1) ? fixed_seed : rand_dev(); //25041981;//
   std::mt19937 rand_generator(random_seed);
   std::normal_distribution<double> norm_dis(0e0,2e-1);
   //std::uniform_real_distribution<double> norm_dis(-2e0,2e0);
