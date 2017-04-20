@@ -33,9 +33,9 @@ std::vector< std::vector<double> > &MinimumFrobeniusNormModel::hessian ( )
 double MinimumFrobeniusNormModel::evaluate (  std::vector<double> const &x ) 
 {
   double value = model_constant;
-  value += dot_product( x, model_gradient );
+  value += VectorOperations::dot_product( x, model_gradient );
   mat_vec_product( model_hessian, x, matvecproduct );
-  value += 0.5*dot_product( x, matvecproduct );
+  value += 0.5*VectorOperations::dot_product( x, matvecproduct );
   return value;
 }
 //--------------------------------------------------------------------------------

@@ -61,13 +61,13 @@ class PostProcessModels : VectorOperations {
 
       double evaluations_scaling = delta;
       std::vector<double> evaluations_center_node = evaluations->nodes[ evaluations->best_index ];
-      for (int i = 0; i < dim; ++i) g.push_back(0.0);
+      for (int i = 0; i < dim; ++i) g[i] = 0.0;
       c = surrogate_models[model_number].evaluate( g );
-      c -= this->dot_product( surrogate_models[model_number].gradient(), 
+      c -= VectorOperations::dot_product( surrogate_models[model_number].gradient(), 
                               evaluations_center_node) / evaluations_scaling;
       this->mat_vec_product( surrogate_models[model_number].hessian(), 
                              evaluations_center_node, g ); 
-      c += 0.5*this->dot_product( evaluations_center_node, g ) / 
+      c += 0.5*VectorOperations::dot_product( evaluations_center_node, g ) / 
            ( evaluations_scaling * evaluations_scaling );
 
       this->scale ( -1.0/(evaluations_scaling * evaluations_scaling), g, g);
@@ -94,9 +94,9 @@ class PostProcessModels : VectorOperations {
     {
       assert( x.size() == (unsigned) dim );
       double c = c_vec[ model_number ];
-      c += this->dot_product( g_vec[ model_number], x );
+      c += VectorOperations::dot_product( g_vec[ model_number], x );
       this->mat_vec_product( H_vec[model_number], x, vec_output );
-      c += 0.5*this->dot_product( vec_output, x );
+      c += 0.5*VectorOperations::dot_product( vec_output, x );
       return c; 
     }
 //--------------------------------------------------------------------------------

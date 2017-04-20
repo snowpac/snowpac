@@ -15,7 +15,7 @@ class GaussianProcessSupport : protected VectorOperations {
     std::vector<int> update_at_evaluations;
     int update_interval_length;
     int next_update = 0;
-    int last_included;
+    int last_included = 0;
     int best_index;
     double delta_tmp;
     double variance, mean; 
