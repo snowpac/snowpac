@@ -34,6 +34,9 @@ class ImprovePoisedness : public ImprovePoisednessBaseClass,
     bool print_output;
     int change_index;    
     bool model_has_been_improved;
+    std::vector<double> lower_bound_constraints;
+    std::vector<double> upper_bound_constraints;
+    bool use_hard_box_constraints = false;
     void compute_poisedness_constant ( int, std::vector<double>&, BlackBoxData& );
   public:
     //! Constructor
@@ -46,7 +49,7 @@ class ImprovePoisedness : public ImprovePoisednessBaseClass,
      \param verbose switch output on (verbose = 3) or off (verbose = 0)
      \see BlackBoxData
     */
-    ImprovePoisedness ( BasisForSurrogateModelBaseClass&, double, int, double&, int );
+    ImprovePoisedness ( BasisForSurrogateModelBaseClass&, double, int, double&, int, std::vector<double>, std::vector<double>, bool);
     //! Destructor
     ~ImprovePoisedness () { }
     //! Find node to be replaced by better poised node

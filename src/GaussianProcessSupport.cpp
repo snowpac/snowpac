@@ -25,7 +25,7 @@ void GaussianProcessSupport::initialize ( const int dim, const int number_proces
   values.resize( number_processes );
   noise.resize( number_processes );
   for ( int i = 0; i < number_processes; i++) {
-    std::cout << gaussian_process_type << std::endl;
+    //std::cout << gaussian_process_type << std::endl;
     if( gaussian_process_type.compare( "GP" ) == 0){
       gaussian_processes.push_back ( std::shared_ptr<GaussianProcess> (new GaussianProcess(dim, *delta)) );
       use_approx_gaussian_process = false;
@@ -171,12 +171,12 @@ void GaussianProcessSupport::update_gaussian_processes_for_agp( BlackBoxData &ev
     gaussian_process_noise.resize(gaussian_process_active_index.size());
 
     int nb_u_points = (int) (gaussian_process_nodes.size()*u_ratio);
-    std::cout << "###Nb u nodes " << nb_u_points << " points###" << std::endl;
+    //std::cout << "###Nb u nodes " << nb_u_points << " points###" << std::endl;
 
     if(nb_u_points >= min_nb_u && !approx_gaussian_process_active){
       cur_nb_u_points = nb_u_points;
       approx_gaussian_process_active = true;
-      std::cout << "###Activating Approximate Gaussian Processes with " << nb_u_points << " points###" << std::endl;
+      //std::cout << "###Activating Approximate Gaussian Processes with " << nb_u_points << " points###" << std::endl;
       for(int i = 0; i < number_processes; ++i){
         gaussian_processes[i]->sample_u(cur_nb_u_points);
         
@@ -194,7 +194,7 @@ void GaussianProcessSupport::update_gaussian_processes_for_agp( BlackBoxData &ev
     }else if(nb_u_points < min_nb_u && approx_gaussian_process_active){
       cur_nb_u_points = 0;
       approx_gaussian_process_active = false;
-      std::cout << "###Deactivatin Approximate Gaussian Processes with " << nb_u_points << " points###" << std::endl;
+      //std::cout << "###Deactivatin Approximate Gaussian Processes with " << nb_u_points << " points###" << std::endl;
       for(int i = 0; i < number_processes; ++i){
         gaussian_processes[i]->clear_u();
 
@@ -209,7 +209,7 @@ void GaussianProcessSupport::update_gaussian_processes_for_agp( BlackBoxData &ev
                                    gaussian_process_noise);
       }
     }else if(nb_u_points > min_nb_u && cur_nb_u_points != nb_u_points && approx_gaussian_process_active){
-      std::cout << "###Nb u points has changed from " << cur_nb_u_points << " to " << nb_u_points << " points###" << std::endl;
+      //std::cout << "###Nb u points has changed from " << cur_nb_u_points << " to " << nb_u_points << " points###" << std::endl;
       cur_nb_u_points = nb_u_points;
       for(int i = 0; i < number_processes; ++i){
         gaussian_processes[i]->sample_u(cur_nb_u_points);
@@ -226,7 +226,7 @@ void GaussianProcessSupport::update_gaussian_processes_for_agp( BlackBoxData &ev
       }
       do_parameter_estimation = true;
     }else{
-      std::cout << "###Nothing changed last update" << std::endl;
+      //std::cout << "###Nothing changed last update" << std::endl;
     }
 
     for(int i = 0; i < number_processes && !do_parameter_estimation; ++i){
@@ -241,7 +241,7 @@ void GaussianProcessSupport::update_gaussian_processes_for_agp( BlackBoxData &ev
         update_at_evaluations.erase( update_at_evaluations.begin() );
       }
     }
-    std::cout << "###Do parameter estimation: " << do_parameter_estimation << std::endl;
+    //std::cout << "###Do parameter estimation: " << do_parameter_estimation << std::endl;
 
 
     if ( do_parameter_estimation ) {
@@ -384,8 +384,8 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
         evaluations.noise[ j ].at( evaluations.active_index [ i ] ) = 
           weight * 2e0 * sqrt (variance)  + 
           (1e0-weight) * ( noise[ j ].at( evaluations.active_index [ i ] ) );
-        std::cout << "Smooth evaluate var: [" << noise[ j ].at( evaluations.active_index [ i ]) << ", " << 2e0 *sqrt(variance) << "]\n" << std::endl;
-       std::cout << "Smooth evaluate [" << evaluations.active_index[i] << ", " << j <<"]: mean,variance " << evaluations.values[ j ].at( evaluations.active_index [ i ] ) << ", " << evaluations.noise[ j ].at( evaluations.active_index [ i ] )  << "\n" << std::endl;
+        //std::cout << "Smooth evaluate var: [" << noise[ j ].at( evaluations.active_index [ i ]) << ", " << 2e0 *sqrt(variance) << "]\n" << std::endl;
+       //std::cout << "Smooth evaluate [" << evaluations.active_index[i] << ", " << j <<"]: mean,variance " << evaluations.values[ j ].at( evaluations.active_index [ i ] ) << ", " << evaluations.noise[ j ].at( evaluations.active_index [ i ] )  << "\n" << std::endl;
       }
       if (variance < 0e0){
           negative_variance_found = true;

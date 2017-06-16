@@ -5,11 +5,14 @@
 //--------------------------------------------------------------------------------
 ImprovePoisedness::ImprovePoisedness ( BasisForSurrogateModelBaseClass &B,
                                        double poisedness_threshold,
-                                       int m, double &rad, int verbose ) :
+                                       int m, double &rad, int verbose, 
+                                       std::vector<double> upper_bound_constraints_in, 
+                                       std::vector<double> lower_bound_constraints_in, 
+                                       bool use_hard_box_constraints_in) :
                                        ImprovePoisednessBaseClass (
                                        poisedness_threshold, B ),
                                        QuadraticMinimization ( B.dimension() ),
-                                       max_nb_nodes ( m )
+                                       max_nb_nodes ( m ), use_hard_box_constraints(use_hard_box_constraints_in)
 { 
     dim = B.dimension ( );
     delta = &rad;
@@ -21,6 +24,19 @@ ImprovePoisedness::ImprovePoisedness ( BasisForSurrogateModelBaseClass &B,
     basis_hessian.resize ( dim );
     for ( int i = 0; i < dim; ++i )
       basis_hessian[i].resize( dim );
+
+    if(!upper_bound_constraints_in.empty()){
+      upper_bound_constraints.resize(upper_bound_constraints_in.size());
+      for(int i = 0; i < upper_bound_constraints_in.size(); ++i){
+        upper_bound_constraints[i] = upper_bound_constraints_in[i];
+      }
+    }
+    if(!lower_bound_constraints_in.empty()){
+      lower_bound_constraints.resize(lower_bound_constraints_in.size());
+      for(int i = 0; i < lower_bound_constraints_in.size(); ++i){
+        lower_bound_constraints[i] = lower_bound_constraints_in[i];
+      }
+    }
 
     tmp_node.resize ( dim );  
 
@@ -252,14 +268,56 @@ void ImprovePoisedness::compute_poisedness_constant ( int reference_node,
 
     if (poisedness_constant_tmp1 >= poisedness_constant_tmp2 && 
         poisedness_constant_tmp1 > poisedness_constant) {
-      for ( int k = 0; k < dim; ++k)
+      for ( int k = 0; k < dim; ++k){
         new_node.at(k) = q1.at(k)*(*delta) + evaluations.nodes[ evaluations.best_index ].at(k);
+
+        if(use_hard_box_constraints){
+          if(!upper_bound_constraints.empty() && !lower_bound_constraints.empty()){
+            if(new_node[k] > upper_bound_constraints[k]){
+              new_node[k] = upper_bound_constraints[k];
+            }else if(new_node[k] < lower_bound_constraints[k]){
+              new_node[k] = lower_bound_constraints[k];
+            }
+          }else if(!upper_bound_constraints.empty()){
+            if (new_node.at(k) > upper_bound_constraints[k])
+            {
+              new_node.at(k) = upper_bound_constraints[k];
+            }
+          }else if(!lower_bound_constraints.empty()){
+            if (new_node.at(k) < lower_bound_constraints[k])
+            {
+              new_node.at(k) = lower_bound_constraints[k];
+            }
+          }
+        }
+      }
       poisedness_constant = poisedness_constant_tmp1;
       change_index = i;
     } else if (poisedness_constant_tmp2 > poisedness_constant_tmp1 && 
                poisedness_constant_tmp2 > poisedness_constant) {
-      for ( int k = 0; k < dim; ++k)
+      for ( int k = 0; k < dim; ++k){
         new_node.at(k) = q2.at(k)*(*delta) + evaluations.nodes[ evaluations.best_index ].at(k);
+
+        if(use_hard_box_constraints){
+          if( !upper_bound_constraints.empty() && !lower_bound_constraints.empty()){
+            if(new_node[k] > upper_bound_constraints[k]){
+              new_node[k] = upper_bound_constraints[k];
+            }else if(new_node[k] < lower_bound_constraints[k]){
+              new_node[k] = lower_bound_constraints[k];
+            }
+          }else if(!upper_bound_constraints.empty()){
+            if (new_node.at(k) > upper_bound_constraints[k])
+            {
+              new_node.at(k) = upper_bound_constraints[k];
+            }
+          }else if(!lower_bound_constraints.empty()){
+            if (new_node.at(k) < lower_bound_constraints[k])
+            {
+              new_node.at(k) = lower_bound_constraints[k];
+            }
+          }
+        }
+      }
       poisedness_constant = poisedness_constant_tmp2;
       change_index = i;
     }

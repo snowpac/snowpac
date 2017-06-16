@@ -200,6 +200,17 @@ void SubproblemOptimization<TSurrogateModel>::set_feasibility_thresholds (
     if ( feasibility_thresholds.at( i ) < 0e0 ) feasibility_thresholds.at( i ) = 0e0; 
     else point_is_feasible = false;
   }
+//  std::cout << "#M2# Subproblem Testing feasiblity: " << std::endl;
+//  std::cout << "#M2#      at point: [";
+//  for(int i = 0; i < x.size(); ++i)
+//    std::cout << x[i] << ', ';
+//  std::cout << std::endl;
+//  std::cout << "#M2#      Feasiblity thresholds:";
+//  for ( int i = 0; i < number_constraints; i++ ) {
+//    std::cout << feasibility_thresholds.at( i ) << ", ";
+//  }
+//  std::cout << std::endl;
+//  std::cout << "#M2#      feasible: " << point_is_feasible << std::endl;
 
   return;
 }
@@ -337,9 +348,12 @@ double SubproblemOptimization<TSurrogateModel>::compute_trial_point (
         std::cout << std::setprecision(16) << "      " << x[i] << " ";
       std::cout << std::endl;*/
       for (int i = 0; i < dim; ++i)
-        if(x[i] > 1.0){
-          std::cout << std::setprecision(16) << "Setting x[i] from " << x[i] << " to 1.0!"<< std::endl;
-          x[i] = 1.0;
+        if(x[i] > ub[i]){
+          //std::cout << std::setprecision(16) << "Setting x[i] to upper bound: " << ub[i] << std::endl;
+          x[i] = ub[i];
+        }else if(x[i] < lb[i]){
+          //std::cout << std::setprecision(16) << "Setting x[i] to lower bound: " << lb[i] << std::endl;
+          x[i] = lb[i];
         }
       opt_trial_point.optimize ( x, optimization_result );
     }
@@ -406,8 +420,6 @@ double SubproblemOptimization<TSurrogateModel>::restore_feasibility (
   return optimization_result;
 }
 //--------------------------------------------------------------------------------
-
-
 
 
 #endif

@@ -120,11 +120,11 @@ void GaussianProcess::build ( std::vector< std::vector<double> > const &nodes,
                               std::vector<double> const &values,
                               std::vector<double> const &noise ) 
 {
-    std::cout << "GP build [" << nodes.size() << "]" << std::endl;
-    std::cout << "With Parameters: " << std::endl;
-    for ( int i = 0; i < dim+1; ++i )
-      std::cout << "gp_param = " << gp_parameters[i] << std::endl;
-    std::cout << std::endl;
+    //std::cout << "GP build [" << nodes.size() << "]" << std::endl;
+    //std::cout << "With Parameters: " << std::endl;
+    //for ( int i = 0; i < dim+1; ++i )
+    // std::cout << "gp_param = " << gp_parameters[i] << std::endl;
+    //std::cout << std::endl;
 
     nb_gp_nodes = nodes.size();
     gp_nodes.clear();
@@ -174,7 +174,7 @@ void GaussianProcess::update ( std::vector<double> const &x,
                                double &value, 
                                double &noise )
 {
-  std::cout << "GP update [" << nb_gp_nodes+1 << "]" << std::endl;
+  //std::cout << "GP update [" << nb_gp_nodes+1 << "]" << std::endl;
   K0.resize( nb_gp_nodes );
   nb_gp_nodes += 1;
   gp_nodes.push_back( x );
@@ -233,7 +233,7 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
                                                   std::vector<double> const &values,
                                                   std::vector<double> const &noise ) 
 {
-  std::cout << "GP Estimator" << std::endl;
+  //std::cout << "GP Estimator" << std::endl;
   nb_gp_nodes = nodes.size();
   gp_nodes.clear();
   gp_noise.clear();
@@ -358,11 +358,11 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
     }
   }
 
-  std::cout << "exitflag = "<< exitflag<<std::endl;
-  std::cout << "OPTVAL .... " << optval << std::endl;
-  for ( int i = 0; i < gp_parameters.size(); ++i )
-    std::cout << "gp_param = " << gp_parameters[i] << std::endl;
-  std::cout << std::endl;
+  //std::cout << "exitflag = "<< exitflag<<std::endl;
+  //std::cout << "OPTVAL .... " << optval << std::endl;
+  //for ( int i = 0; i < gp_parameters.size(); ++i )
+  //  std::cout << "gp_param = " << gp_parameters[i] << std::endl;
+  //std::cout << std::endl;
  
       
   return;
