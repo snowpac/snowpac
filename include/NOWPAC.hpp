@@ -121,6 +121,7 @@ class NOWPAC : protected NoiseDetection<TSurrogateModel> {
     bool out_of_bounds;
     int output_steps = 1;
     bool use_hard_box_constraints = false;
+    bool use_asynchronous_evaluations = false;
 public:
     //! Constructor
     /*!
@@ -417,6 +418,11 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_option (
     use_hard_box_constraints = option_value;
     return;
   }
+  if ( option_name.compare( "use_asynchronous_evaluations" ) == 0){
+    use_asynchronous_evaluations = option_value;
+    return;
+  }
+  
 
   std::cout << "Warning : Unknown parameter bool(" << option_name << ")"<< std::endl;
   return;
@@ -746,37 +752,87 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::blackbox_evaluator ( )
     return;
   }
 
-  for ( int i = nb_vals_tmp; i < nb_nodes_tmp; ++i ) {
-    // evaluate blackbox and check results for consistency
-    if ( stochastic_optimization ) { //TODO:PARALLEL EVAL HERE
-      blackbox->evaluate( evaluations.nodes[ i ], blackbox_values, 
-                          blackbox_noise, user_data_pointer );
-      if ( blackbox_noise.size() != (unsigned) (nb_constraints+1) ) EXIT_FLAG = -5;
+  if(!use_asynchronous_evaluations){
+    for ( int i = nb_vals_tmp; i < nb_nodes_tmp; ++i ) {
+      // evaluate blackbox and check results for consistency
+      if ( stochastic_optimization ) { //TODO: PARALLEL EVAL HERE
+        blackbox->evaluate( evaluations.nodes[ i ], blackbox_values, 
+                            blackbox_noise, user_data_pointer );
+        if ( blackbox_noise.size() != (unsigned) (nb_constraints+1) ) EXIT_FLAG = -5;
+        for ( int i = 0; i < nb_constraints+1; ++i ) {
+          if ( blackbox_noise[i] < 0.0 || blackbox_noise[i] != blackbox_noise[i] ) {
+            EXIT_FLAG = -5;
+            return;
+          }
+        }
+      } else {
+        blackbox->evaluate( evaluations.nodes[ i ], blackbox_values, 
+                            user_data_pointer ); 
+      }
+
+      if ( blackbox_values.size() != (unsigned) (nb_constraints+1) ) EXIT_FLAG = -5;
       for ( int i = 0; i < nb_constraints+1; ++i ) {
-        if ( blackbox_noise[i] < 0.0 || blackbox_noise[i] != blackbox_noise[i] ) {
+        if ( blackbox_values[i] != blackbox_values[i] ) {
           EXIT_FLAG = -5;
           return;
         }
       }
-    } else {
-      blackbox->evaluate( evaluations.nodes[ i ], blackbox_values, 
-                          user_data_pointer ); 
-    }
 
-    if ( blackbox_values.size() != (unsigned) (nb_constraints+1) ) EXIT_FLAG = -5;
-    for ( int i = 0; i < nb_constraints+1; ++i ) {
-      if ( blackbox_values[i] != blackbox_values[i] ) {
-        EXIT_FLAG = -5;
-        return;
+      // add evaluations to blackbox data
+      for (int j = 0; j < nb_constraints+1; ++j) {
+        if ( stochastic_optimization )
+          evaluations.noise[j].push_back( blackbox_noise.at(j) );
+        evaluations.values[j].push_back( blackbox_values.at(j) );
+      }  
+    }
+  }else{
+    int tmp_nb_evals = nb_nodes_tmp-nb_vals_tmp;
+    std::vector<std::vector<double>> blackbox_values_tmp;
+    blackbox_values_tmp.resize(tmp_nb_evals);
+    for(int i = 0; i < tmp_nb_evals; ++i){
+      blackbox_values_tmp[i].resize( nb_constraints + 1 );
+    }
+    std::vector<std::vector<double>> blackbox_noise_tmp;
+    if( stochastic_optimization ){
+      blackbox_noise_tmp.resize(tmp_nb_evals);
+      for(int i = 0; i < tmp_nb_evals; ++i){
+        blackbox_noise_tmp.resize( nb_constraints + 1 );
       }
     }
+    for ( int i = nb_vals_tmp; i < nb_nodes_tmp; ++i ) {
+      if ( stochastic_optimization ) { //TODO: PARALLEL EVAL HERE
+        blackbox->evaluate_nowait( evaluations.nodes[ i ], blackbox_values_tmp[ i - nb_vals_tmp ], 
+                            blackbox_noise_tmp[ i - nb_vals_tmp], user_data_pointer );
+      } else {
+        blackbox->evaluate_nowait( evaluations.nodes[ i ], blackbox_values_tmp[ i - nb_vals_tmp ], 
+                            user_data_pointer ); 
+      }
+    }
+    blackbox->synchronize();
+    if( stochastic_optimization ){
+      for ( int i = 0; i < tmp_nb_evals; ++i ) {
+        if ( blackbox_noise_tmp[i].size() != (unsigned) (nb_constraints+1) ) EXIT_FLAG = -5;
 
+        for ( int j = 0; j < nb_constraints+1; ++j ) {
+          if ( blackbox_noise_tmp[i][j] < 0.0 ) {
+            EXIT_FLAG = -5;
+            return;
+          }
+        }
+
+      }
+    }
+    for ( int i = 0; i < tmp_nb_evals; ++i ) {
+      if ( blackbox_values_tmp[i].size() != (unsigned) (nb_constraints+1) ) EXIT_FLAG = -5;
+    }
     // add evaluations to blackbox data
-    for (int j = 0; j < nb_constraints+1; ++j) {
-      if ( stochastic_optimization )
-        evaluations.noise[j].push_back( blackbox_noise.at(j) );
-      evaluations.values[j].push_back( blackbox_values.at(j) );
-    }  
+    for ( int i = 0; i < tmp_nb_evals; ++i ) {
+      for (int j = 0; j < nb_constraints+1; ++j) {
+        if ( stochastic_optimization )
+          evaluations.noise[j].push_back( blackbox_noise_tmp.at(i).at(j) );
+        evaluations.values[j].push_back( blackbox_values_tmp.at(i).at(j) );
+      }
+    }
   }
 
   assert ( evaluations.nodes.size() == evaluations.values[0].size() );
@@ -905,6 +961,7 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::update_trustregion (
       }
     }
   }
+
 
  if ( tmp_dbl >= 0e0 ) {
    if ( max_noise > 2e0*tmp_dbl ) max_noise = 2e0*tmp_dbl;
