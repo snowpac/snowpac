@@ -48,7 +48,7 @@
 #include <fstream>
 #include <cassert>
 #include <backward/strstream>
-
+#include <limits>
 //! NOWPAC
 template<class TSurrogateModel = MinimumFrobeniusNormModel, 
          class TBasisForSurrogateModel = LegendreBasisForMinimumFrobeniusNormModel>
@@ -83,6 +83,7 @@ class NOWPAC : protected NoiseDetection<TSurrogateModel> {
     void *user_data_pointer = NULL;
     BlackBoxData evaluations;
     std::vector<double> x_trial;
+    std::vector<double> x_sample;
     bool delta_max_is_set;
     double delta, delta_min, delta_max;
     double omega, theta, gamma, gamma_inc, mu;
@@ -157,7 +158,7 @@ public:
      \param x initial starting point (input) and optimal solution (output)
      \param val optimal value of objective function on output
     */
-    int optimize ( std::vector<double>&, double& );
+    int optimize ( std::vector<double>&, std::vector<double>& );
     //! Function to start optimization (with restart option)
     /*!
      Function to start optimization. If this function is called with bb_data with
@@ -169,7 +170,7 @@ public:
      \param val optimal value of objective function on output
      \param bb_data container to store data for restart 
     */
-    int optimize ( std::vector<double>&, double&, BlackBoxData& );
+    int optimize ( std::vector<double>&, std::vector<double>&, BlackBoxData& );
     //! Function to set option for optimizer
     /*!
      Function to set option for optimizer:
@@ -317,6 +318,7 @@ NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::NOWPAC ( int n ) :
 { 
   stochastic_optimization = false;
   x_trial.resize( dim );
+  x_sample.resize( dim );
   delta = 1e0;
   delta_max_is_set = false;
   delta_max = 1e0;
@@ -657,7 +659,7 @@ double NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::compute_acceptance_rati
   acceptance_ratio = ( evaluations.values[0].at( evaluations.best_index ) - 
                        evaluations.values[0].back() )  /
                      ( evaluations.values[0].at( evaluations.best_index ) - 
-                       trial_model_value );
+                       surrogate_models[0].evaluate(x_trial) );//trial_model_value );
 
   if ( acceptance_ratio != acceptance_ratio ) acceptance_ratio = -0.4251981;
 
@@ -731,7 +733,7 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::blackbox_evaluator (
   write_to_file();
 
   //TODO Remove this later
-  if(false){
+  if(true){
     output_for_plotting(output_steps, 0, x);
     output_steps++;
   }
@@ -848,7 +850,7 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::blackbox_evaluator ( )
 
   write_to_file();
   //TODO: Remove this later
-  if(false){
+  if(true){
     for(int i = nb_vals_tmp; i < nb_nodes_tmp; ++i){
       output_for_plotting(output_steps, i-nb_vals_tmp, evaluations.nodes[ i ]);
     }
@@ -863,21 +865,33 @@ template<class TSurrogateModel, class TBasisForSurrogateModel>
 bool NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::last_point_is_feasible ( ) 
 {
   bool point_is_feasible = true;
-//  std::cout << "#M1# Testing feasiblity: " << std::endl;
-//  std::cout << "#M1#      at best point: [";
-//  for(int i = 0; i < evaluations.nodes[evaluations.best_index].size(); ++i)
-//    std::cout << evaluations.nodes[evaluations.best_index][i] << ', ';
-//  std::cout << std::endl;
-//  std::cout << "#M1#      at index: " << evaluations.best_index << std::endl;
+/*
+  for (int i = 0; i < nb_constraints; ++i){
+	if(evaluations.values[i+1].back() > 0.){
+		point_is_feasible = false;
+		inner_boundary_path_constants.at(i) *= 2e0;
+		if (inner_boundary_path_constants.at(i) > max_inner_boundary_path_constants.at(i)){
+			inner_boundary_path_constants.at(i) = max_inner_boundary_path_constants.at(i);
+		}
+	}
+ }	
+*/
+//Old version	
+  std::cout << "#M1# Testing feasiblity: " << std::endl;
+  std::cout << "#M1#      at best point: [";
+  for(int i = 0; i < evaluations.nodes[evaluations.best_index].size(); ++i)
+    std::cout << evaluations.nodes[evaluations.best_index][i] << ', ';
+  std::cout << std::endl;
+  std::cout << "#M1#      at index: " << evaluations.best_index << std::endl;
 
   for (int i = 0; i < nb_constraints; ++i ) {
     tmp_dbl = evaluations.values[i+1].at( evaluations.best_index );
-//    std::cout << "#M1# Testing feasiblity: cons[" << i << "] = " << tmp_dbl << std::endl;
+    std::cout << "#M1# Testing feasiblity: cons[" << i << "] = " << tmp_dbl << std::endl;
     if ( tmp_dbl < 0e0 ) tmp_dbl = 0e0;
-    //std::cout << "#M1# Compare to back(): " << evaluations.values[i+1].back() << std::endl;
+  std::cout << "#M1# Compare to back(): " << evaluations.values[i+1].back() << std::endl;
     if ( evaluations.values[i+1].back() > tmp_dbl ) {
       point_is_feasible = false;
-      //std::cout << "#M1# Point is not feasible: res = " << tmp_dbl << " vs. back: " << evaluations.values[i+1].back() << std::endl;
+      std::cout << "#M1# Point is not feasible: res = " << tmp_dbl << " vs. back: " << evaluations.values[i+1].back() << std::endl;
       inner_boundary_path_constants.at(i) *= 2e0;
 //      if ( inner_boundary_path_constants.at(i) > max_inner_boundary_path_constants.at(i) )
 //        inner_boundary_path_constants.at(i) = max_inner_boundary_path_constants.at(i);
@@ -887,6 +901,8 @@ bool NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::last_point_is_feasible ( 
 //      tmp_dbl = pow( this->diff_norm( x_trial, evaluations.nodes[ evaluations.best_index ] ) / 
 //                     delta, 1e0 );
 //      std::cout << " step size scale = " << sqrt(tmp_dbl) << std::endl; 
+
+
 
 /*
     std::cout << "**************************************" << std::endl;
@@ -970,13 +986,13 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::update_trustregion (
  if ( noise_detection && scaling_factor >= 1e0) this->reset_noise_detection();
 
   delta *= scaling_factor;
-  //std::cout << std::endl << "------------------------- " << std::endl;
-  /*std::cout << "#Noise#Cur delta " << delta << " Scaling factor: " << scaling_factor << std::endl;
+  std::cout << std::endl << "------------------------- " << std::endl;
+  std::cout << "#Noise#Cur delta " << delta << " Scaling factor: " << scaling_factor << std::endl;
   std::cout << "#Noise#MAXNOISE " << max_noise << " sqrt = " << sqrt( max_noise ) << std::endl;
     std::cout << "#Noise#   ObjF " << noise_per_function[0] << " sqrt = " << sqrt( noise_per_function[0] ) << std::endl;
     for ( int j = 1; j < nb_constraints+1; ++j ) {
         std::cout << "#Noise#   C" << j << " " << noise_per_function[j] << " sqrt = " << sqrt( noise_per_function[j] ) << std::endl;
-    }*/
+    }
   if ( stochastic_optimization ) {
     double ar_tmp = acceptance_ratio;
     if ( ar_tmp < 0e0 ) ar_tmp = -ar_tmp;
@@ -994,7 +1010,7 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::update_trustregion (
   }
  if ( delta < delta_min ) EXIT_FLAG = 0;
     //std::cout << "#Noise#   delta: " << delta << std::endl;
-  //std::cout <<  "------------------------- " << std::endl;
+  std::cout <<  "------------------------- " << std::endl;
   /*if (use_approx_gaussian_process){
     gaussian_processes.set_constraint_ball_radius(1.5*delta);
   }*/
@@ -1224,18 +1240,33 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::output_for_plotting ( con
   int xcoord = 0;
   int ycoord = 1;
   double var = 0;
-  double upper_bound = 5;
-  double lower_bound = -1;
-  std::ofstream outputfile ( "gp_data_" + std::to_string(evaluation_step) + "_" + std::to_string(sub_index) + ".dat" );
+  double upper_bound = 1;
+  double lower_bound = 0;
+  std::ofstream outputfile ( "blackbox_data_" + std::to_string(evaluation_step) + "_" + std::to_string(sub_index) + ".dat");
+  if (outputfile.is_open() ) {
+	for (int i = 0; i < evaluations.nodes.size(); ++i){
+		for(int j = 0; j < dim; ++j){
+			outputfile <<  evaluations.nodes.at(i).at(j) << ';';
+		}
+		for(int j = 0; j < nb_constraints + 1; ++j){
+			outputfile << evaluations.values.at(j).at(i) << ';';
+		}
+		outputfile << std::endl;
+	}
+}else{
+ std::cout << "Unable to open file" << std::endl;
+}
+/*
+  outputfile.open ( "gp_data_" + std::to_string(evaluation_step) + "_" + std::to_string(sub_index) + ".dat" );
   if ( outputfile.is_open( ) ) {
     for ( int i = 0; i < dim; ++i)
       x_loc.at(i) = 0e0;
-    for (double i = -1.0; i <= 1.0; i+=0.01) {
+    for (double i = 0.0; i <= 1.0; i+=0.05) {
       //x_loc.at(xcoord) =  i;
-      x_loc.at(xcoord) = ( (i+1)/(2) * (upper_bound-lower_bound) + lower_bound);
-      for (double j = -1.0; j < 1.0; j+=0.01) {
+      x_loc.at(xcoord) = i;
+      for (double j = 0.0; j <= 1.0; j+=0.05) {
         //x_loc.at(ycoord) = j;
-        x_loc.at(ycoord) = ( (j+1)/(2) * (upper_bound-lower_bound) + lower_bound);
+        x_loc.at(ycoord) = j;
         //fvals.at(0) = surrogate_models[0].evaluate( x_loc );
         gaussian_processes.evaluate_gaussian_process_at(0, x_loc, fvals.at(0), fvar.at(0));
         outputfile << x_loc.at(xcoord) << "; " << x_loc.at(ycoord) << "; " << fvals.at(0)<<"; " << fvar.at(0) << ";";
@@ -1308,6 +1339,7 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::output_for_plotting ( con
             outputfile.close();
         } else std::cout << "Unable to open file." << std::endl;
     }
+  */
   /*
   outputfile.open ( "surrogate_data_" + std::to_string(evaluation_step) + "_" + std::to_string(sub_index) + ".dat" );
   if ( outputfile.is_open( ) ) {
@@ -1380,7 +1412,7 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::output_for_plotting ( con
 //--------------------------------------------------------------------------------
 template<class TSurrogateModel, class TBasisForSurrogateModel>
 int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize ( 
-  std::vector<double> &x, double &val, BlackBoxData &bb_data ) 
+  std::vector<double> &x, std::vector<double> &val, BlackBoxData &bb_data ) 
 {
 
 
@@ -1401,7 +1433,7 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
 //--------------------------------------------------------------------------------
 template<class TSurrogateModel, class TBasisForSurrogateModel>
 int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize ( 
-  std::vector<double> &x, double &val ) 
+  std::vector<double> &x, std::vector<double> &val ) 
 {
 
   check_parameter_consistency( x );  
@@ -1461,24 +1493,24 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
       //return EXIT_FLAG;
     }
     for (int i = 0; i < dim; ++i ) {
-      x_trial = x;
+      x_sample = x;
       if(!upper_bound_constraints.empty()){ //Is there an upper bound
-    	  if(x_trial.at(i)+delta < upper_bound_constraints.at(i) ){ //Is new surrogate point in domain
-    		  x_trial.at(i) += delta; //if yes, create that point
+    	  if(x_sample.at(i)+delta < upper_bound_constraints.at(i) ){ //Is new surrogate point in domain
+    		  x_sample.at(i) += delta; //if yes, create that point
         }else if(!lower_bound_constraints.empty()){//if no, check if there are lower bounds
-      	  if(x_trial.at(i) - delta > lower_bound_constraints.at(i) ){//if lower bounds, check if -delta is in bounds
-      		  x_trial.at(i) -= delta; //if yes, create that point
+      	  if(x_sample.at(i) - delta > lower_bound_constraints.at(i) ){//if lower bounds, check if -delta is in bounds
+      		  x_sample.at(i) -= delta; //if yes, create that point
           }else{//neither in upper nor lower bounds
-            x_trial.at(i) = (upper_bound_constraints[i] - x_trial[i]) > (x_trial[i] - lower_bound_constraints[i]) ?
+            x_sample.at(i) = (upper_bound_constraints[i] - x_sample[i]) > (x_sample[i] - lower_bound_constraints[i]) ?
                             upper_bound_constraints[i] : lower_bound_constraints[i]; //take point with maximal distance to x_trial
           }
         }else{//if no lower bounds, but upper, take -delta as new point
-          x_trial.at(i) -= delta;
+          x_sample.at(i) -= delta;
         }
       }else{//no upper bounds, just take new point
-    	  x_trial.at(i) += delta;
+    	  x_sample.at(i) += delta;
       }
-      blackbox_evaluator( x_trial, true );
+      blackbox_evaluator( x_sample, true );
       if ( EXIT_FLAG != NOEXIT ){
         std::cout << "ERROR   : Black box returned invalid value" << std::endl << std::fflush; 
         return EXIT_FLAG;
@@ -1523,6 +1555,60 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
   return 0;
 */
 
+  //Check if initial point is infeasible
+  bool initial_point_is_feasible = true; 
+  for (int i = 0; i < nb_constraints; ++i){
+	if(evaluations.values[i+1].at(evaluations.best_index) > 0.){
+		initial_point_is_feasible = false;
+		if (verbose == 3) {std::cout << "Initial point is not feasible ..." << std::endl;};
+		break;
+	}
+  }
+  if( !initial_point_is_feasible ){ //If infeasible we look if one of the sample points is feasible
+	bool cur_point_is_feasible = true;
+	double cur_min = std::numeric_limits<double>::infinity();
+	for(int h = 0; h < evaluations.nodes.size(); ++h){
+		for (int i = 0; i < nb_constraints; ++i){
+			if(evaluations.values[i+1].at(h) > 0.){
+				cur_point_is_feasible = false;
+				break;
+			}
+		}
+		if(cur_point_is_feasible){
+			if(evaluations.values[0].at(h) < cur_min){
+				evaluations.best_index = h;
+			}
+		}
+		cur_point_is_feasible = true;
+ 	}	
+	if( cur_min < std::numeric_limits<double>::infinity() ){ //We found a feasible point, resample now
+		for (int i = 0; i < dim; ++i ) {
+      			x_sample = evaluations.nodes[ evaluations.best_index ];
+      			if(!upper_bound_constraints.empty()){ //Is there an upper bound
+    	  			if(x_sample.at(i)+delta < upper_bound_constraints.at(i) ){ //Is new surrogate point in domain
+    		  			x_sample.at(i) += delta; //if yes, create that point
+        			}else if(!lower_bound_constraints.empty()){//if no, check if there are lower bounds
+      	  				if(x_sample.at(i) - delta > lower_bound_constraints.at(i) ){//if lower bounds, check if -delta is in bounds
+      		  				x_sample.at(i) -= delta; //if yes, create that point
+          				}else{//neither in upper nor lower bounds
+            					x_sample.at(i) = (upper_bound_constraints[i] - x_sample[i]) > (x_sample[i] - lower_bound_constraints[i]) ?
+                	            			upper_bound_constraints[i] : lower_bound_constraints[i]; //take point with maximal distance to x_trial
+        	  			}
+	        		}else{//if no lower bounds, but upper, take -delta as new point
+          				x_sample.at(i) -= delta;
+       			 	}
+	      		}else{//no upper bounds, just take new point
+    	  			x_sample.at(i) += delta;
+      			}
+	      		blackbox_evaluator( x_sample, true );
+      			if ( EXIT_FLAG != NOEXIT ){
+        		std::cout << "ERROR   : Black box returned invalid value" << std::endl << std::fflush; 
+	        	return EXIT_FLAG;
+      			}
+    		}
+	}
+  }	
+
   x_trial = evaluations.nodes[ evaluations.best_index ];
   if ( verbose == 3 ) { std::cout << "Value of criticality measure : "; }
   criticality_value = surrogate_optimization->compute_criticality_measure( x_trial );
@@ -1555,18 +1641,18 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
             if(use_hard_box_constraints){
               out_of_bounds = true;
               do{
-                x_trial.at(i) = evaluations.nodes[ evaluations.best_index ].at( i ) +
+                x_sample.at(i) = evaluations.nodes[ evaluations.best_index ].at( i ) +
                          delta * norm_dis( rand_generator ) * 1e0;
-                if(x_trial[i] >= lower_bound_constraints[i] && x_trial[i] <= upper_bound_constraints[i]){
+                if(x_sample[i] >= lower_bound_constraints[i] && x_sample[i] <= upper_bound_constraints[i]){
                   out_of_bounds = false;
                 }
               }while(out_of_bounds);
             }else{
-              x_trial.at(i) = evaluations.nodes[ evaluations.best_index ].at( i ) +
+              x_sample.at(i) = evaluations.nodes[ evaluations.best_index ].at( i ) +
                          delta * norm_dis( rand_generator ) * 1e0;
             }
           }
-          evaluations.nodes.push_back( x_trial );
+          evaluations.nodes.push_back( x_sample );
         }
         blackbox_evaluator( );
         if ( EXIT_FLAG != NOEXIT ) break;
@@ -1651,19 +1737,19 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
             if(use_hard_box_constraints){
               out_of_bounds = true;
               do{
-                x_trial.at(i) = evaluations.nodes[ evaluations.best_index ].at( i ) +
+                x_sample.at(i) = evaluations.nodes[ evaluations.best_index ].at( i ) +
                          delta * norm_dis( rand_generator ) * 1e0;
-                if(x_trial[i] >= lower_bound_constraints[i] && x_trial[i] <= upper_bound_constraints[i]){
+                if(x_sample[i] >= lower_bound_constraints[i] && x_sample[i] <= upper_bound_constraints[i]){
                   out_of_bounds = false;
                 }
               }while(out_of_bounds);
             }else{
-              x_trial.at(i) = evaluations.nodes[ evaluations.best_index ].at( i ) +
+              x_sample.at(i) = evaluations.nodes[ evaluations.best_index ].at( i ) +
                          delta * norm_dis( rand_generator ) * 1e0;
             }
           }
 
-          evaluations.nodes.push_back( x_trial );
+          evaluations.nodes.push_back( x_sample );
         }
         blackbox_evaluator( );
         if ( EXIT_FLAG != NOEXIT ) break;
@@ -1697,7 +1783,7 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
                                               max_inner_boundary_path_constants.at(i);
 
       if ( verbose == 3 ) { std::cout << std::endl; }
-      /*if ( verbose >= 2 ) { 
+      if ( verbose >= 2 ) { 
         std::cout << "*****************************************" << std::endl; 
         std::cout << "#Noise# x_trial: [ "; 
         for(int i = 0; i < x_trial.size(); ++i){
@@ -1708,10 +1794,10 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
                        << evaluations.values[0].back()  << " Sub: " << ( evaluations.values[0].at( evaluations.best_index ) - 
                        evaluations.values[0].back() )<< std::endl;
         std::cout << "#Noise# R_best: " <<  evaluations.values[0].at( evaluations.best_index ) << " m_trial: "
-                       << trial_model_value  << " Sub: " << evaluations.values[0].at( evaluations.best_index ) - 
-                       trial_model_value << std::endl;
+                       << surrogate_models[0].evaluate(x_trial) << " Sub: " << evaluations.values[0].at( evaluations.best_index ) - 
+                       surrogate_models[0].evaluate(x_trial) << std::endl;
         std::cout << "#Noise# Acceptance ratio: " << acceptance_ratio << " eta_1: " << eta_1 << " eta_0: " << eta_0 << std::endl << std::flush; 
-      }*/
+      }
       std::cout << std::flush; 
       if ( acceptance_ratio >= eta_1 && acceptance_ratio < 2e0 ) {
         if ( verbose >= 2 ) { std::cout << "Step successful" << std::endl << std::flush; }
@@ -1758,18 +1844,18 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
             if(use_hard_box_constraints){
               out_of_bounds = true;
               do{
-                x_trial.at(i) = evaluations.nodes[ evaluations.best_index ].at( i ) +
+                x_sample.at(i) = evaluations.nodes[ evaluations.best_index ].at( i ) +
                          delta * norm_dis( rand_generator ) * 1e0;
-                if(x_trial[i] >= lower_bound_constraints[i] && x_trial[i] <= upper_bound_constraints[i]){
+                if(x_sample[i] >= lower_bound_constraints[i] && x_sample[i] <= upper_bound_constraints[i]){
                   out_of_bounds = false;
                 }
               }while(out_of_bounds);
             }else{
-              x_trial.at(i) = evaluations.nodes[ evaluations.best_index ].at( i ) +
+              x_sample.at(i) = evaluations.nodes[ evaluations.best_index ].at( i ) +
                          delta * norm_dis( rand_generator ) * 1e0;
             }
           }
-          evaluations.nodes.push_back( x_trial );
+          evaluations.nodes.push_back( x_sample );
         }
         blackbox_evaluator( );
         if ( EXIT_FLAG == NOEXIT ) {
@@ -1830,8 +1916,10 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
 
   } while ( EXIT_FLAG == NOEXIT );
 
-
-  val = evaluations.values[0].at(evaluations.best_index);
+  val.resize(1 + nb_constraints);
+  for(int i = 0; i < 1 + nb_constraints; ++i){
+    val[i] = evaluations.values[i].at(evaluations.best_index);
+  }
   x   = evaluations.nodes[ evaluations.best_index ];
 
   if ( verbose >= 1 ) {
