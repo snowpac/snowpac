@@ -659,7 +659,7 @@ double NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::compute_acceptance_rati
   acceptance_ratio = ( evaluations.values[0].at( evaluations.best_index ) - 
                        evaluations.values[0].back() )  /
                      ( evaluations.values[0].at( evaluations.best_index ) - 
-                       surrogate_models[0].evaluate(x_trial) );//trial_model_value );
+                       surrogate_models[0].evaluate( evaluations.transform(x_trial) ) );//trial_model_value );
 
   if ( acceptance_ratio != acceptance_ratio ) acceptance_ratio = -0.4251981;
 
