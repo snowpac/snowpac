@@ -733,7 +733,7 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::blackbox_evaluator (
   write_to_file();
 
   //TODO Remove this later
-  if(true){
+  if(false){
     output_for_plotting(output_steps, 0, x);
     output_steps++;
   }
@@ -850,7 +850,7 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::blackbox_evaluator ( )
 
   write_to_file();
   //TODO: Remove this later
-  if(true){
+  if(false){
     for(int i = nb_vals_tmp; i < nb_nodes_tmp; ++i){
       output_for_plotting(output_steps, i-nb_vals_tmp, evaluations.nodes[ i ]);
     }
@@ -1527,11 +1527,6 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
     }
     if ( verbose >= 2 ) { std::cout << "done" << std::endl;; }
   }
-
-  if ( verbose == 3 ) { std::cout << "Building initial models ... "; }
-  update_surrogate_models( );
-  if ( verbose == 3 ) { std::cout << "done" << std::endl; }
-
    
 /*
   std::vector<double> x_loc(2);
@@ -1556,17 +1551,19 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
 */
 
   //Check if initial point is infeasible
-  bool initial_point_is_feasible = true; 
+  bool initial_point_is_infeasible = false; 
   for (int i = 0; i < nb_constraints; ++i){
 	if(evaluations.values[i+1].at(evaluations.best_index) > 0.){
-		initial_point_is_feasible = false;
+		initial_point_is_infeasible = true;
 		if (verbose == 3) {std::cout << "Initial point is not feasible ..." << std::endl;};
 		break;
 	}
   }
-  if( !initial_point_is_feasible ){ //If infeasible we look if one of the sample points is feasible
+  double max_constraint_violation, cur_constraint_violation, tmp_constraint_violation;
+  max_constraint_violation = std::numeric_limits<double>::infinity();
+  if( initial_point_is_infeasible ){ //If infeasible we look if one of the sample points is feasible
 	bool cur_point_is_feasible = true;
-	double cur_min = std::numeric_limits<double>::infinity();
+	bool found_feasible_point = true;
 	for(int h = 0; h < evaluations.nodes.size(); ++h){
 		for (int i = 0; i < nb_constraints; ++i){
 			if(evaluations.values[i+1].at(h) > 0.){
@@ -1575,13 +1572,27 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
 			}
 		}
 		if(cur_point_is_feasible){
-			if(evaluations.values[0].at(h) < cur_min){
+			found_feasible_point = true;
+			if(evaluations.values[0].at(h) < evaluations.values[0].at(evaluations.best_index)){
 				evaluations.best_index = h;
 			}
 		}
 		cur_point_is_feasible = true;
  	}	
-	if( cur_min < std::numeric_limits<double>::infinity() ){ //We found a feasible point, resample now
+	if(!found_feasible_point){ //If we did not find a feasible point we look for the point with the lowest constraint violation
+		cur_constraint_violation = std::numeric_limits<double>::infinity();
+		for(int h = 0; h < evaluations.nodes.size(); ++h){
+			tmp_constraint_violation = 0.0;
+			for(int i = 0; i < nb_constraints; ++i){
+				tmp_constraint_violation += evaluations.values[i+1].at(h)*evaluations.values[i+1].at(h);
+			}
+			if(tmp_constraint_violation < cur_constraint_violation){
+				cur_constraint_violation = tmp_constraint_violation;
+				evaluations.best_index = h;
+			} 
+		}
+	}
+	if( evaluations.best_index != 0 ){ //We found a better point, resample now
 		for (int i = 0; i < dim; ++i ) {
       			x_sample = evaluations.nodes[ evaluations.best_index ];
       			if(!upper_bound_constraints.empty()){ //Is there an upper bound
@@ -1607,7 +1618,12 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
       			}
     		}
 	}
-  }	
+  }
+
+  if ( verbose == 3 ) { std::cout << "Building initial models ... "; }
+  update_surrogate_models( );
+  if ( verbose == 3 ) { std::cout << "done" << std::endl; }
+	
 
   x_trial = evaluations.nodes[ evaluations.best_index ];
   if ( verbose == 3 ) { std::cout << "Value of criticality measure : "; }
