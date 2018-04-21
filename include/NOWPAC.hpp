@@ -661,10 +661,42 @@ double NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::compute_acceptance_rati
   //                   ( evaluations.values[0].at( evaluations.best_index ) - 
   //                     surrogate_models[0].evaluate( evaluations.transform(x_trial) ) );
 
-  acceptance_ratio = ( evaluations.values[0].at( evaluations.best_index ) - 
-                       evaluations.values[0].back() )  /
-                     ( surrogate_models[0].evaluate( evaluations.transform(evaluations.nodes[evaluations.best_index]) ) - 
-                       surrogate_models[0].evaluate( evaluations.transform(x_trial) ) );
+  bool cur_point_is_feasible = true;
+
+  for (int i = 0; i < nb_constraints; ++i ){
+    if(surrogate_models[i+1].evaluate( evaluations.transform(x_trial) ) > 0.){
+        cur_point_is_feasible = false;
+        break;
+    }
+  }
+  
+  double numerator, denominator;
+  double R_best, R_last;
+  double m_best, m_last;
+  if cur_point_is_feasible{ 
+    R_best = evaluations.values[0].at( evaluations.best_index );
+    R_last = evaluations.values[0].back();
+    m_best = surrogate_models[0].evaluate( evaluations.transform(evaluations.nodes[evaluations.best_index]) );
+    m_last = surrogate_models[0].evaluate( evaluations.transform(x_trial) );
+  }else{ //Feasibility restoration mode, different objective
+    R_best = 0.;
+    R_last = 0.;
+    m_best = 0.;
+    m_last = 0.;
+    for (int i = 0; i < nb_constraints; ++i ) {
+      if (surrogate_models[i+1].evaluate( evaluations.transform(x_trial) ) > 0.){
+        R_best += evaluations.values[i+1].at( evaluations.best_index )*evaluations.values[i+1].at( evaluations.best_index );
+        R_last += evaluations.values[i+1].back() * evaluations.values[i+1].back();
+        m_best += surrogate_models[i+1].evaluate( evaluations.transform(evaluations.nodes[evaluations.best_index]) ) * 
+                  surrogate_models[i+1].evaluate( evaluations.transform(evaluations.nodes[evaluations.best_index]) );
+        m_last += surrogate_models[i+1].evaluate( evaluations.transform(x_trial) ) * 
+                  surrogate_models[i+1].evaluate( evaluations.transform(x_trial) );
+      }
+    }
+  }
+  numerator = R_best - R_last;
+  denominator = m_best - m_last;
+  acceptance_ratio = (std::fabs(denominator) > DBL_MIN) ? numerator / denominator : numerator;
 
   return acceptance_ratio;
 }
