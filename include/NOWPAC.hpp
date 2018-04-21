@@ -49,6 +49,7 @@
 #include <cassert>
 #include <backward/strstream>
 #include <limits>
+#include <float.h>
 //! NOWPAC
 template<class TSurrogateModel = MinimumFrobeniusNormModel, 
          class TBasisForSurrogateModel = LegendreBasisForMinimumFrobeniusNormModel>
@@ -1849,7 +1850,7 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
                                               max_inner_boundary_path_constants.at(i);
 
       if ( verbose == 3 ) { std::cout << std::endl; }
-      
+
       if ( verbose >= 2 ) std::cout << "*****************************************" << std::endl; 
 
       if ( acceptance_ratio >= eta_1 && acceptance_ratio < 2e0 ) {
