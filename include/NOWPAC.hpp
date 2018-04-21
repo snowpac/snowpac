@@ -699,7 +699,8 @@ double NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::compute_acceptance_rati
   denominator = m_best - m_last;
 
   acceptance_ratio = (std::fabs(denominator) > DBL_MIN) ? numerator / denominator : numerator;
-  std::cout << "*******************************"; 
+
+  std::cout << "*******************************" << std::endl; 
   if (!cur_point_is_feasible) std::cout << "#AcceptRatio# #FEASRES#: Feasibility restoration acceptance ratio" << std::endl;
   std::cout << "#AcceptRatio# x_trial: [ "; 
   for(int i = 0; i < x_trial.size(); ++i){
@@ -708,8 +709,8 @@ double NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::compute_acceptance_rati
   std::cout << "]" << std::endl;
   std::cout << "#AcceptRatio# R_best: " <<  R_best << " R_last: " << R_last  << " numerator: " << numerator << std::endl;
   std::cout << "#AcceptRatio# m_best: " <<  m_best << " m_last: " << m_last << " denominator: " << denominator << std::endl;
-  std::cout << "#AcceptRatio# Acceptance ratio: " << acceptance_ratio << " eta_1: " << eta_1 << " eta_0: " << eta_0 << std::endl << std::flush; 
-  std::cout << "*******************************"; 
+  std::cout << "#AcceptRatio# Acceptance ratio: " << acceptance_ratio << " eta_1: " << eta_1 << " eta_0: " << eta_0 << std::endl; 
+  std::cout << "*******************************" << std::endl; 
   std::cout << std::flush; 
 
   return acceptance_ratio;
@@ -1848,8 +1849,9 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
                                               max_inner_boundary_path_constants.at(i);
 
       if ( verbose == 3 ) { std::cout << std::endl; }
-      if ( verbose >= 2 ) { 
-        std::cout << "*****************************************" << std::endl; 
+      
+      if ( verbose >= 2 ) std::cout << "*****************************************" << std::endl; 
+
       if ( acceptance_ratio >= eta_1 && acceptance_ratio < 2e0 ) {
         if ( verbose >= 2 ) { std::cout << "Step successful" << std::endl << std::flush; }
         update_trustregion( gamma_inc );
