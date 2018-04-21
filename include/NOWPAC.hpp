@@ -673,7 +673,7 @@ double NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::compute_acceptance_rati
   double numerator, denominator;
   double R_best, R_last;
   double m_best, m_last;
-  if cur_point_is_feasible{ 
+  if (cur_point_is_feasible){ 
     R_best = evaluations.values[0].at( evaluations.best_index );
     R_last = evaluations.values[0].back();
     m_best = surrogate_models[0].evaluate( evaluations.transform(evaluations.nodes[evaluations.best_index]) );
