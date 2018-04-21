@@ -700,7 +700,7 @@ double NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::compute_acceptance_rati
 
   acceptance_ratio = (std::fabs(denominator) > DBL_MIN) ? numerator / denominator : numerator;
   std::cout << "*******************************"; 
-  if (!cur_points_is_feasible) std::cout << "#AcceptRatio# #FEASRES#: Feasibility restoration acceptance ratio" << std::endl;
+  if (!cur_point_is_feasible) std::cout << "#AcceptRatio# #FEASRES#: Feasibility restoration acceptance ratio" << std::endl;
   std::cout << "#AcceptRatio# x_trial: [ "; 
   for(int i = 0; i < x_trial.size(); ++i){
    std::cout << x_trial[i] << " ";
