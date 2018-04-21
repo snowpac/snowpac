@@ -694,9 +694,23 @@ double NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::compute_acceptance_rati
       }
     }
   }
+
   numerator = R_best - R_last;
   denominator = m_best - m_last;
+
   acceptance_ratio = (std::fabs(denominator) > DBL_MIN) ? numerator / denominator : numerator;
+  std::cout << "*******************************"; 
+  if (!cur_points_is_feasible) std::cout << "#AcceptRatio# #FEASRES#: Feasibility restoration acceptance ratio" << std::endl;
+  std::cout << "#AcceptRatio# x_trial: [ "; 
+  for(int i = 0; i < x_trial.size(); ++i){
+   std::cout << x_trial[i] << " ";
+  }
+  std::cout << "]" << std::endl;
+  std::cout << "#AcceptRatio# R_best: " <<  R_best << " R_last: " << R_last  << " numerator: " << numerator << std::endl;
+  std::cout << "#AcceptRatio# m_best: " <<  m_best << " m_last: " << m_last << " denominator: " << denominator << std::endl;
+  std::cout << "#AcceptRatio# Acceptance ratio: " << acceptance_ratio << " eta_1: " << eta_1 << " eta_0: " << eta_0 << std::endl << std::flush; 
+  std::cout << "*******************************"; 
+  std::cout << std::flush; 
 
   return acceptance_ratio;
 }
@@ -1836,20 +1850,6 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
       if ( verbose == 3 ) { std::cout << std::endl; }
       if ( verbose >= 2 ) { 
         std::cout << "*****************************************" << std::endl; 
-        std::cout << "#Noise# x_trial: [ "; 
-        for(int i = 0; i < x_trial.size(); ++i){
-         std::cout << x_trial[i] << " ";
-        }
-        std::cout << "]" << std::endl;
-        std::cout << "#Noise# R_best: " <<  evaluations.values[0].at( evaluations.best_index ) << " R_last: "
-                       << evaluations.values[0].back()  << " Sub: " << ( evaluations.values[0].at( evaluations.best_index ) - 
-                       evaluations.values[0].back() )<< std::endl;
-        std::cout << "#Noise# R_best: " <<  evaluations.values[0].at( evaluations.best_index ) << " m_trial: "
-                       << surrogate_models[0].evaluate(x_trial) << " Sub: " << evaluations.values[0].at( evaluations.best_index ) - 
-                       surrogate_models[0].evaluate(x_trial) << std::endl;
-        std::cout << "#Noise# Acceptance ratio: " << acceptance_ratio << " eta_1: " << eta_1 << " eta_0: " << eta_0 << std::endl << std::flush; 
-      }
-      std::cout << std::flush; 
       if ( acceptance_ratio >= eta_1 && acceptance_ratio < 2e0 ) {
         if ( verbose >= 2 ) { std::cout << "Step successful" << std::endl << std::flush; }
         update_trustregion( gamma_inc );
