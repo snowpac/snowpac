@@ -701,19 +701,20 @@ double NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::compute_acceptance_rati
 
   acceptance_ratio = (std::fabs(denominator) > DBL_MIN) ? numerator / denominator : numerator;
 
-  std::cout << "*******************************" << std::endl; 
-  if (!cur_point_is_feasible) std::cout << "#AcceptRatio# #FEASRES#: Feasibility restoration acceptance ratio" << std::endl;
-  std::cout << "#AcceptRatio# x_trial: [ "; 
-  for(int i = 0; i < x_trial.size(); ++i){
-   std::cout << x_trial[i] << " ";
+  if(verbose >= 3){
+    std::cout << "*******************************" << std::endl; 
+    if (!cur_point_is_feasible) std::cout << "#AcceptRatio# #FEASRES#: Feasibility restoration acceptance ratio" << std::endl;
+    std::cout << "#AcceptRatio# x_trial: [ "; 
+    for(int i = 0; i < x_trial.size(); ++i){
+     std::cout << x_trial[i] << " ";
+    }
+    std::cout << "]" << std::endl;
+    std::cout << "#AcceptRatio# R_best: " <<  R_best << " R_last: " << R_last  << " numerator: " << numerator << std::endl;
+    std::cout << "#AcceptRatio# m_best: " <<  m_best << " m_last: " << m_last << " denominator: " << denominator << std::endl;
+    std::cout << "#AcceptRatio# Acceptance ratio: " << acceptance_ratio << " eta_1: " << eta_1 << " eta_0: " << eta_0 << std::endl; 
+    std::cout << "*******************************" << std::endl; 
+    std::cout << std::flush; 
   }
-  std::cout << "]" << std::endl;
-  std::cout << "#AcceptRatio# R_best: " <<  R_best << " R_last: " << R_last  << " numerator: " << numerator << std::endl;
-  std::cout << "#AcceptRatio# m_best: " <<  m_best << " m_last: " << m_last << " denominator: " << denominator << std::endl;
-  std::cout << "#AcceptRatio# Acceptance ratio: " << acceptance_ratio << " eta_1: " << eta_1 << " eta_0: " << eta_0 << std::endl; 
-  std::cout << "*******************************" << std::endl; 
-  std::cout << std::flush; 
-
   return acceptance_ratio;
 }
 //--------------------------------------------------------------------------------
@@ -928,21 +929,26 @@ bool NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::last_point_is_feasible ( 
  }	
 */
 //Old version	
-  std::cout << "#M1# Testing feasiblity: " << std::endl;
-  std::cout << "#M1#      at best point: [";
-  for(int i = 0; i < evaluations.nodes[evaluations.best_index].size(); ++i)
-    std::cout << evaluations.nodes[evaluations.best_index][i] << ', ';
-  std::cout << std::endl;
-  std::cout << "#M1#      at index: " << evaluations.best_index << std::endl;
-
+  if(verbose >= 3){
+    std::cout << "#TESTFEAS# Testing feasiblity: " << std::endl;
+    std::cout << "#TESTFEAS#      at best point: [";
+    for(int i = 0; i < evaluations.nodes[evaluations.best_index].size(); ++i)
+      std::cout << evaluations.nodes[evaluations.best_index][i] << ', ';
+    std::cout << std::endl;
+    std::cout << "#TESTFEAS#      at index: " << evaluations.best_index << std::endl;
+  }
   for (int i = 0; i < nb_constraints; ++i ) {
     tmp_dbl = evaluations.values[i+1].at( evaluations.best_index );
-    std::cout << "#M1# Testing feasiblity: cons[" << i << "] = " << tmp_dbl << std::endl;
+    if(verbose >= 3){
+      std::cout << "#TESTFEAS# Testing feasiblity: cons[" << i << "] = " << tmp_dbl << std::endl;
+      std::cout << "#TESTFEAS# Compare to back(): " << evaluations.values[i+1].back() << std::endl;
+    }
     if ( tmp_dbl < 0e0 ) tmp_dbl = 0e0;
-  std::cout << "#M1# Compare to back(): " << evaluations.values[i+1].back() << std::endl;
     if ( evaluations.values[i+1].back() > tmp_dbl ) {
+      if(verbose >= 3){
+        std::cout << "#TESTFEAS# Point is not feasible: res = " << tmp_dbl << " vs. back: " << evaluations.values[i+1].back() << std::endl;
+      }
       point_is_feasible = false;
-      std::cout << "#M1# Point is not feasible: res = " << tmp_dbl << " vs. back: " << evaluations.values[i+1].back() << std::endl;
       inner_boundary_path_constants.at(i) *= 2e0;
 //      if ( inner_boundary_path_constants.at(i) > max_inner_boundary_path_constants.at(i) )
 //        inner_boundary_path_constants.at(i) = max_inner_boundary_path_constants.at(i);
@@ -1037,13 +1043,16 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::update_trustregion (
  if ( noise_detection && scaling_factor >= 1e0) this->reset_noise_detection();
 
   delta *= scaling_factor;
-  std::cout << std::endl << "------------------------- " << std::endl;
-  std::cout << "#Noise#Cur delta " << delta << " Scaling factor: " << scaling_factor << std::endl;
-  std::cout << "#Noise#MAXNOISE " << max_noise << " sqrt = " << sqrt( max_noise ) << std::endl;
+  if(verbose >= 3){
+    std::cout << std::endl << "------------------------- " << std::endl;
+    std::cout << "#Noise#Cur delta " << delta << " Scaling factor: " << scaling_factor << std::endl;
+    std::cout << "#Noise#MAXNOISE " << max_noise << " sqrt = " << sqrt( max_noise ) << std::endl;
     std::cout << "#Noise#   ObjF " << noise_per_function[0] << " sqrt = " << sqrt( noise_per_function[0] ) << std::endl;
     for ( int j = 1; j < nb_constraints+1; ++j ) {
-        std::cout << "#Noise#   C" << j << " " << noise_per_function[j] << " sqrt = " << sqrt( noise_per_function[j] ) << std::endl;
+      std::cout << "#Noise#   C" << j << " " << noise_per_function[j] << " sqrt = " << sqrt( noise_per_function[j] ) << std::endl;
     }
+    std::cout <<  "------------------------- " << std::endl;
+  }
   if ( stochastic_optimization ) {
     double ar_tmp = acceptance_ratio;
     if ( ar_tmp < 0e0 ) ar_tmp = -ar_tmp;
@@ -1061,7 +1070,6 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::update_trustregion (
   }
  if ( delta < delta_min ) EXIT_FLAG = 0;
     //std::cout << "#Noise#   delta: " << delta << std::endl;
-  std::cout <<  "------------------------- " << std::endl;
   /*if (use_approx_gaussian_process){
     gaussian_processes.set_constraint_ball_radius(1.5*delta);
   }*/
@@ -1848,8 +1856,6 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
       for (int i = 0; i < nb_constraints; ++i) 
         inner_boundary_path_constants.at(i) = pow(stepsize[0], 2e0) * 
                                               max_inner_boundary_path_constants.at(i);
-
-      if ( verbose == 3 ) { std::cout << std::endl; }
 
       if ( verbose >= 2 ) std::cout << "*****************************************" << std::endl; 
 
