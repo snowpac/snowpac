@@ -919,19 +919,37 @@ bool NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::last_point_is_feasible ( 
   bool point_is_feasible = true;
 
   // New version
+  bool best_point_is_feasible = true;
   bool back_point_is_feasible = true;
 
+  // Check if new point is feasible, if not improve inner boundary path constant
   for (int i = 0; i < nb_constraints; ++i){
     if(evaluations.values[i+1].back() > 0.){
       back_point_is_feasible = false;
       inner_boundary_path_constants.at(i) *= 2e0;
-      if (inner_boundary_path_constants.at(i) > max_inner_boundary_path_constants.at(i)){
-        inner_boundary_path_constants.at(i) = max_inner_boundary_path_constants.at(i);
-      }
+      //if (inner_boundary_path_constants.at(i) > max_inner_boundary_path_constants.at(i)){
+      //  inner_boundary_path_constants.at(i) = max_inner_boundary_path_constants.at(i);
+      //}
       //break;
     }
   } 
-  if(!back_point_is_feasible){
+
+  // Check if current best point is feasible
+  for (int i = 0; i < nb_constraints; ++i){
+    if(evaluations.values[i+1][evaluations.best_index] > 0.){
+      best_point_is_feasible = false;
+      //inner_boundary_path_constants.at(i) *= 2e0;
+      //if (inner_boundary_path_constants.at(i) > max_inner_boundary_path_constants.at(i)){
+      //  inner_boundary_path_constants.at(i) = max_inner_boundary_path_constants.at(i);
+      //}
+      //break;
+    }
+  }
+
+  if(!best_point_is_feasible && back_point_is_feasible){ //From infeasible to feasible: Take this point
+    point_is_feasible = true;
+  }else if(!best_point_is_feasible && !back_point_is_feasible){ //Improved feasibility: Check if Feas Restore Condition improved based on robust measures
+    point_is_feasible = true;
     std::cout << "#TESTFEAS# Trial point not feasible: " << std::endl;
     double feasiblity_obj_best = 0.;
     double feasiblity_obj_last = 0.;
@@ -949,83 +967,12 @@ bool NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::last_point_is_feasible ( 
       std::cout << "#TESTFEAS# Point feasibility not improved: " << std::endl;
       point_is_feasible = false;
     }
-  }else{//Do the same as in Florian's version
-    if(verbose >= 3){
-      std::cout << "#TESTFEAS# Testing feasiblity: " << std::endl;
-      std::cout << "#TESTFEAS#      at best point: [";
-      for(int i = 0; i < evaluations.nodes[evaluations.best_index].size(); ++i)
-        std::cout << evaluations.nodes[evaluations.best_index][i] << ', ';
-      std::cout << std::endl;
-      std::cout << "#TESTFEAS#      at index: " << evaluations.best_index << std::endl;
-    }
-    for (int i = 0; i < nb_constraints; ++i ) {
-      tmp_dbl = evaluations.values[i+1].at( evaluations.best_index );
-      if(verbose >= 3){
-        std::cout << "#TESTFEAS# Testing feasiblity: cons[" << i << "] = " << tmp_dbl << std::endl;
-        std::cout << "#TESTFEAS# Compare to back(): " << evaluations.values[i+1].back() << std::endl;
-      }
-      if ( tmp_dbl < 0e0 ) tmp_dbl = 0e0;
-      if ( evaluations.values[i+1].back() > tmp_dbl ) {
-        if(verbose >= 3){
-          std::cout << "#TESTFEAS# Point is not feasible: res = " << tmp_dbl << " vs. back: " << evaluations.values[i+1].back() << std::endl;
-        }
-        point_is_feasible = false;
-        inner_boundary_path_constants.at(i) *= 2e0;
-        if ( inner_boundary_path_constants.at(i) > max_inner_boundary_path_constants.at(i) )
-          inner_boundary_path_constants.at(i) = max_inner_boundary_path_constants.at(i);
-      }
-    }
+  }else if(best_point_is_feasible && !back_point_is_feasible){ //From feasible to infeasible: Reject this point
+    point_is_feasible = false;
+  }else{//Both are feasible
+    point_is_feasible = true;
   }
-  /*
-//----Old version 
-  if(verbose >= 3){
-    std::cout << "#TESTFEAS# Testing feasiblity: " << std::endl;
-    std::cout << "#TESTFEAS#      at best point: [";
-    for(int i = 0; i < evaluations.nodes[evaluations.best_index].size(); ++i)
-      std::cout << evaluations.nodes[evaluations.best_index][i] << ', ';
-    std::cout << std::endl;
-    std::cout << "#TESTFEAS#      at index: " << evaluations.best_index << std::endl;
-  }
-  for (int i = 0; i < nb_constraints; ++i ) {
-    tmp_dbl = evaluations.values[i+1].at( evaluations.best_index );
-    if(verbose >= 3){
-      std::cout << "#TESTFEAS# Testing feasiblity: cons[" << i << "] = " << tmp_dbl << std::endl;
-      std::cout << "#TESTFEAS# Compare to back(): " << evaluations.values[i+1].back() << std::endl;
-    }
-    if ( tmp_dbl < 0e0 ) tmp_dbl = 0e0;
-    if ( evaluations.values[i+1].back() > tmp_dbl ) {
-      if(verbose >= 3){
-        std::cout << "#TESTFEAS# Point is not feasible: res = " << tmp_dbl << " vs. back: " << evaluations.values[i+1].back() << std::endl;
-      }
-      point_is_feasible = false;
-      inner_boundary_path_constants.at(i) *= 2e0;
-//      if ( inner_boundary_path_constants.at(i) > max_inner_boundary_path_constants.at(i) )
-//        inner_boundary_path_constants.at(i) = max_inner_boundary_path_constants.at(i);
-    }
-  }
-  //-----
-  */
-
-//      tmp_dbl = pow( this->diff_norm( x_trial, evaluations.nodes[ evaluations.best_index ] ) / 
-//                     delta, 1e0 );
-//      std::cout << " step size scale = " << sqrt(tmp_dbl) << std::endl; 
-
-
-
-/*
-    std::cout << "**************************************" << std::endl;
-  if ( !point_is_feasible ) 
-    std::cout << "Point is not feasible" << std::endl;
-  if ( point_is_feasible ) 
-    std::cout << "Point is feasible" << std::endl;
-    std::cout << "--------------------------------------" << std::endl;
-    for ( int i = 0; i < nb_constraints; ++i )
-      std::cout << inner_boundary_path_constants[i] << " vs. " <<
-                   evaluations.values[i+1].back() << std::endl;
-    std::cout << "**************************************" << std::endl;
-//    assert( false );
-*/
-
+  
   return point_is_feasible;
 }
 //--------------------------------------------------------------------------------
