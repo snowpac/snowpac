@@ -925,9 +925,9 @@ bool NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::last_point_is_feasible ( 
     if(evaluations.values[i+1].back() > 0.){
       back_point_is_feasible = false;
       inner_boundary_path_constants.at(i) *= 2e0;
-      //if (inner_boundary_path_constants.at(i) > max_inner_boundary_path_constants.at(i)){
-      //  inner_boundary_path_constants.at(i) = max_inner_boundary_path_constants.at(i);
-      //}
+      if (inner_boundary_path_constants.at(i) > max_inner_boundary_path_constants.at(i)){
+        inner_boundary_path_constants.at(i) = max_inner_boundary_path_constants.at(i);
+      }
       //break;
     }
   } 
@@ -971,8 +971,8 @@ bool NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::last_point_is_feasible ( 
         }
         point_is_feasible = false;
         inner_boundary_path_constants.at(i) *= 2e0;
-        //if ( inner_boundary_path_constants.at(i) > max_inner_boundary_path_constants.at(i) )
-        //  inner_boundary_path_constants.at(i) = max_inner_boundary_path_constants.at(i);
+        if ( inner_boundary_path_constants.at(i) > max_inner_boundary_path_constants.at(i) )
+          inner_boundary_path_constants.at(i) = max_inner_boundary_path_constants.at(i);
       }
     }
   }
