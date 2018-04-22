@@ -924,11 +924,11 @@ bool NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::last_point_is_feasible ( 
   for (int i = 0; i < nb_constraints; ++i){
     if(evaluations.values[i+1].back() > 0.){
       back_point_is_feasible = false;
-      //inner_boundary_path_constants.at(i) *= 2e0;
+      inner_boundary_path_constants.at(i) *= 2e0;
       //if (inner_boundary_path_constants.at(i) > max_inner_boundary_path_constants.at(i)){
       //  inner_boundary_path_constants.at(i) = max_inner_boundary_path_constants.at(i);
       //}
-      break;
+      //break;
     }
   } 
   if(!back_point_is_feasible){
