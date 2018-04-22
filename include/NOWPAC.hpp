@@ -926,7 +926,7 @@ bool NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::last_point_is_feasible ( 
   for (int i = 0; i < nb_constraints; ++i){
     if(evaluations.values[i+1].back() > 0.){
       back_point_is_feasible = false;
-      inner_boundary_path_constants.at(i) *= 2e0;
+      //inner_boundary_path_constants.at(i) *= 2e0;
       //if (inner_boundary_path_constants.at(i) > max_inner_boundary_path_constants.at(i)){
       //  inner_boundary_path_constants.at(i) = max_inner_boundary_path_constants.at(i);
       //}
@@ -967,7 +967,16 @@ bool NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::last_point_is_feasible ( 
       std::cout << "#TESTFEAS# Point feasibility not improved: " << std::endl;
       point_is_feasible = false;
     }
-  }else if(best_point_is_feasible && !back_point_is_feasible){ //From feasible to infeasible: Reject this point
+  }else if(best_point_is_feasible && !back_point_is_feasible){ //From feasible to infeasible: Reject this point, update inner boundary path
+    for (int i = 0; i < nb_constraints; ++i){
+      if(evaluations.values[i+1].back() > 0.){
+        inner_boundary_path_constants.at(i) *= 2e0;
+        //if (inner_boundary_path_constants.at(i) > max_inner_boundary_path_constants.at(i)){
+        //  inner_boundary_path_constants.at(i) = max_inner_boundary_path_constants.at(i);
+        //}
+        //break;
+      }
+    } 
     point_is_feasible = false;
   }else{//Both are feasible
     point_is_feasible = true;
