@@ -88,7 +88,7 @@ class NOWPAC : protected NoiseDetection<TSurrogateModel> {
     bool delta_max_is_set;
     double delta, delta_min, delta_max;
     double omega, theta, gamma, gamma_inc, mu;
-    double eta_0, eta_1, eps_c;
+    double eta_0, eta_1, eta_2, eps_c;
     double threshold_for_poisedness_constant;
     std::vector<double> inner_boundary_path_constants;
     std::vector<double> max_inner_boundary_path_constants;
@@ -329,8 +329,9 @@ NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::NOWPAC ( int n ) :
   theta = 0.5;
   gamma = 0.8;
   gamma_inc = 1.4;
-  eta_0 = 0.1; 
-  eta_1 = 0.7;
+  eta_0 = 0.000001; 
+  eta_1 = 0.2;
+  eta_2 = 0.7;
   eps_c = 1e-3;
   mu = 1e0;
   nb_constraints = -1;
@@ -373,6 +374,8 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_option (
     { eta_0 = option_value; return; }
   if ( option_name.compare( "eta_1" ) == 0 ) 
     { eta_1 = option_value; return; }
+  if ( option_name.compare( "eta_2" ) == 0 ) 
+    { eta_2 = option_value; return; }
   if ( option_name.compare( "eps_c" ) == 0 ) 
     { eps_c = option_value; return; }
   if ( option_name.compare( "mu" ) == 0 ) 
@@ -918,19 +921,13 @@ bool NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::last_point_is_feasible ( 
 {
   bool point_is_feasible = true;
 
-  // New version
   bool best_point_is_feasible = true;
   bool back_point_is_feasible = true;
 
-  // Check if new point is feasible, if not improve inner boundary path constant
+  // Check if new point is feasible
   for (int i = 0; i < nb_constraints; ++i){
     if(evaluations.values[i+1].back() > 0.){
       back_point_is_feasible = false;
-      //inner_boundary_path_constants.at(i) *= 2e0;
-      //if (inner_boundary_path_constants.at(i) > max_inner_boundary_path_constants.at(i)){
-      //  inner_boundary_path_constants.at(i) = max_inner_boundary_path_constants.at(i);
-      //}
-      //break;
     }
   } 
 
@@ -938,47 +935,38 @@ bool NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::last_point_is_feasible ( 
   for (int i = 0; i < nb_constraints; ++i){
     if(evaluations.values[i+1][evaluations.best_index] > 0.){
       best_point_is_feasible = false;
-      //inner_boundary_path_constants.at(i) *= 2e0;
-      //if (inner_boundary_path_constants.at(i) > max_inner_boundary_path_constants.at(i)){
-      //  inner_boundary_path_constants.at(i) = max_inner_boundary_path_constants.at(i);
-      //}
-      //break;
     }
   }
-
-  if(!best_point_is_feasible && back_point_is_feasible){ //From infeasible to feasible: Take this point
+  
+  if(!best_point_is_feasible && back_point_is_feasible){ 
+    //From infeasible to feasible: Take this point
     point_is_feasible = true;
-  }else if(!best_point_is_feasible && !back_point_is_feasible){ //Improved feasibility: Check if Feas Restore Condition improved based on robust measures
+  }else if(!best_point_is_feasible && !back_point_is_feasible){ 
+    //From infeasible to infeasible: Check if Feas Restore Condition improved based on robust measures  
     point_is_feasible = true;
-    std::cout << "#TESTFEAS# Trial point not feasible: " << std::endl;
     double feasiblity_obj_best = 0.;
     double feasiblity_obj_last = 0.;
     for (int i = 0; i < nb_constraints; ++i){
       if(evaluations.values[i+1].back() > 0.){
-        feasiblity_obj_best += evaluations.values[i+1][evaluations.best_index]*evaluations.values[i+1][evaluations.best_index];
-        feasiblity_obj_last += evaluations.values[i+1].back()*evaluations.values[i+1].back();
-        //inner_boundary_path_constants.at(i) *= 2e0;
-        //if (inner_boundary_path_constants.at(i) > max_inner_boundary_path_constants.at(i)){
-        //  inner_boundary_path_constants.at(i) = max_inner_boundary_path_constants.at(i);
-        //}
+        feasiblity_obj_best += evaluations.values[i+1][evaluations.best_index]
+                             * evaluations.values[i+1][evaluations.best_index];
+        feasiblity_obj_last += evaluations.values[i+1].back()
+                             * evaluations.values[i+1].back();
       }
     } 
     if(feasiblity_obj_last >= feasiblity_obj_best){
-      std::cout << "#TESTFEAS# Point feasibility not improved: " << std::endl;
       point_is_feasible = false;
     }
-  }else if(best_point_is_feasible && !back_point_is_feasible){ //From feasible to infeasible: Reject this point, update inner boundary path
+  }else if(best_point_is_feasible && !back_point_is_feasible){ 
+    //From feasible to infeasible: Reject this point, update inner boundary path
     for (int i = 0; i < nb_constraints; ++i){
       if(evaluations.values[i+1].back() > 0.){
         inner_boundary_path_constants.at(i) *= 2e0;
-        //if (inner_boundary_path_constants.at(i) > max_inner_boundary_path_constants.at(i)){
-        //  inner_boundary_path_constants.at(i) = max_inner_boundary_path_constants.at(i);
-        //}
-        //break;
       }
     } 
     point_is_feasible = false;
-  }else{//Both are feasible
+  }else{
+    //Both are feasible  
     point_is_feasible = true;
   }
   
@@ -1240,6 +1228,10 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::check_parameter_consisten
   }
   if ( eta_1 <= 0.0 || eta_0 > eta_1 || eta_1 >= 1.0) {
     std::cout << "Error   : Invalid parameter value for eta_1 ([eta_0, 1[)." << std::endl;
+    EXIT_FLAG = -4;
+  }
+  if ( eta_2 <= 0.0 || eta_1 > eta_2 || eta_2 >= 1.0) {
+    std::cout << "Error   : Invalid parameter value for eta_2 ([eta_1, 1[)." << std::endl;
     EXIT_FLAG = -4;
   }
   if ( mu <= 0.0 ) {
@@ -1866,13 +1858,17 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
 
       if ( verbose >= 2 ) std::cout << "*****************************************" << std::endl; 
 
-      if ( acceptance_ratio >= eta_1 && acceptance_ratio < 2e0 ) {
+      if ( acceptance_ratio >= eta_2 && acceptance_ratio < 2e0 ) {
         if ( verbose >= 2 ) { std::cout << "Step successful" << std::endl << std::flush; }
         update_trustregion( gamma_inc );
       } 
       fflush(stdout);
-      if ( (acceptance_ratio >= eta_0 && acceptance_ratio < eta_1) || acceptance_ratio >= 2e0 ) {
+      if ( (acceptance_ratio >= eta_1 && acceptance_ratio < eta_2) || acceptance_ratio >= 2e0 ) {
         if ( verbose >= 2 ) { std::cout << "Step acceptable" << std::endl << std::flush; }
+      }
+      if ( (acceptance_ratio >= eta_0 && acceptance_ratio < eta_1)) {
+        if ( verbose >= 2 ) { std::cout << "Step acceptable but shrink" << std::endl << std::flush; }
+        update_trustregion( gamma );
       }
 
       if ( acceptance_ratio >= eta_0 ) {
