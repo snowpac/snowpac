@@ -6,7 +6,7 @@ ExternalProject_Add( NLOPT
    
    PREFIX ${NOWPAC_INSTALL_PREFIX}/nowpac/external/nlopt/build
    URL ${NOWPAC_NLOPT_URL}
-   CONFIGURE_COMMAND ../NLOPT/configure --prefix=${NOWPAC_INSTALL_PREFIX}/nowpac/external/nlopt --enable-shared --enable-static
+   CONFIGURE_COMMAND ../NLOPT/configure --prefix=${NOWPAC_INSTALL_PREFIX}/nowpac/external/nlopt --without-octave --without-matlab --enable-shared --enable-static
    BUILD_COMMAND make 
    INSTALL_COMMAND make install
    LOG_DOWNLOAD 1

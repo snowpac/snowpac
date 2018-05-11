@@ -69,6 +69,7 @@ class NOWPAC : protected NoiseDetection<TSurrogateModel> {
     void blackbox_evaluator ( );
     void update_surrogate_models ( );
     void update_trustregion ( double );
+    bool best_point_is_feasible ( );
     bool last_point_is_feasible ( );
     void add_trial_node( );
     double compute_acceptance_ratio ( );
@@ -915,6 +916,26 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::blackbox_evaluator ( )
 }  
 //--------------------------------------------------------------------------------
 
+
+//--------------------------------------------------------------------------------
+template<class TSurrogateModel, class TBasisForSurrogateModel>
+bool NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::best_point_is_feasible ( ) 
+{
+
+  bool best_point_is_feasible = true;
+
+  // Check if current best point is feasible
+  for (int i = 0; i < nb_constraints; ++i){
+    if(evaluations.values[i+1][evaluations.best_index] > 0.){
+      best_point_is_feasible = false;
+      break;
+    }
+  }
+  
+  return best_point_is_feasible;
+}
+//--------------------------------------------------------------------------------
+
 //--------------------------------------------------------------------------------
 template<class TSurrogateModel, class TBasisForSurrogateModel>
 bool NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::last_point_is_feasible ( ) 
@@ -1696,58 +1717,60 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
     /*- STEP 1 - STEP 1 - STEP 1 - STEP 1 - STEP 1 - STEP 1 - STEP 1 - STEP 1 - STEP 1 -*/
     /*----------------------------------------------------------------------------------*/
     //if criticality measure is small, check if model improvement is necessary
-    if ( criticality_value <= eps_c ) {
-      if ( verbose == 3 && delta > mu * criticality_value ) {
-        std::cout << " Criticality measure below threshold" << std::endl;
-        std::cout << " -----------------------------------" << std::endl;
-      }
-      while ( delta > mu * criticality_value ) {
-        //output_for_plotting( number_accepted_steps) ;
-        update_trustregion( omega );
-        update_surrogate_models( ); //xxx
-        if ( EXIT_FLAG != NOEXIT ) break;
-        //if (verbose == 3) {
-        //  std::cout << "#Noise# Adjusting trust-region radius to " << delta << std::endl;
-        //}
-        surrogate_nodes->improve_poisedness ( evaluations.best_index, evaluations );
-        if ( stochastic_optimization ) {
-          for (int i = 0; i < dim; ++i ){
-            if(use_hard_box_constraints){
-              out_of_bounds = true;
-              do{
+    if ( best_point_is_feasible( ) ) {
+      if ( criticality_value <= eps_c ) {
+        if ( verbose == 3 && delta > mu * criticality_value ) {
+          std::cout << " Criticality measure below threshold" << std::endl;
+          std::cout << " -----------------------------------" << std::endl;
+        }
+        while ( delta > mu * criticality_value ) {
+          //output_for_plotting( number_accepted_steps) ;
+          update_trustregion( omega );
+          update_surrogate_models( ); //xxx
+          if ( EXIT_FLAG != NOEXIT ) break;
+          //if (verbose == 3) {
+          //  std::cout << "#Noise# Adjusting trust-region radius to " << delta << std::endl;
+          //}
+          surrogate_nodes->improve_poisedness ( evaluations.best_index, evaluations );
+          if ( stochastic_optimization ) {
+            for (int i = 0; i < dim; ++i ){
+              if(use_hard_box_constraints){
+                out_of_bounds = true;
+                do{
+                  x_sample.at(i) = evaluations.nodes[ evaluations.best_index ].at( i ) +
+                           delta * norm_dis( rand_generator ) * 1e0;
+                  if(x_sample[i] >= lower_bound_constraints[i] && x_sample[i] <= upper_bound_constraints[i]){
+                    out_of_bounds = false;
+                  }
+                }while(out_of_bounds);
+              }else{
                 x_sample.at(i) = evaluations.nodes[ evaluations.best_index ].at( i ) +
-                         delta * norm_dis( rand_generator ) * 1e0;
-                if(x_sample[i] >= lower_bound_constraints[i] && x_sample[i] <= upper_bound_constraints[i]){
-                  out_of_bounds = false;
-                }
-              }while(out_of_bounds);
-            }else{
-              x_sample.at(i) = evaluations.nodes[ evaluations.best_index ].at( i ) +
-                         delta * norm_dis( rand_generator ) * 1e0;
+                           delta * norm_dis( rand_generator ) * 1e0;
+              }
             }
+            evaluations.nodes.push_back( x_sample );
           }
-          evaluations.nodes.push_back( x_sample );
-        }
-        blackbox_evaluator( );
-        if ( EXIT_FLAG != NOEXIT ) break;
-        update_surrogate_models( );
-        if ( noise_detection ) {
-          if ( this->detect_noise( ) && noise_termination ) EXIT_FLAG = -2; 
-        }
-        x_trial = evaluations.nodes[ evaluations.best_index ];
+          blackbox_evaluator( );
+          if ( EXIT_FLAG != NOEXIT ) break;
+          update_surrogate_models( );
+          if ( noise_detection ) {
+            if ( this->detect_noise( ) && noise_termination ) EXIT_FLAG = -2; 
+          }
+          x_trial = evaluations.nodes[ evaluations.best_index ];
 
-        criticality_value = surrogate_optimization->compute_criticality_measure( x_trial );
+          criticality_value = surrogate_optimization->compute_criticality_measure( x_trial );
 
-        // TODO: check if while should be exited on infeasible points...
+          // TODO: check if while should be exited on infeasible points...
 
-        //output_for_plotting( number_accepted_steps) ;
-        if (verbose == 3) {
-          std::cout << " Value of criticality measure is " << criticality_value << std::endl;
-          std::cout << " -----------------------------------" << std::endl << std::flush;
+          //output_for_plotting( number_accepted_steps) ;
+          if (verbose == 3) {
+            std::cout << " Value of criticality measure is " << criticality_value << std::endl;
+            std::cout << " -----------------------------------" << std::endl << std::flush;
+          }
         }
       }
-    }
 
+    }
     /*----------------------------------------------------------------------------------*/
     /*- STEP 2 - STEP 2 - STEP 2 - STEP 2 - STEP 2 - STEP 2 - STEP 2 - STEP 2 - STEP 2 -*/
     /*----------------------------------------------------------------------------------*/
