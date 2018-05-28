@@ -1806,7 +1806,14 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
         break;
       }
       if ( !last_point_is_feasible( ) ) {
-        if ( verbose == 3 ) { std::cout << " Feasibility violated" << std::endl << std::flush; }
+        if ( verbose == 3 ) { 
+          std::cout << " #FEASVIOLATION Feasibility violated" << std::endl << std::flush; 
+          for (int i = 0; i < nb_constraints; ++i){
+            std::cout << " Constraint " << i+1 
+             << ": [Best: " << evaluations.values[i+1][evaluations.best_index]
+             << ", Back: " << evaluations.values[i+1].back() << "]"<< std::endl << std::flush;
+          }
+        }
 
         tmp_dbl = 1e0;
         for ( int i = 0; i < evaluations.active_index.size(); ++i ) {
