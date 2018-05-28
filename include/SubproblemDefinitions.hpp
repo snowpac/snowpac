@@ -78,6 +78,7 @@ double SubproblemDefinitions<TSurrogateModel, TSubproblemOptimization>::opt_rest
   std::vector<double> gradient (x.size());
   double objective_value = 0e0;
   double tmp[3];
+  double lambda_g = *(d->me->delta);
   if (!grad.empty( )) {
     for (int j = 0; j < x.size( ); ++j)
       grad[ j ] = 0e0;
@@ -92,10 +93,10 @@ double SubproblemDefinitions<TSurrogateModel, TSubproblemOptimization>::opt_rest
       d->vo->mat_vec_product( (*(d->me->surrogate_models))[i+1].hessian( ), x, gradient );
       d->vo->add ((*(d->me->surrogate_models))[i+1].gradient( ), gradient );
       //gradient = (*(d->me->surrogate_models))[i+1].gradient( x );
-      objective_value += pow( tmp[0] , 2e0);
+      objective_value += pow( tmp[0] , 2e0) + lambda_g * tmp[0];
       if (!grad.empty( )) {
         for (int j = 0; j < x.size( ); j++){ 
-          grad[j] += 2e0 * tmp[0] * ( gradient.at( j ) ); 
+          grad[j] += 2e0 * tmp[0] * ( gradient[j] ) + lambda_g * gradient[j]; 
 			// + d->me->inner_boundary_constant->at(i) * x.at(j) * tmp[2]);
       	}
       }
