@@ -332,7 +332,7 @@ double SubproblemOptimization<TSurrogateModel>::compute_trial_point (
   if ( !point_is_feasible ) {
     std::cout << "#M3: FEASIBILITY RESTORARION: " << std::endl;
     //opt_restore_feasibility.optimize ( x, optimization_result );
-    optimization_result = this.restore_feasibility(x)
+    optimization_result = this->restore_feasibility(x);
     set_feasibility_thresholds ( x );    
     std::cout << "#M4: Point is feasible: " << point_is_feasible << std::endl;
     if ( point_is_feasible ) {
