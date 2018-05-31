@@ -970,9 +970,11 @@ bool NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::last_point_is_feasible ( 
     for (int i = 0; i < nb_constraints; ++i){
       if(evaluations.values[i+1].back() > 0.){
         feasiblity_obj_best += evaluations.values[i+1][evaluations.best_index]
-                             * evaluations.values[i+1][evaluations.best_index];
+                               * evaluations.values[i+1][evaluations.best_index] 
+                             + delta * evaluations.values[i+1][evaluations.best_index];
         feasiblity_obj_last += evaluations.values[i+1].back()
-                             * evaluations.values[i+1].back();
+                               * evaluations.values[i+1].back() 
+                             + delta * evaluations.values[i+1].back();
       }
     } 
     if(feasiblity_obj_last >= feasiblity_obj_best){
