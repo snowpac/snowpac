@@ -1142,19 +1142,39 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::write_to_file ( )
     
     // output the last added design
     for(int i = 0; i < dim; ++i) {
-        fprintf(output_file, double_format, evaluations.nodes.at(evaluations.nodes.size()-1).at(i));
+        fprintf(output_file, double_format, evaluations.nodes.back().at(i));
     }
     // output the last value of the objective
-    fprintf(output_file, double_format, evaluations.values.at(evaluations.values.size()-1).at(0));
+    fprintf(output_file, double_format, evaluations.values.at(0).back() );
+
+    // output the last values of the constraints
+    for(int i = 0; i < nb_constraints; ++i) {
+        fprintf(output_file, double_format, evaluations.values.at(i+1).back() );
+    }
   
     if(stochastic_optimization){
       // output mean and variance of current value of objective gp
-      double mean = -1;
-      double var = -1;
-      gaussian_processes.evaluate_gaussian_process_at(0, evaluations.nodes.at(evaluations.best_index), mean, var);
-      fprintf(output_file, double_format, mean);
+      //double mean = -1;
+      //double var = -1;
+      //gaussian_processes.evaluate_gaussian_process_at(0, evaluations.nodes.at(evaluations.best_index), mean, var);
+      //fprintf(output_file, double_format, mean);
+      //fprintf(output_file, double_format, var);
 
-      fprintf(output_file, double_format, var);
+      // output the noise for best value of the objective
+      fprintf(output_file, double_format, evaluations.noise.at(0).at(evaluations.best_index));
+
+      // output the noise for best values of the constraints
+      for(int i = 0; i < nb_constraints; ++i) {
+          fprintf(output_file, double_format, evaluations.noise.at(i+1).at(evaluations.best_index));
+      }
+
+      // output the noise for last added value of the objective
+      fprintf(output_file, double_format, evaluations.noise.at(0).back() );
+
+      // output the noise for last added values of the constraints
+      for(int i = 0; i < nb_constraints; ++i) {
+          fprintf(output_file, double_format, evaluations.noise.at(i+1).back() );
+      }
     }
 
     fprintf(output_file, "\n");
