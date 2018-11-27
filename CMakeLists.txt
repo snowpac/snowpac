@@ -147,6 +147,7 @@ SET ( NOWPAC_GTEST_HEADER_FILES
     ${NOWPAC_SOURCE_DIR}/test/include/gtest_quadraticmonimial.hpp
     ${NOWPAC_SOURCE_DIR}/test/include/gtest_triangularmatrixoperations.hpp
     ${NOWPAC_SOURCE_DIR}/test/include/gtest_vectoroperations.hpp
+    ${NOWPAC_SOURCE_DIR}/test/include/gtest_gaussianprocess.hpp
 )
 SET ( NOWPAC_GTEST_SOURCE_FILES
     ${NOWPAC_SOURCE_DIR}/test/src/gtest_main.cpp)
@@ -187,6 +188,7 @@ IF ( NOWPAC_ENABLE_TESTS STREQUAL "ON" )
    TARGET_LINK_LIBRARIES(nowpac_test nowpac)
    TARGET_LINK_LIBRARIES(nowpac_test ${NOWPAC_GTEST_LIBRARY_PATH}/libgtest.a)
    TARGET_LINK_LIBRARIES(nowpac_test pthread)
+   TARGET_LINK_LIBRARIES(nowpac_test ${NOWPAC_NLOPT_LIBRARY_PATH}/libnlopt.${NOWPAC_SHARED_LIBRARY_EXTENSION})
    IF (NOT EIGEN_FOUND)
       ADD_DEPENDENCIES(nowpac_test EIGEN)
    ENDIF ()
@@ -198,6 +200,7 @@ IF ( NOWPAC_ENABLE_TESTS STREQUAL "ON" )
    ENDIF ()
    ADD_DEPENDENCIES(nowpac_test nowpac)
 ENDIF ()
+
 
 SET ( NOWPAC_INCLUDE_PATH "${NOWPAC_INSTALL_PREFIX}/nowpac/include" CACHE PATH "NOWPAC include directory" FORCE)
 SET ( NOWPAC_LIBRARY_PATH "${NOWPAC_INSTALL_PREFIX}/nowpac/lib" CACHE PATH "NOWPAC library directory" FORCE)

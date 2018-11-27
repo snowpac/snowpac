@@ -1180,8 +1180,6 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::write_to_file ( )
     fprintf(output_file, "\n");
     fflush(output_file);
 
-
-
 }
 //--------------------------------------------------------------------------------
 
@@ -1911,16 +1909,20 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
       if ( verbose >= 2 ) std::cout << "*****************************************" << std::endl; 
 
       if ( acceptance_ratio >= eta_2 && acceptance_ratio < 2e0 ) {
-        if ( verbose >= 2 ) { std::cout << "Step successful" << std::endl << std::flush; }
+        if ( verbose >= 2 ) { std::cout << "Step successful and increase." << std::endl << std::flush; }
         update_trustregion( gamma_inc );
       } 
       fflush(stdout);
       if ( (acceptance_ratio >= eta_1 && acceptance_ratio < eta_2) || acceptance_ratio >= 2e0 ) {
-        if ( verbose >= 2 ) { std::cout << "Step acceptable" << std::endl << std::flush; }
+        if ( verbose >= 2 ) { std::cout << "Step acceptable and keep." << std::endl << std::flush; }
       }
-      if ( (acceptance_ratio >= eta_0 && acceptance_ratio < eta_1)) {
-        if ( verbose >= 2 ) { std::cout << "Step acceptable but shrink" << std::endl << std::flush; }
+      if ( acceptance_ratio >= eta_0 && acceptance_ratio < eta_1 ) {
+        if ( verbose >= 2 ) { std::cout << "Step acceptable but shrink." << std::endl << std::flush; }
         update_trustregion( gamma );
+      }
+      if ( acceptance_ratio < eta_0) {
+        if ( verbose >= 2 ) { std::cout << "Step rejected and shrink." << std::endl << std::flush; }
+        //Shrinking step done in if statement below.
       }
 
       if ( acceptance_ratio >= eta_0 ) {
@@ -1937,7 +1939,6 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
         if ( number_accepted_steps >= max_number_accepted_steps ) EXIT_FLAG = -6;
       }
       if ( acceptance_ratio < eta_0 ) {
-        if ( verbose >= 2 ) { std::cout << "Step rejected" << std::endl << std::flush; }
         tmp_dbl = 1e0;
         for ( int i = 0; i < evaluations.active_index.size(); ++i ) {
            if ( this->diff_norm ( evaluations.nodes.at( evaluations.active_index.at(i) ),

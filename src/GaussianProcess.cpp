@@ -1,6 +1,7 @@
 #include "GaussianProcess.hpp"
 #include "math.h"
 #include <iostream>
+#include <iomanip>  
 #include <cassert>
 
 //--------------------------------------------------------------------------------
@@ -128,10 +129,10 @@ void GaussianProcess::build ( std::vector< std::vector<double> > const &nodes,
 
     nb_gp_nodes = nodes.size();
     gp_nodes.clear();
-    //gp_noise.clear();
+    gp_noise.clear();
     for ( int i = 0; i < nb_gp_nodes; ++i ) {
       gp_nodes.push_back ( nodes.at(i) );
-      //gp_noise.push_back( noise.at(i) );
+      gp_noise.push_back( noise.at(i) );
     }
 
 
@@ -145,10 +146,24 @@ void GaussianProcess::build ( std::vector< std::vector<double> > const &nodes,
     L.resize( nb_gp_nodes );
 
     for (int i = 0; i < nb_gp_nodes; i++) {
-      for (int j = 0; j <= i; j++)
+      for (int j = 0; j <= i; j++){
         L.at(i).push_back (evaluate_kernel( gp_nodes[i], gp_nodes[j] ) );
+      }
       L.at(i).at(i) += pow( noise.at(i) / 2e0 + noise_regularization, 2e0 );
     }
+
+    /*
+    for (int i = 0; i < nb_gp_nodes; i++) {
+      for (int j = 0; j <=i; j++){
+        std::cout << std::setprecision(16) << L[i][j] << ' ';
+      }
+      for (int j = i+1; j < nb_gp_nodes; j++){
+        std::cout << std::setprecision(16) << L[j][i] << ' ';
+      }
+
+      std::cout << ';' << std::endl;
+    }
+    */
   
     CholeskyFactorization::compute( L, pos, rho, nb_gp_nodes );
     assert( pos == 0 );
@@ -224,7 +239,147 @@ void GaussianProcess::evaluate ( std::vector<double> const &x,
 
   //std::cout << "GP evalute [" << gp_nodes.size() <<"] mean,variance " << mean << ", " << variance << std::endl;
   return;
+}
+//--------------------------------------------------------------------------------
 
+//--------------------------------------------------------------------------------
+void GaussianProcess::evaluate ( std::vector<double> const &x,
+                                 double &mean) 
+{
+  K0.resize( nb_gp_nodes );
+    
+  for (int i = 0; i < nb_gp_nodes; i++)
+    K0.at(i) = evaluate_kernel( gp_nodes[i], x );
+
+  mean = VectorOperations::dot_product(K0, alpha);
+//  mean = VectorOperations::dot_product(K0, alpha) + 1e0;
+//  mean *= 5e-1*( max_function_value-min_function_value );
+//  mean += min_function_value;
+
+  //std::cout << "GP evalute [" << gp_nodes.size() <<"] mean,variance " << mean << ", " << variance << std::endl;
+  return;
+}
+//--------------------------------------------------------------------------------
+
+//--------------------------------------------------------------------------------
+void GaussianProcess::evaluate ( std::vector<double> const &x,
+                                 std::vector<double> const &f_train,
+                                 double &mean) 
+{
+  assert(f_train.size() == nb_gp_nodes);
+
+  K0.resize( nb_gp_nodes );
+    
+  for (int i = 0; i < nb_gp_nodes; i++)
+    K0.at(i) = evaluate_kernel( gp_nodes[i], x );
+
+  std::vector<double> local_f_train;
+  local_f_train.resize(nb_gp_nodes);
+  for (int i = 0; i < nb_gp_nodes; i++) {
+    local_f_train[i] = f_train[i];
+  }
+
+  forward_substitution( L, local_f_train );
+  backward_substitution( L, local_f_train );
+
+  mean = VectorOperations::dot_product(K0, local_f_train);
+
+  return;
+}
+//--------------------------------------------------------------------------------
+
+
+//--------------------------------------------------------------------------------
+void GaussianProcess::build_inverse () 
+{
+  L_inverse.resize(nb_gp_nodes);
+  for (int i = 0; i < nb_gp_nodes; i++){
+    L_inverse[i].resize(nb_gp_nodes);
+    for (int j = 0; j < nb_gp_nodes; j++){
+      if(i==j)
+        L_inverse[i][j] = 1;
+      else
+        L_inverse[i][j] = 0;
+    }
+  }
+  for (int i = 0; i < nb_gp_nodes; i++){
+    forward_substitution( L, L_inverse[i]);
+  }
+  for (int i = 0; i < nb_gp_nodes; i++){
+    backward_substitution( L, L_inverse[i]);
+  }
+  return;
+}
+//--------------------------------------------------------------------------------
+
+//--------------------------------------------------------------------------------
+double GaussianProcess::compute_var_meanGP (std::vector<double> xstar) 
+{
+  std::vector<double> k_xstar_X(nb_gp_nodes);
+  for(int i = 0; i < nb_gp_nodes; ++i){
+    k_xstar_X[i] = evaluate_kernel(xstar, gp_nodes[i]);
+  }
+  std::vector<double> k_xstar_X_Kinv(nb_gp_nodes);
+  VectorOperations::vec_mat_product(L_inverse, k_xstar_X, k_xstar_X_Kinv);
+  std::vector<double> k_xstar_X_Kinv_squared(nb_gp_nodes);
+  std::vector<double> gp_noise_squared(nb_gp_nodes);
+  for(int i = 0; i < nb_gp_nodes; ++i){
+    k_xstar_X_Kinv_squared[i] = k_xstar_X_Kinv[i]*k_xstar_X_Kinv[i];
+    gp_noise_squared[i] = gp_noise[i]*gp_noise[i];
+  }
+  double var_meanGP = 0;
+  var_meanGP = VectorOperations::dot_product(k_xstar_X_Kinv_squared, gp_noise_squared);
+  return var_meanGP;
+}
+//--------------------------------------------------------------------------------
+
+
+//--------------------------------------------------------------------------------
+double GaussianProcess::compute_cov_meanGPMC (std::vector<double> xstar, int xstar_idx) 
+{
+  //std::vector<double> k_xstar_X(nb_gp_nodes);
+  double cov_meanGPMC = 0.;
+  for(int i = 0; i < nb_gp_nodes; ++i){
+    //k_xstar_X[i] = evaluate_kernel(xstar, gp_nodes[i]);
+    cov_meanGPMC += evaluate_kernel(xstar, gp_nodes[i])*L_inverse[i][xstar_idx];
+  }
+  cov_meanGPMC *= gp_noise[xstar_idx]*gp_noise[xstar_idx];
+  return cov_meanGPMC;
+}
+//--------------------------------------------------------------------------------
+
+//--------------------------------------------------------------------------------
+double GaussianProcess::bootstrap_diffGPMC (std::vector<double> xstar) 
+{
+  double mean_xstar = 0.0;
+  double mean_bootstrap = 0.0;
+  double mean_bootstrap_eval = 0.0;
+  double bootstrap_samples = 10000;
+  double bootstrap_estimate = 0.0;
+  std::vector<double> f_train_bootstrap(nb_gp_nodes);
+  std::vector<double> Kinv_f_train_bootstrap(nb_gp_nodes);
+  std::random_device rd; // obtain a random number from hardware
+  std::mt19937 eng(rd()); // seed the generator
+  std::uniform_int_distribution<> distr(0, nb_gp_nodes-1);
+  std::vector<double> k_xstar_X(nb_gp_nodes);
+  for(int i = 0; i < nb_gp_nodes; ++i){
+    k_xstar_X[i] = evaluate_kernel(xstar, gp_nodes[i]);
+  }
+
+  int random_idx = -1;
+  for(int i = 0; i < bootstrap_samples; ++i){
+    for(int j = 0; j < nb_gp_nodes; ++j){ //sample randomly from training data
+      random_idx = distr(eng);
+      f_train_bootstrap[j] = scaled_function_values[random_idx];
+    }
+    mat_vec_product(L_inverse, f_train_bootstrap, Kinv_f_train_bootstrap);
+    mean_bootstrap += dot_product(k_xstar_X, Kinv_f_train_bootstrap);
+  }
+  mean_bootstrap /= bootstrap_samples;
+
+  evaluate(xstar, mean_xstar);
+  bootstrap_estimate = mean_bootstrap - mean_xstar;
+  return bootstrap_estimate;
 }
 //--------------------------------------------------------------------------------
 

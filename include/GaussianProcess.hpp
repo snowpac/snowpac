@@ -8,6 +8,11 @@
 #include "nlopt.hpp"
 #include "BlackBoxData.hpp"
 #include <memory>
+#include <random>
+
+#include <Eigen/Core>
+
+using namespace Eigen;
 
 //! Gaussian process regression
 /*!
@@ -31,6 +36,7 @@ class GaussianProcess : public GaussianProcessBaseClass,
     std::vector<double> lb, ub;
     //general/shared auxiliary variables
     std::vector< std::vector<double> > L;
+    std::vector< std::vector<double> > L_inverse;
     std::vector<double> alpha;    
 
     GaussianProcess *gp_pointer;
@@ -124,6 +130,31 @@ class GaussianProcess : public GaussianProcessBaseClass,
      \see build
     */
     virtual void evaluate ( std::vector<double> const&, double&, double& );
+
+    /*
+    Same but without variance computation
+    */
+    virtual void evaluate ( std::vector<double> const &x,
+                                 double &mean);
+
+    //! Evaluate Gaussian process given new training data set
+    /*!
+     Computes the mean and variance of the Gaussian process.\n
+     Requires the building of the Gaussian process.
+     \param x point at which the Gaussian process is evaluated
+     \param f_train training values
+     \param mean mean of the Gaussian process at point x
+     \see build
+    */
+    virtual void evaluate ( std::vector<double> const&, std::vector<double> const&, double& );
+
+    virtual void build_inverse ();
+
+    virtual double compute_var_meanGP (std::vector<double> xstar); 
+
+    virtual double compute_cov_meanGPMC (std::vector<double> xstar, int xstar_idx);
+
+    virtual double bootstrap_diffGPMC (std::vector<double> xstar);
 
     virtual const std::vector<std::vector<double>> &getGp_nodes() const;
 

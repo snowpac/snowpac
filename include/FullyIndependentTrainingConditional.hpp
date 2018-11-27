@@ -10,8 +10,6 @@
 
 #include "GaussianProcess.hpp"
 
-#include <Eigen/Core>
-
 using namespace Eigen;
 
 class FullyIndependentTrainingConditional: public GaussianProcess{

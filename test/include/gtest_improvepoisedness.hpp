@@ -11,14 +11,23 @@ public:
     Wrapper_ImprovePoisedness ( double threshold_for_poisedness_constant_input,
                                 int max_nb_nodes_input, double &delta_input,
                                 MonomialBasisForMinimumFrobeniusNormModel &basis_input,
-                                int print_output_input ) :
-     ImprovePoisedness ( basis_input, threshold_for_poisedness_constant_input,
-                          max_nb_nodes_input, delta_input,
-                        print_output_input )
+                                int print_output_input, 
+                                std::vector<double> upper_bound_constraints_in,
+                                std::vector<double> lower_bound_constraints_in,
+                                bool use_hard_box_constraints_in ) :
+     ImprovePoisedness ( basis_input, 
+                         threshold_for_poisedness_constant_input,
+                         max_nb_nodes_input, 
+                         delta_input,
+                         print_output_input,
+                         upper_bound_constraints_in, 
+                         lower_bound_constraints_in, 
+                         use_hard_box_constraints_in)
      {
          delta = delta_input;
          threshold_poisedness = threshold_for_poisedness_constant_input;
      }
+
     int improvepoisedness_test1 ( ) {
 
       int dim = 2;
@@ -308,10 +317,20 @@ TEST ( ImprovePoisednessTest, improvepoisedness_test1 )
   double delta_loc = 1.0;
   int print_output = 0;
   int dim = 2;
+
+  std::vector<double> upper_bound_constraints_in(dim);
+  std::vector<double> lower_bound_constraints_in(dim);
+  bool use_hard_box_constraints_in = false;
+  for(int i = 0; i < dim; i++){
+    upper_bound_constraints_in[i] = 1.0;
+    lower_bound_constraints_in[i] = -1.0;
+  }
+
   MonomialBasisForMinimumFrobeniusNormModel basis( dim );
 
   Wrapper_ImprovePoisedness W( threshold_for_poisedness_constant, max_nb_nodes,
-                              delta_loc, basis, print_output );
+                              delta_loc, basis, print_output, 
+                              upper_bound_constraints_in, lower_bound_constraints_in, use_hard_box_constraints_in );
   EXPECT_EQ( 1, W.improvepoisedness_test1() );
 }
 //--------------------------------------------------------------------------------
@@ -324,10 +343,19 @@ TEST ( ImprovePoisednessTest, improvepoisedness_test2 )
   double delta_loc = 0.1;
   int print_output = 0;
   int dim = 2;
+  std::vector<double> upper_bound_constraints_in(dim);
+  std::vector<double> lower_bound_constraints_in(dim);
+  bool use_hard_box_constraints_in = false;
+  for(int i = 0; i < dim; i++){
+    upper_bound_constraints_in[i] = 1.0;
+    lower_bound_constraints_in[i] = -1.0;
+  }
+
   MonomialBasisForMinimumFrobeniusNormModel basis( dim );
 
   Wrapper_ImprovePoisedness W( threshold_for_poisedness_constant, max_nb_nodes,
-                              delta_loc, basis, print_output );
+                              delta_loc, basis, print_output, 
+                              upper_bound_constraints_in, lower_bound_constraints_in, use_hard_box_constraints_in );
   EXPECT_EQ( 1, W.improvepoisedness_test2() );
 }
 //--------------------------------------------------------------------------------
@@ -340,10 +368,19 @@ TEST ( ImprovePoisednessTest, improvepoisedness_test3 )
   double delta_loc = 0.5;
   int print_output = 0;
   int dim = 2;
+  std::vector<double> upper_bound_constraints_in(dim);
+  std::vector<double> lower_bound_constraints_in(dim);
+  bool use_hard_box_constraints_in = false;
+  for(int i = 0; i < dim; i++){
+    upper_bound_constraints_in[i] = 1.0;
+    lower_bound_constraints_in[i] = -1.0;
+  }
+
   MonomialBasisForMinimumFrobeniusNormModel basis( dim );
 
   Wrapper_ImprovePoisedness W( threshold_for_poisedness_constant, max_nb_nodes,
-                              delta_loc, basis, print_output );
+                              delta_loc, basis, print_output, 
+                              upper_bound_constraints_in, lower_bound_constraints_in, use_hard_box_constraints_in );
   EXPECT_EQ( 1, W.improvepoisedness_test3() );
 }
 //--------------------------------------------------------------------------------
@@ -356,10 +393,19 @@ TEST ( ImprovePoisednessTest, improvepoisedness_test4_1 )
   double delta_loc = 1.0;
   int print_output = 0;
   int dim = 2;
+  std::vector<double> upper_bound_constraints_in(dim);
+  std::vector<double> lower_bound_constraints_in(dim);
+  bool use_hard_box_constraints_in = false;
+  for(int i = 0; i < dim; i++){
+    upper_bound_constraints_in[i] = 1.0;
+    lower_bound_constraints_in[i] = -1.0;
+  }
+
   MonomialBasisForMinimumFrobeniusNormModel basis( dim );
 
   Wrapper_ImprovePoisedness W( threshold_for_poisedness_constant, max_nb_nodes,
-                              delta_loc, basis, print_output );
+                              delta_loc, basis, print_output, 
+                              upper_bound_constraints_in, lower_bound_constraints_in, use_hard_box_constraints_in );
   EXPECT_EQ( 1, W.improvepoisedness_test4() );
 }
 //--------------------------------------------------------------------------------
@@ -372,10 +418,19 @@ TEST ( ImprovePoisednessTest, improvepoisedness_test4_2 )
   double delta_loc = 1.0;
   int print_output = 0;
   int dim = 2;
+  std::vector<double> upper_bound_constraints_in(dim);
+  std::vector<double> lower_bound_constraints_in(dim);
+  bool use_hard_box_constraints_in = false;
+  for(int i = 0; i < dim; i++){
+    upper_bound_constraints_in[i] = 1.0;
+    lower_bound_constraints_in[i] = -1.0;
+  }
+
   MonomialBasisForMinimumFrobeniusNormModel basis( dim );
 
   Wrapper_ImprovePoisedness W( threshold_for_poisedness_constant, max_nb_nodes,
-                              delta_loc, basis, print_output );
+                              delta_loc, basis, print_output, 
+                              upper_bound_constraints_in, lower_bound_constraints_in, use_hard_box_constraints_in );
   EXPECT_EQ( 1, W.improvepoisedness_test4() );
 }
 //--------------------------------------------------------------------------------

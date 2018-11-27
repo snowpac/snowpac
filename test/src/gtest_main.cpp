@@ -7,6 +7,7 @@
 #include "gtest_vectoroperations.hpp"
 #include "gtest_quadraticmonomial.hpp"
 #include "gtest_blackboxdata.hpp"
+#include "gtest_gaussianprocess.hpp"
 #include "gtest/gtest.h"
 #include <iostream>
 
