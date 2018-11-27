@@ -150,11 +150,11 @@ class GaussianProcess : public GaussianProcessBaseClass,
 
     virtual void build_inverse ();
 
-    virtual double compute_var_meanGP (std::vector<double> xstar); 
+    virtual double compute_var_meanGP ( std::vector<double>const& xstar, std::vector<double> const& noise) ;
 
-    virtual double compute_cov_meanGPMC (std::vector<double> xstar, int xstar_idx);
+    virtual double compute_cov_meanGPMC  ( std::vector<double>const& xstar, int const& xstar_idx, double const& noise) ;
 
-    virtual double bootstrap_diffGPMC (std::vector<double> xstar);
+    virtual double bootstrap_diffGPMC ( std::vector<double>const& xstar);
 
     virtual const std::vector<std::vector<double>> &getGp_nodes() const;
 

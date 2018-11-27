@@ -38,8 +38,9 @@ class Wrapper_GaussianProcess : public GaussianProcess
     { 
       std::vector<double> xstar = {0.};
       double result_matlab = 9.844240598591604e-04;
+    std::vector<double> noise = {0.04, 0.04, 0.04, 0.04, 0.04};
 
-      double var_meanGP = compute_var_meanGP(xstar);
+      double var_meanGP = compute_var_meanGP(xstar, noise);
       return (fabs(result_matlab - var_meanGP) < 1e-8); 
     }
 
@@ -48,7 +49,7 @@ class Wrapper_GaussianProcess : public GaussianProcess
       std::vector<double> xstar = {0.};
       double result_matlab = 0.001070406968878;
 
-      double cov_meanGPMC = compute_cov_meanGPMC(xstar, 3);
+      double cov_meanGPMC = compute_cov_meanGPMC(xstar, 3, 0.04);
       return (fabs(result_matlab - cov_meanGPMC) < 1e-8); 
     }
 

@@ -382,8 +382,8 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
         gaussian_processes[j]->evaluate( evaluations.nodes[evaluations.active_index[i]], mean, variance );
 
         var_Rf = evaluations.noise[j][evaluations.active_index[i]]*evaluations.noise[j][evaluations.active_index[i]];
-        cov_RfGP = gaussian_processes[j]->compute_cov_meanGPMC(evaluations.nodes[evaluations.active_index[i]], evaluations.active_index[i]);
-        var_GP = gaussian_processes[j]->compute_var_meanGP(evaluations.nodes[evaluations.active_index[i]]);
+        cov_RfGP = gaussian_processes[j]->compute_cov_meanGPMC(evaluations.nodes[evaluations.active_index[i]], evaluations.active_index[i], noise[j][evaluations.active_index [ i ]]);
+        var_GP = gaussian_processes[j]->compute_var_meanGP(evaluations.nodes[evaluations.active_index[i]], noise[j]);
         bootstrap_diffGPRf = gaussian_processes[j]->bootstrap_diffGPMC(evaluations.nodes[evaluations.active_index[i]]);
         bootstrap_squared = bootstrap_diffGPRf*bootstrap_diffGPRf;
 

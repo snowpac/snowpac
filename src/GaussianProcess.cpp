@@ -129,10 +129,10 @@ void GaussianProcess::build ( std::vector< std::vector<double> > const &nodes,
 
     nb_gp_nodes = nodes.size();
     gp_nodes.clear();
-    gp_noise.clear();
+    //gp_noise.clear();
     for ( int i = 0; i < nb_gp_nodes; ++i ) {
       gp_nodes.push_back ( nodes.at(i) );
-      gp_noise.push_back( noise.at(i) );
+      //gp_noise.push_back( noise.at(i) );
     }
 
 
@@ -313,7 +313,7 @@ void GaussianProcess::build_inverse ()
 //--------------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------------
-double GaussianProcess::compute_var_meanGP (std::vector<double> xstar) 
+double GaussianProcess::compute_var_meanGP ( std::vector<double>const& xstar, std::vector<double> const& noise) 
 {
   std::vector<double> k_xstar_X(nb_gp_nodes);
   for(int i = 0; i < nb_gp_nodes; ++i){
@@ -325,7 +325,7 @@ double GaussianProcess::compute_var_meanGP (std::vector<double> xstar)
   std::vector<double> gp_noise_squared(nb_gp_nodes);
   for(int i = 0; i < nb_gp_nodes; ++i){
     k_xstar_X_Kinv_squared[i] = k_xstar_X_Kinv[i]*k_xstar_X_Kinv[i];
-    gp_noise_squared[i] = gp_noise[i]*gp_noise[i];
+    gp_noise_squared[i] = noise[i]*noise[i];
   }
   double var_meanGP = 0;
   var_meanGP = VectorOperations::dot_product(k_xstar_X_Kinv_squared, gp_noise_squared);
@@ -335,7 +335,7 @@ double GaussianProcess::compute_var_meanGP (std::vector<double> xstar)
 
 
 //--------------------------------------------------------------------------------
-double GaussianProcess::compute_cov_meanGPMC (std::vector<double> xstar, int xstar_idx) 
+double GaussianProcess::compute_cov_meanGPMC ( std::vector<double>const& xstar, int const& xstar_idx, double const& noise) 
 {
   //std::vector<double> k_xstar_X(nb_gp_nodes);
   double cov_meanGPMC = 0.;
@@ -343,13 +343,13 @@ double GaussianProcess::compute_cov_meanGPMC (std::vector<double> xstar, int xst
     //k_xstar_X[i] = evaluate_kernel(xstar, gp_nodes[i]);
     cov_meanGPMC += evaluate_kernel(xstar, gp_nodes[i])*L_inverse[i][xstar_idx];
   }
-  cov_meanGPMC *= gp_noise[xstar_idx]*gp_noise[xstar_idx];
+  cov_meanGPMC *= noise*noise;
   return cov_meanGPMC;
 }
 //--------------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------------
-double GaussianProcess::bootstrap_diffGPMC (std::vector<double> xstar) 
+double GaussianProcess::bootstrap_diffGPMC ( std::vector<double>const& xstar)
 {
   double mean_xstar = 0.0;
   double mean_bootstrap = 0.0;
