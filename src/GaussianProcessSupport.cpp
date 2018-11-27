@@ -356,58 +356,108 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
 
   update_data( evaluations );
 
+  update_gaussian_processes( evaluations );
+
+  evaluations.active_index.push_back( evaluations.nodes.size()-1 );
+
   bool negative_variance_found;
-  do{
-    negative_variance_found = false;
-    update_gaussian_processes( evaluations );
+  bool new_r_tilde_implementation = true;
 
-    evaluations.active_index.push_back( evaluations.nodes.size()-1 );
-    for ( unsigned int i = 0; i < evaluations.active_index.size( ); ++i ) {
-  //    rescale ( 1e0/(delta_tmp), evaluations.nodes[evaluations.active_index[i]], 
-  //              evaluations.nodes[best_index], rescaled_node );
-      for ( int j = 0; j < number_processes; ++j ) {
-  //      gaussian_processes[j].evaluate( rescaled_node, mean, variance );
+  if (new_r_tilde_implementation){
+    std::cout << "WE ARE IN PROTOTYPICAL NEW ERROR ESTIMATION MODE. HARDCODED!!!" << std::endl;
+    double var_Rf = 0;
+    double cov_RfGP = 0;
+    double var_GP = 0;
+    double bootstrap_diffGPRf = 0;
+    double bootstrap_squared = 0;
+    double denominator = 0;
+    double numerator = 0;
+    double optimal_gamma = 0;
+    double optimal_gamma_squared = 0;
+    double MSE = 0;
 
-         // std::cout << "Smooth Gaussian Process: " << j << std::endl;
+    for ( int j = 0; j < number_processes; ++j ) {
+      gaussian_processes[j]->build_inverse();
+      for ( unsigned int i = 0; i < evaluations.active_index.size( ); ++i ) {
         gaussian_processes[j]->evaluate( evaluations.nodes[evaluations.active_index[i]], mean, variance );
 
-        if (variance < 0e0){
-          negative_variance_found = true;
-          break;
-        }
+        var_Rf = evaluations.noise[j][evaluations.active_index[i]]*evaluations.noise[j][evaluations.active_index[i]];
+        cov_RfGP = gaussian_processes[j]->compute_cov_meanGPMC(evaluations.nodes[evaluations.active_index[i]], evaluations.active_index[i]);
+        var_GP = gaussian_processes[j]->compute_var_meanGP(evaluations.nodes[evaluations.active_index[i]]);
+        bootstrap_diffGPRf = gaussian_processes[j]->bootstrap_diffGPMC(evaluations.nodes[evaluations.active_index[i]]);
+        bootstrap_squared = bootstrap_diffGPRf*bootstrap_diffGPRf;
 
-        weight = exp( - 2e0*sqrt(variance) );
+        numerator = var_Rf - cov_RfGP;
+        denominator = bootstrap_squared + var_GP + var_Rf - 2.0 * cov_RfGP;
+
+        optimal_gamma = numerator/denominator;
+
+        optimal_gamma = (optimal_gamma > 1.0) ? 1.0 : optimal_gamma;
+        optimal_gamma = (optimal_gamma < 0.0) ? 0.0 : optimal_gamma;
+
+        optimal_gamma_squared = optimal_gamma*optimal_gamma;
+        MSE = optimal_gamma_squared*bootstrap_squared + 
+              optimal_gamma_squared * var_GP + 
+              (1. - optimal_gamma) * (1. - optimal_gamma) * var_Rf + 
+              2. * optimal_gamma * (1. - optimal_gamma) * cov_RfGP;
 
         evaluations.values[ j ].at( evaluations.active_index [ i ] ) = 
-          weight * mean  + 
-          (1e0-weight) * ( values[ j ].at( evaluations.active_index [ i ] ) );
-        evaluations.noise[ j ].at( evaluations.active_index [ i ] ) = 
-          weight * 2e0 * sqrt (variance)  + 
-          (1e0-weight) * ( noise[ j ].at( evaluations.active_index [ i ] ) );
-        //std::cout << "Smooth evaluate var: [" << noise[ j ].at( evaluations.active_index [ i ]) << ", " << 2e0 *sqrt(variance) << "]\n" << std::endl;
-       //std::cout << "Smooth evaluate [" << evaluations.active_index[i] << ", " << j <<"]: mean,variance " << evaluations.values[ j ].at( evaluations.active_index [ i ] ) << ", " << evaluations.noise[ j ].at( evaluations.active_index [ i ] )  << "\n" << std::endl;
-      }
-      if (variance < 0e0){
-          negative_variance_found = true;
-          break;
-      }
-    }
+                    optimal_gamma * mean + (1 - optimal_gamma) * 
+                    ( values[ j ].at( evaluations.active_index [ i ] ) );
 
-    evaluations.active_index.erase( evaluations.active_index.end()-1 );
-    if(!negative_variance_found){
-      for ( int j = 0; j < number_processes; ++j ) {
-        gaussian_processes[j]->decrease_nugget();
+        evaluations.noise[ j ].at( evaluations.active_index [ i ] ) = sqrt(MSE);
       }
     }
-    if(negative_variance_found){
-      for ( int j = 0; j < number_processes; ++j ) {
-        bool max_nugget_reached = gaussian_processes[j]->increase_nugget();
-        if(max_nugget_reached){
-          return -7;
+  }else{
+    do{
+      negative_variance_found = false;
+      for ( unsigned int i = 0; i < evaluations.active_index.size( ); ++i ) {
+    //    rescale ( 1e0/(delta_tmp), evaluations.nodes[evaluations.active_index[i]], 
+    //              evaluations.nodes[best_index], rescaled_node );
+        for ( int j = 0; j < number_processes; ++j ) {
+    //      gaussian_processes[j].evaluate( rescaled_node, mean, variance );
+
+           // std::cout << "Smooth Gaussian Process: " << j << std::endl;
+          gaussian_processes[j]->evaluate( evaluations.nodes[evaluations.active_index[i]], mean, variance );
+
+          if (variance < 0e0){
+            negative_variance_found = true;
+            break;
+          }
+
+          weight = exp( - 2e0*sqrt(variance) );
+
+          evaluations.values[ j ].at( evaluations.active_index [ i ] ) = 
+            weight * mean  + 
+            (1e0-weight) * ( values[ j ].at( evaluations.active_index [ i ] ) );
+          evaluations.noise[ j ].at( evaluations.active_index [ i ] ) = 
+            weight * 2e0 * sqrt (variance)  + 
+            (1e0-weight) * ( noise[ j ].at( evaluations.active_index [ i ] ) );
+          //std::cout << "Smooth evaluate var: [" << noise[ j ].at( evaluations.active_index [ i ]) << ", " << 2e0 *sqrt(variance) << "]\n" << std::endl;
+         //std::cout << "Smooth evaluate [" << evaluations.active_index[i] << ", " << j <<"]: mean,variance " << evaluations.values[ j ].at( evaluations.active_index [ i ] ) << ", " << evaluations.noise[ j ].at( evaluations.active_index [ i ] )  << "\n" << std::endl;
+        }
+        if (variance < 0e0){
+            negative_variance_found = true;
+            break;
         }
       }
-    }
-  }while(negative_variance_found);
+
+      evaluations.active_index.erase( evaluations.active_index.end()-1 );
+      if(!negative_variance_found){
+        for ( int j = 0; j < number_processes; ++j ) {
+          gaussian_processes[j]->decrease_nugget();
+        }
+      }
+      if(negative_variance_found){
+        for ( int j = 0; j < number_processes; ++j ) {
+          bool max_nugget_reached = gaussian_processes[j]->increase_nugget();
+          if(max_nugget_reached){
+            return -7;
+          }
+        }
+      }
+    }while(negative_variance_found);
+  }
 /*
   for ( unsigned int i = 0; i < evaluations.nodes.size( ); ++i ) {
 //    rescale ( 1e0/(delta_tmp), evaluations.nodes[ i ], 
