@@ -316,19 +316,24 @@ void GaussianProcess::build_inverse ()
 double GaussianProcess::compute_var_meanGP ( std::vector<double>const& xstar, std::vector<double> const& noise) 
 {
   std::vector<double> k_xstar_X(nb_gp_nodes);
+  std::vector<double> k_xstar_X_Kinv(nb_gp_nodes);
+  std::vector<double> k_xstar_X_Kinv_squared(nb_gp_nodes);
+  std::vector<double> gp_noise_squared(nb_gp_nodes);
+  double var_meanGP = 0;
+
   for(int i = 0; i < nb_gp_nodes; ++i){
     k_xstar_X[i] = evaluate_kernel(xstar, gp_nodes[i]);
   }
-  std::vector<double> k_xstar_X_Kinv(nb_gp_nodes);
+
   VectorOperations::vec_mat_product(L_inverse, k_xstar_X, k_xstar_X_Kinv);
-  std::vector<double> k_xstar_X_Kinv_squared(nb_gp_nodes);
-  std::vector<double> gp_noise_squared(nb_gp_nodes);
+
   for(int i = 0; i < nb_gp_nodes; ++i){
     k_xstar_X_Kinv_squared[i] = k_xstar_X_Kinv[i]*k_xstar_X_Kinv[i];
     gp_noise_squared[i] = noise[i]*noise[i];
   }
-  double var_meanGP = 0;
+
   var_meanGP = VectorOperations::dot_product(k_xstar_X_Kinv_squared, gp_noise_squared);
+  
   return var_meanGP;
 }
 //--------------------------------------------------------------------------------
@@ -362,6 +367,7 @@ double GaussianProcess::bootstrap_diffGPMC ( std::vector<double>const& xstar)
   std::mt19937 eng(rd()); // seed the generator
   std::uniform_int_distribution<> distr(0, nb_gp_nodes-1);
   std::vector<double> k_xstar_X(nb_gp_nodes);
+
   for(int i = 0; i < nb_gp_nodes; ++i){
     k_xstar_X[i] = evaluate_kernel(xstar, gp_nodes[i]);
   }
@@ -372,8 +378,8 @@ double GaussianProcess::bootstrap_diffGPMC ( std::vector<double>const& xstar)
       random_idx = distr(eng);
       f_train_bootstrap[j] = scaled_function_values[random_idx];
     }
-    mat_vec_product(L_inverse, f_train_bootstrap, Kinv_f_train_bootstrap);
-    mean_bootstrap += dot_product(k_xstar_X, Kinv_f_train_bootstrap);
+    mat_vec_product(L_inverse, f_train_bootstrap, Kinv_f_train_bootstrap); //(K_XX - sigma^2 I)^{-1} f_train_bootstrap
+    mean_bootstrap += dot_product(k_xstar_X, Kinv_f_train_bootstrap); // k_xstar_X Kinv_f_train_bootstrap = k_xstar_X (K_XX - sigma^2 I)^{-1} f_train_bootstrap
   }
   mean_bootstrap /= bootstrap_samples;
 

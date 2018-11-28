@@ -5,6 +5,7 @@
 #include "BlackBoxData.hpp"
 #include "VectorOperations.hpp"
 #include <vector>
+#include <float.h>
 
 class GaussianProcessSupport : protected VectorOperations {
   private:

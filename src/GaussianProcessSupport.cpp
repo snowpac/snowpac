@@ -375,22 +375,31 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
     double optimal_gamma = 0;
     double optimal_gamma_squared = 0;
     double MSE = 0;
+    double cur_noise_xstar = 0;
+    std::vector<double> cur_xstar; 
+    std::vector<double> cur_noise; 
+    int cur_xstar_idx = -1;
 
     for ( int j = 0; j < number_processes; ++j ) {
       gaussian_processes[j]->build_inverse();
       for ( unsigned int i = 0; i < evaluations.active_index.size( ); ++i ) {
-        gaussian_processes[j]->evaluate( evaluations.nodes[evaluations.active_index[i]], mean, variance );
+        cur_xstar_idx = evaluations.active_index[i];
+        cur_noise = evaluations.noise[j];
+        cur_noise_xstar = cur_noise[cur_xstar_idx];
+        cur_xstar = evaluations.nodes[cur_xstar_idx];
+        
+        gaussian_processes[j]->evaluate( cur_xstar, mean, variance );
 
-        var_Rf = evaluations.noise[j][evaluations.active_index[i]]*evaluations.noise[j][evaluations.active_index[i]];
-        cov_RfGP = gaussian_processes[j]->compute_cov_meanGPMC(evaluations.nodes[evaluations.active_index[i]], evaluations.active_index[i], noise[j][evaluations.active_index [ i ]]);
-        var_GP = gaussian_processes[j]->compute_var_meanGP(evaluations.nodes[evaluations.active_index[i]], noise[j]);
-        bootstrap_diffGPRf = gaussian_processes[j]->bootstrap_diffGPMC(evaluations.nodes[evaluations.active_index[i]]);
+        var_Rf = cur_noise_xstar * cur_noise_xstar;
+        cov_RfGP = gaussian_processes[j]->compute_cov_meanGPMC(cur_xstar, cur_xstar_idx, cur_noise_xstar);
+        var_GP = gaussian_processes[j]->compute_var_meanGP(cur_xstar, cur_noise);
+        bootstrap_diffGPRf = gaussian_processes[j]->bootstrap_diffGPMC(cur_xstar);
         bootstrap_squared = bootstrap_diffGPRf*bootstrap_diffGPRf;
 
         numerator = var_Rf - cov_RfGP;
         denominator = bootstrap_squared + var_GP + var_Rf - 2.0 * cov_RfGP;
 
-        optimal_gamma = numerator/denominator;
+        optimal_gamma = (std::fabs(denominator) > DBL_MIN) ? 1.0 : numerator/denominator;
 
         optimal_gamma = (optimal_gamma > 1.0) ? 1.0 : optimal_gamma;
         optimal_gamma = (optimal_gamma < 0.0) ? 0.0 : optimal_gamma;
@@ -398,14 +407,14 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
         optimal_gamma_squared = optimal_gamma*optimal_gamma;
         MSE = optimal_gamma_squared*bootstrap_squared + 
               optimal_gamma_squared * var_GP + 
-              (1. - optimal_gamma) * (1. - optimal_gamma) * var_Rf + 
-              2. * optimal_gamma * (1. - optimal_gamma) * cov_RfGP;
+              (1.0 - optimal_gamma) * (1.0 - optimal_gamma) * var_Rf + 
+              2.0 * optimal_gamma * (1.0 - optimal_gamma) * cov_RfGP;
 
-        evaluations.values[ j ].at( evaluations.active_index [ i ] ) = 
-                    optimal_gamma * mean + (1 - optimal_gamma) * 
-                    ( values[ j ].at( evaluations.active_index [ i ] ) );
+        evaluations.values[ j ].at( cur_xstar_idx ) = 
+                    optimal_gamma * mean + (1.0 - optimal_gamma) * 
+                    ( evaluations.values[ j ].at( cur_xstar_idx ) );
 
-        evaluations.noise[ j ].at( evaluations.active_index [ i ] ) = sqrt(MSE);
+        evaluations.noise[ j ].at( cur_xstar_idx ) = sqrt(MSE);
       }
     }
   }else{
