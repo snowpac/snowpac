@@ -388,7 +388,7 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
     std::vector<double> cur_xstar; 
     std::vector<double> cur_noise; 
     int cur_xstar_idx = -1;
-    bool print_debug_information = true;
+    bool print_debug_information = false;
     for ( int j = 0; j < number_processes; ++j ) {
       gaussian_processes[j]->build_inverse();
       for ( unsigned int i = 0; i < evaluations.active_index.size( ); ++i ) {
@@ -440,7 +440,7 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
               (1.0 - optimal_gamma) * (1.0 - optimal_gamma) * var_Rf + 
               2.0 * optimal_gamma * (1.0 - optimal_gamma) * cov_RfGP;
 
-        if(MSE < 0 || MSE > var_Rf){
+        if(!(MSE > 0 && MSE < var_Rf)){
           if(print_debug_information){
             std::cout << "\nMSE: " << MSE;
             std::cout << "\nMSE Reset" << std::endl;
