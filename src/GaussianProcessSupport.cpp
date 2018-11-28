@@ -379,7 +379,7 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
     std::vector<double> cur_xstar; 
     std::vector<double> cur_noise; 
     int cur_xstar_idx = -1;
-
+    bool print_debug_information = false;
     for ( int j = 0; j < number_processes; ++j ) {
       gaussian_processes[j]->build_inverse();
       for ( unsigned int i = 0; i < evaluations.active_index.size( ); ++i ) {
@@ -389,7 +389,21 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
         cur_xstar = evaluations.nodes[cur_xstar_idx];
         
         gaussian_processes[j]->evaluate( cur_xstar, mean, variance );
-
+        if(print_debug_information){
+        std::cout << "############################" 
+                  << "\ncur_xstar_idx: " << cur_xstar_idx 
+                  << "\ncur_noise: ["; 
+                  for(double n : cur_noise) {
+                    std::cout << std::setprecision(8) << n << ' ';
+                  }
+        std::cout << "]\ncur_noise_xstar: " << cur_noise_xstar 
+                  << "\ncur_xstar: ["; 
+                  for(double n : cur_xstar) {
+                    std::cout << n << ' ';
+                  }
+                  std::cout << "]"<< std::endl;
+        }
+        assert(!std::isnan(cur_noise_xstar));
         var_Rf = cur_noise_xstar * cur_noise_xstar;
         cov_RfGP = gaussian_processes[j]->compute_cov_meanGPMC(cur_xstar, cur_xstar_idx, cur_noise_xstar);
         var_GP = gaussian_processes[j]->compute_var_meanGP(cur_xstar, cur_noise);
@@ -399,10 +413,18 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
         numerator = var_Rf - cov_RfGP;
         denominator = bootstrap_squared + var_GP + var_Rf - 2.0 * cov_RfGP;
 
-        optimal_gamma = (std::fabs(denominator) > DBL_MIN) ? 1.0 : numerator/denominator;
+        optimal_gamma = (std::fabs(denominator) <= DBL_MIN) ? 1.0 : numerator/denominator;
 
         optimal_gamma = (optimal_gamma > 1.0) ? 1.0 : optimal_gamma;
         optimal_gamma = (optimal_gamma < 0.0) ? 0.0 : optimal_gamma;
+
+        if(print_debug_information){
+        std::cout << "\nvar_Rf: " << var_Rf 
+                  << "\ncov_RfGP: " << cov_RfGP 
+                  << "\nvar_GP: " << var_GP 
+                  << "\nbootstrap_diffGPRf " << bootstrap_diffGPRf 
+                  << "\noptimal_gamma " << optimal_gamma;
+        }
 
         optimal_gamma_squared = optimal_gamma*optimal_gamma;
         MSE = optimal_gamma_squared*bootstrap_squared + 
@@ -410,11 +432,24 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
               (1.0 - optimal_gamma) * (1.0 - optimal_gamma) * var_Rf + 
               2.0 * optimal_gamma * (1.0 - optimal_gamma) * cov_RfGP;
 
+        if(MSE < 0 || MSE > var_Rf){
+          optimal_gamma = 0.0;
+          MSE = var_Rf;
+        }
+
         evaluations.values[ j ].at( cur_xstar_idx ) = 
                     optimal_gamma * mean + (1.0 - optimal_gamma) * 
                     ( evaluations.values[ j ].at( cur_xstar_idx ) );
 
         evaluations.noise[ j ].at( cur_xstar_idx ) = sqrt(MSE);
+
+        if(print_debug_information){
+          std::cout << "\nMSE: " << MSE 
+                  << "\nRtilde: " << evaluations.values[ j ].at( cur_xstar_idx )
+                  << "\nRtildeNoise: " << evaluations.noise[ j ].at( cur_xstar_idx ) 
+                  << "\n############################" << std::endl;
+        }
+        assert(!std::isnan(evaluations.noise[ j ].at( cur_xstar_idx )));
       }
     }
   }else{

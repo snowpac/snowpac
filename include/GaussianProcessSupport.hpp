@@ -6,6 +6,9 @@
 #include "VectorOperations.hpp"
 #include <vector>
 #include <float.h>
+#include <cmath>
+#include <iomanip>
+#include <assert.h>
 
 class GaussianProcessSupport : protected VectorOperations {
   private:
