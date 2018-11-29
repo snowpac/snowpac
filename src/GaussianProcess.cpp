@@ -359,10 +359,11 @@ double GaussianProcess::bootstrap_diffGPMC ( std::vector<double>const& xstar)
   double mean_xstar = 0.0;
   double mean_bootstrap = 0.0;
   double mean_bootstrap_eval = 0.0;
-  double bootstrap_samples = 10000;
+  int bootstrap_samples = 10000;
   double bootstrap_estimate = 0.0;
+  int random_idx = -1;
   std::vector<double> f_train_bootstrap(nb_gp_nodes);
-  std::vector<double> Kinv_f_train_bootstrap(nb_gp_nodes);
+  std::vector<double> k_xstar_X_Kinv(nb_gp_nodes);
   std::random_device rd; // obtain a random number from hardware
   std::mt19937 eng(rd()); // seed the generator
   std::uniform_int_distribution<> distr(0, nb_gp_nodes-1);
@@ -372,14 +373,13 @@ double GaussianProcess::bootstrap_diffGPMC ( std::vector<double>const& xstar)
     k_xstar_X[i] = evaluate_kernel(xstar, gp_nodes[i]);
   }
 
-  int random_idx = -1;
+  vec_mat_product(L_inverse, k_xstar_X, k_xstar_X_Kinv); //k_xstar_X (K_XX - sigma^2 I)^{-1}
   for(int i = 0; i < bootstrap_samples; ++i){
     for(int j = 0; j < nb_gp_nodes; ++j){ //sample randomly from training data
       random_idx = distr(eng);
       f_train_bootstrap[j] = scaled_function_values[random_idx];
     }
-    mat_vec_product(L_inverse, f_train_bootstrap, Kinv_f_train_bootstrap); //(K_XX - sigma^2 I)^{-1} f_train_bootstrap
-    mean_bootstrap += dot_product(k_xstar_X, Kinv_f_train_bootstrap); // k_xstar_X Kinv_f_train_bootstrap = k_xstar_X (K_XX - sigma^2 I)^{-1} f_train_bootstrap
+    mean_bootstrap += dot_product(k_xstar_X_Kinv, f_train_bootstrap); // k_xstar_X (K_XX - sigma^2 I)^{-1} f_train_bootstrap
   }
   mean_bootstrap /= bootstrap_samples;
 
