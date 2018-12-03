@@ -384,11 +384,16 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
     double optimal_gamma = 0;
     double optimal_gamma_squared = 0;
     double MSE = 0;
+    double RMSE = 0;
+    double Rtilde = 0;
     double cur_noise_xstar = 0;
+    double heuristic_RMSE = 0;
+    double heuristic_Rtilde = 0;
+    double heuristic_gamma = 0;
     std::vector<double> cur_xstar; 
     std::vector<double> cur_noise; 
     int cur_xstar_idx = -1;
-    bool print_debug_information = false;
+    bool print_debug_information = true;
     for ( int j = 0; j < number_processes; ++j ) {
       gaussian_processes[j]->build_inverse();
       for ( unsigned int i = 0; i < evaluations.active_index.size( ); ++i ) {
@@ -398,6 +403,7 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
         cur_xstar = evaluations.nodes[cur_xstar_idx];
         
         gaussian_processes[j]->evaluate( cur_xstar, mean, variance );
+
         if(print_debug_information){
         std::cout << "############################" 
                   << "\ncur_xstar_idx: " << cur_xstar_idx 
@@ -440,6 +446,9 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
               (1.0 - optimal_gamma) * (1.0 - optimal_gamma) * var_Rf + 
               2.0 * optimal_gamma * (1.0 - optimal_gamma) * cov_RfGP;
 
+        Rtilde = optimal_gamma * mean + (1.0 - optimal_gamma) * 
+                 ( evaluations.values[ j ].at( cur_xstar_idx ) );
+
         if(!(MSE > 0 && MSE < var_Rf)){
           if(print_debug_information){
             std::cout << "\nMSE: " << MSE;
@@ -448,15 +457,23 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
           optimal_gamma = 0.0;
           MSE = var_Rf;
         }
+        RMSE = sqrt(MSE);
 
-        evaluations.values[ j ].at( cur_xstar_idx ) = 
-                    optimal_gamma * mean + (1.0 - optimal_gamma) * 
-                    ( evaluations.values[ j ].at( cur_xstar_idx ) );
+        heuristic_gamma = exp( - 2e0*sqrt(variance) );
+        heuristic_Rtilde = 
+            heuristic_gamma * mean  + 
+            (1e0-heuristic_gamma) * ( values[ j ].at( evaluations.active_index [ i ] ) );
+        heuristic_RMSE = 
+            heuristic_gamma * 2e0 * sqrt (variance)  + 
+            (1e0-heuristic_gamma) * ( noise[ j ].at( evaluations.active_index [ i ] ) );
 
-        evaluations.noise[ j ].at( cur_xstar_idx ) = sqrt(MSE);
+        evaluations.values[ j ].at( cur_xstar_idx ) = RMSE < heuristic_RMSE ? Rtilde : heuristic_Rtilde;
+
+        evaluations.noise[ j ].at( cur_xstar_idx ) = RMSE < heuristic_RMSE ? RMSE : heuristic_RMSE;
 
         if(print_debug_information){
           std::cout << "\nMSE: " << MSE 
+                    << "\nHeuristic taken: " << (heuristic_RMSE < RMSE) 
                     << "\nRtilde: " << evaluations.values[ j ].at( cur_xstar_idx )
                     << "\nRtildeNoise: " << evaluations.noise[ j ].at( cur_xstar_idx ) 
                     << "\n############################" << std::endl;
