@@ -770,8 +770,10 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::blackbox_evaluator (
   // add evaluations to blackbox data
   evaluations.nodes.push_back( x );
   for (int i = 0; i < nb_constraints+1; ++i) {  
-    if ( stochastic_optimization ) 
+    if ( stochastic_optimization ) {
       evaluations.noise[i].push_back( blackbox_noise.at(i) );
+      evaluations.noise_MC[i].push_back( blackbox_noise.at(i) );
+    }
     evaluations.values[i].push_back( blackbox_values.at(i) );
   }  
 
@@ -838,8 +840,10 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::blackbox_evaluator ( )
 
       // add evaluations to blackbox data
       for (int j = 0; j < nb_constraints+1; ++j) {
-        if ( stochastic_optimization )
+        if ( stochastic_optimization ) {
           evaluations.noise[j].push_back( blackbox_noise.at(j) );
+          evaluations.noise_MC[j].push_back( blackbox_noise.at(j) );
+        }
         evaluations.values[j].push_back( blackbox_values.at(j) );
       }  
     }
@@ -886,8 +890,10 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::blackbox_evaluator ( )
     // add evaluations to blackbox data
     for ( int i = 0; i < tmp_nb_evals; ++i ) {
       for (int j = 0; j < nb_constraints+1; ++j) {
-        if ( stochastic_optimization )
+        if ( stochastic_optimization ) {
           evaluations.noise[j].push_back( blackbox_noise_tmp.at(i).at(j) );
+          evaluations.noise_MC[j].push_back( blackbox_noise_tmp.at(i).at(j) );
+        }
         evaluations.values[j].push_back( blackbox_values_tmp.at(i).at(j) );
       }
     }
@@ -1343,28 +1349,53 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::output_for_plotting ( con
   double lower_bound = 0;
   std::ofstream outputfile ( "blackbox_data_" + std::to_string(evaluation_step) + "_" + std::to_string(sub_index) + ".dat");
   if (outputfile.is_open() ) {
-	for (int i = 0; i < evaluations.nodes.size(); ++i){
-		for(int j = 0; j < dim; ++j){
-			outputfile <<  evaluations.nodes.at(i).at(j) << ';';
-		}
-		for(int j = 0; j < nb_constraints + 1; ++j){
-			outputfile << evaluations.values.at(j).at(i) << ';';
-		}
-		outputfile << std::endl;
-	}
-}else{
- std::cout << "Unable to open file" << std::endl;
-}
-/*
+  	for (int i = 0; i < evaluations.nodes.size(); ++i){
+  		for(int j = 0; j < dim; ++j){
+  			outputfile <<  evaluations.nodes.at(i).at(j) << ';';
+  		}
+  		for(int j = 0; j < nb_constraints + 1; ++j){
+  			outputfile << evaluations.values.at(j).at(i) << ';';
+  		}
+  		outputfile << std::endl;
+  	}
+    outputfile.close();
+  }else{
+   std::cout << "Unable to open file" << std::endl;
+  }
+
+  outputfile.open( "gp_best_point_" + std::to_string(evaluation_step) + "_" + std::to_string(sub_index) + ".dat" );
+  if ( outputfile.is_open( ) ) {
+        //fvals.at(0) = surrogate_models[0].evaluate( x_loc );
+        gaussian_processes.evaluate_gaussian_process_at(0, best_node, fvals.at(0), var);
+        outputfile << best_node.at(xcoord) << "; " << best_node.at(ycoord) << "; " << fvals.at(0)<<"; " << var << std::endl;
+        for ( int k = 0; k < nb_constraints; ++k) {
+            //fvals.at(k+1) = surrogate_models[k+1].evaluate( x_loc );
+            gaussian_processes.evaluate_gaussian_process_at(k + 1, best_node, fvals.at(k + 1), var);
+            outputfile << best_node.at(xcoord) << "; " << best_node.at(ycoord) << "; " << fvals.at(k + 1) << "; " << var << std::endl;
+        }
+        outputfile.close();
+  } else {std::cout << "Unable to open file." << std::endl;}
+
+		outputfile.open( "gp_points_" + std::to_string(evaluation_step) + "_" + std::to_string(sub_index) + ".dat" );
+		std::vector<std::vector<double>> gp_nodes;
+		if ( outputfile.is_open( ) ) {
+			gp_nodes = gaussian_processes.get_nodes_at(0);
+			for ( int i = 0; i < gp_nodes.size(); ++i) {
+					for (int j = 0; j < gp_nodes[i].size(); ++j){
+							outputfile << gp_nodes[i][j] << " ";
+					}
+					outputfile << std::endl;
+			}
+			outputfile.close();
+		} else {std::cout << "Unable to open file." << std::endl;}
+
   outputfile.open ( "gp_data_" + std::to_string(evaluation_step) + "_" + std::to_string(sub_index) + ".dat" );
   if ( outputfile.is_open( ) ) {
     for ( int i = 0; i < dim; ++i)
       x_loc.at(i) = 0e0;
     for (double i = 0.0; i <= 1.0; i+=0.05) {
-      //x_loc.at(xcoord) =  i;
       x_loc.at(xcoord) = i;
       for (double j = 0.0; j <= 1.0; j+=0.05) {
-        //x_loc.at(ycoord) = j;
         x_loc.at(ycoord) = j;
         //fvals.at(0) = surrogate_models[0].evaluate( x_loc );
         gaussian_processes.evaluate_gaussian_process_at(0, x_loc, fvals.at(0), fvar.at(0));
@@ -1378,33 +1409,7 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::output_for_plotting ( con
       }
     }
     outputfile.close( );
-  } else std::cout << "Unable to open file." << std::endl;
-
-  outputfile.open( "gp_best_point_" + std::to_string(evaluation_step) + "_" + std::to_string(sub_index) + ".dat" );
-  if ( outputfile.is_open( ) ) {
-        //fvals.at(0) = surrogate_models[0].evaluate( x_loc );
-        gaussian_processes.evaluate_gaussian_process_at(0, best_node, fvals.at(0), var);
-        outputfile << best_node.at(xcoord) << "; " << best_node.at(ycoord) << "; " << fvals.at(0)<<"; " << var << std::endl;
-        for ( int k = 0; k < nb_constraints; ++k) {
-            //fvals.at(k+1) = surrogate_models[k+1].evaluate( x_loc );
-            gaussian_processes.evaluate_gaussian_process_at(k + 1, best_node, fvals.at(k + 1), var);
-            outputfile << best_node.at(xcoord) << "; " << best_node.at(ycoord) << "; " << fvals.at(k + 1) << "; " << var << std::endl;
-        }
-        outputfile.close();
-  } else std::cout << "Unable to open file." << std::endl;
-
-		outputfile.open( "gp_points_" + std::to_string(evaluation_step) + "_" + std::to_string(sub_index) + ".dat" );
-		std::vector<std::vector<double>> gp_nodes;
-		if ( outputfile.is_open( ) ) {
-			gp_nodes = gaussian_processes.get_nodes_at(0);
-			for ( int i = 0; i < gp_nodes.size(); ++i) {
-					for (int j = 0; j < gp_nodes[i].size(); ++j){
-							outputfile << gp_nodes[i][j] << " ";
-					}
-					outputfile << std::endl;
-			}
-			outputfile.close();
-		} else std::cout << "Unable to open file." << std::endl;
+  } else {std::cout << "Unable to open file." << std::endl;}
 
     outputfile.open( "active_nodes_" + std::to_string(evaluation_step) + "_" + std::to_string(sub_index) + ".dat" );
 		if ( outputfile.is_open( ) ) {
@@ -1416,7 +1421,7 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::output_for_plotting ( con
 						outputfile << std::endl;
 					}
 					outputfile.close();
-		} else std::cout << "Unable to open file." << std::endl;
+		} else {std::cout << "Unable to open file." << std::endl;}
 
     if(use_approx_gaussian_process) {
         outputfile.open(
@@ -1436,9 +1441,9 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::output_for_plotting ( con
                 outputfile << std::endl;
             }
             outputfile.close();
-        } else std::cout << "Unable to open file." << std::endl;
+        } else {std::cout << "Unable to open file." << std::endl;}
     }
-  */
+  
   /*
   outputfile.open ( "surrogate_data_" + std::to_string(evaluation_step) + "_" + std::to_string(sub_index) + ".dat" );
   if ( outputfile.is_open( ) ) {
