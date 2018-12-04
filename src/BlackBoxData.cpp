@@ -8,6 +8,7 @@ void BlackBoxData::initialize ( int n, int dim ) {
     scaled_node[i] = 0e0;
   values.resize( n );
   noise.resize( n ); 
+  noise_MC.resize( n ); 
   return;
 }
 //--------------------------------------------------------------------------------
@@ -42,7 +43,9 @@ void BlackBoxData::delete_history () {
       for ( int j = 0; j < n; ++j ) {
         values[j].erase( values[j].begin() + i );
         if ( noise[0].size() > 0 )
-          noise[j].erase ( noise[j].begin() + i );        
+          noise[j].erase ( noise[j].begin() + i );
+        if ( noise_MC[0].size() > 0 )   
+          noise_MC[j].erase ( noise_MC[j].begin() + i );        
       }
     }
   } 

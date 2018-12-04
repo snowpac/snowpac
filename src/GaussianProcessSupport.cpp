@@ -53,8 +53,11 @@ void GaussianProcessSupport::initialize ( const int dim, const int number_proces
 //--------------------------------------------------------------------------------
 void GaussianProcessSupport::update_data ( BlackBoxData &evaluations )
 {
+
   for (int j = 0; j < number_processes; ++j) {
-    for ( unsigned int i = nb_values; i < evaluations.values[j].size(); ++i) {
+    values[j].clear();
+    noise[j].clear();
+    for ( unsigned int i = 0; i < evaluations.values[j].size(); ++i) {
       values[j].push_back( evaluations.values[j].at(i) );    
       noise[j].push_back( evaluations.noise[j].at(i) );    
     }
@@ -387,26 +390,34 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
     double RMSE = 0;
     double Rtilde = 0;
     double cur_noise_xstar = 0;
+    double cur_noise_xstar_MC = 0;
     double heuristic_RMSE = 0;
     double heuristic_Rtilde = 0;
     double heuristic_gamma = 0;
     std::vector<double> cur_xstar; 
     std::vector<double> cur_noise; 
+    std::vector<double> cur_noise_MC; 
     int cur_xstar_idx = -1;
-    bool print_debug_information = true;
+    bool print_debug_information = false;
     for ( int j = 0; j < number_processes; ++j ) {
       gaussian_processes[j]->build_inverse();
       for ( unsigned int i = 0; i < evaluations.active_index.size( ); ++i ) {
         cur_xstar_idx = evaluations.active_index[i];
+        cur_xstar = evaluations.nodes[cur_xstar_idx];
+
         cur_noise = evaluations.noise[j];
         cur_noise_xstar = cur_noise[cur_xstar_idx];
-        cur_xstar = evaluations.nodes[cur_xstar_idx];
-        
+
+        cur_noise_MC = evaluations.noise_MC[j];
+        cur_noise_xstar_MC = cur_noise_MC[cur_xstar_idx];
+
         gaussian_processes[j]->evaluate( cur_xstar, mean, variance );
 
         if(print_debug_information){
         std::cout << "############################" 
                   << "\ncur_xstar_idx: " << cur_xstar_idx 
+                  << "\ncur_value: (" << evaluations.values[ j ].at( cur_xstar_idx )  
+                                   << ", " << values[ j ].at( evaluations.active_index [ i ] ) << ")"
                   << "\ncur_noise: ["; 
                   for(double n : cur_noise) {
                     std::cout << std::setprecision(8) << n << ' ';
@@ -419,9 +430,9 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
                   std::cout << "]"<< std::endl;
         }
         assert(!std::isnan(cur_noise_xstar));
-        var_Rf = cur_noise_xstar * cur_noise_xstar;
-        cov_RfGP = gaussian_processes[j]->compute_cov_meanGPMC(cur_xstar, cur_xstar_idx, cur_noise_xstar);
-        var_GP = gaussian_processes[j]->compute_var_meanGP(cur_xstar, cur_noise);
+        var_Rf = cur_noise_xstar_MC * cur_noise_xstar_MC;
+        cov_RfGP = gaussian_processes[j]->compute_cov_meanGPMC(cur_xstar, cur_xstar_idx, cur_noise_xstar_MC);
+        var_GP = gaussian_processes[j]->compute_var_meanGP(cur_xstar, cur_noise_MC);
         bootstrap_diffGPRf = gaussian_processes[j]->bootstrap_diffGPMC(cur_xstar);
         bootstrap_squared = bootstrap_diffGPRf*bootstrap_diffGPRf;
 
@@ -467,6 +478,10 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
             heuristic_gamma * 2e0 * sqrt (variance)  + 
             (1e0-heuristic_gamma) * ( noise[ j ].at( evaluations.active_index [ i ] ) );
 
+        if(print_debug_information){
+          std::cout << "\nRMSE: " << RMSE 
+                    << "\nHeuristic RMSE: " << heuristic_RMSE << std::endl;
+        }
         evaluations.values[ j ].at( cur_xstar_idx ) = RMSE < heuristic_RMSE ? Rtilde : heuristic_Rtilde;
 
         evaluations.noise[ j ].at( cur_xstar_idx ) = RMSE < heuristic_RMSE ? RMSE : heuristic_RMSE;

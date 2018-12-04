@@ -21,7 +21,8 @@ class BlackBoxData : public VectorOperations{
     int best_index;
     std::vector< std::vector<double> > nodes;
     std::vector< std::vector<double> > values;
-    std::vector< std::vector<double> > noise;
+    std::vector< std::vector<double> > noise; //stores the smoothed noise
+    std::vector< std::vector<double> > noise_MC; //stores R_MC noise before smoothing
     std::vector<int> active_index;
 
     void initialize( int, int );
