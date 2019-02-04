@@ -1,7 +1,7 @@
 INCLUDE(ExternalProject)
 
 #SET(NOWPAC_GTEST_URL "https://googletest.googlecode.com/files/gtest-1.7.0.zip")
-SET(NOWPAC_GTEST_URL "https://github.com/abseil/googletest/archive/master.zip")
+SET(NOWPAC_GTEST_URL "https://github.com/google/googletest/archive/master.zip")
 
 ExternalProject_Add( GTEST
    
