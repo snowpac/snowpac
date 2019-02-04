@@ -87,7 +87,6 @@ void GaussianProcessSupport::update_gaussian_processes_for_gp( BlackBoxData &eva
     }
   }
 
-
   if ( do_parameter_estimation ) {
     gaussian_process_active_index.clear( );
     gaussian_process_nodes.clear( );
@@ -356,11 +355,11 @@ void GaussianProcessSupport::update_gaussian_processes ( BlackBoxData &evaluatio
 //--------------------------------------------------------------------------------
 int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
 {
-
   update_data( evaluations );
 
   update_gaussian_processes( evaluations );
-
+  
+  /*
   bool active_index_already_in_set = false;
   for(int cur_active_index : evaluations.active_index ){
     if(cur_active_index == evaluations.nodes.size()-1){
@@ -371,7 +370,8 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
   if(!active_index_already_in_set){
     evaluations.active_index.push_back( evaluations.nodes.size()-1 );
   }
-
+  */
+  
   bool negative_variance_found;
   bool new_r_tilde_implementation = true;
 
@@ -441,7 +441,7 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
 
         optimal_gamma = (std::fabs(denominator) <= DBL_MIN) ? 0.0 : numerator/denominator;
         optimal_gamma = (optimal_gamma > 1.0) ? 1.0 : optimal_gamma;
-        optimal_gamma = (optimal_gamma < 0.0) ? 0.0 : optimal_gamma;
+        optimal_gamma = (optimal_gamma < 0.0 || std::isnan(optimal_gamma)) ? 0.0 : optimal_gamma;
 
         if(print_debug_information){
         std::cout << "\nvar_Rf: " << var_Rf 
@@ -482,9 +482,9 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
           std::cout << "\nRMSE: " << RMSE 
                     << "\nHeuristic RMSE: " << heuristic_RMSE << std::endl;
         }
-        evaluations.values[ j ].at( cur_xstar_idx ) = RMSE < heuristic_RMSE ? Rtilde : heuristic_Rtilde;
+        evaluations.values[ j ].at( cur_xstar_idx ) = Rtilde; // RMSE < heuristic_RMSE ? Rtilde : heuristic_Rtilde;
 
-        evaluations.noise[ j ].at( cur_xstar_idx ) = RMSE < heuristic_RMSE ? RMSE : heuristic_RMSE;
+        evaluations.noise[ j ].at( cur_xstar_idx ) = 2 * RMSE;// RMSE < heuristic_RMSE ? RMSE : heuristic_RMSE;
 
         if(print_debug_information){
           std::cout << "\nMSE: " << MSE 
@@ -493,6 +493,7 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
                     << "\nRtildeNoise: " << evaluations.noise[ j ].at( cur_xstar_idx ) 
                     << "\n############################" << std::endl;
         }
+        assert(!std::isnan(evaluations.values[ j ].at( cur_xstar_idx )));
         assert(!std::isnan(evaluations.noise[ j ].at( cur_xstar_idx )));
       }
     }

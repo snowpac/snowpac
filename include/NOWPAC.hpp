@@ -47,7 +47,6 @@
 #include <iomanip>
 #include <fstream>
 #include <cassert>
-#include <backward/strstream>
 #include <limits>
 #include <float.h>
 //! NOWPAC
@@ -346,9 +345,9 @@ NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::NOWPAC ( int n ) :
 //  evaluations.max_nb_nodes = dim +1; //linear
 //  evaluations.max_nb_nodes = 2*dim+1; //fully linear
   max_number_blackbox_evaluations_is_set = false;
-  max_number_blackbox_evaluations = (int) HUGE_VAL;
+  max_number_blackbox_evaluations = INT_MAX;
   max_number_accepted_steps_is_set = false;
-  max_number_accepted_steps = (int) HUGE_VAL;
+  max_number_accepted_steps = INT_MAX;
   number_accepted_steps = 0;
   verbose = 3;
   NOEXIT = 100;
@@ -585,7 +584,7 @@ template<class TSurrogateModel, class TBasisForSurrogateModel>
 void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_trustregion ( 
   double const &init_delta )
 {
-  set_trustregion ( init_delta, -1.0 );
+  set_trustregion ( init_delta, delta_min );
   return;
 }
 //--------------------------------------------------------------------------------
@@ -778,7 +777,7 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::blackbox_evaluator (
   }  
 
   if ( set_node_active )
-    evaluations.active_index.push_back( (evaluations.nodes).size()-1 );    
+    evaluations.active_index.push_back( evaluations.nodes.size()-1 );    
 
   if ( stochastic_optimization && evaluations.nodes.size() > dim ) {
     if(use_approx_gaussian_process){
@@ -1007,15 +1006,19 @@ bool NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::last_point_is_feasible ( 
 template<class TSurrogateModel, class TBasisForSurrogateModel>
 void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::update_surrogate_models ( )
 {
-  bool best_index_okay = false;
+  bool best_index_in_active_set = false;
   for (int i = 0; i < evaluations.active_index.size(); ++i) {
     if ( evaluations.active_index[i] == evaluations.best_index) {
-      best_index_okay = true;
+      best_index_in_active_set = true;
       break;
     }    
   }
 
-  assert( best_index_okay );
+  //if(!best_index_in_active_set){
+  //  evaluations.active_index.push_back(evaluations.best_index);
+  //}
+
+  assert( best_index_in_active_set );
 
   surrogate_basis.compute_basis_coefficients ( evaluations.get_scaled_active_nodes( delta ) ) ;
 
@@ -2058,18 +2061,25 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
     std::cout << "  Best value            :  " << std::setprecision(12) << evaluations.values[0].at( evaluations.best_index ) << std::endl;
     std::cout << "---------------------------------------------" << std::endl;
     std::cout << "  Trust-region radius   :  " << delta << std::endl;
-    if ( EXIT_FLAG != -5 ) 
+    if ( EXIT_FLAG != -5 ) {
       std::cout << "  Number of evaluations :  " << evaluations.values[0].size() << std::endl;
-    else
+    } else {
       std::cout << "  Number of evaluations :  " << evaluations.values[0].size()+1 << std::endl;
+    }
     int nb_eval_out_of_bounds = 0;
     for (int j = 0; j < evaluations.nodes.size(); ++j)
     {
       for (int i = 0; i < dim; ++i)
       {
-        if(!(evaluations.nodes[j][i] >= lower_bound_constraints[i] && evaluations.nodes[j][i] <= upper_bound_constraints[i])){
-                    nb_eval_out_of_bounds++;
-                    break;
+        if (!lower_bound_constraints.empty()) {
+          if (evaluations.nodes[j][i] < lower_bound_constraints[i]){
+            nb_eval_out_of_bounds++;
+          }
+        }
+        if (!upper_bound_constraints.empty()){
+          if (evaluations.nodes[j][i] > upper_bound_constraints[i]){
+            nb_eval_out_of_bounds++;
+          }
         }
       }
     }

@@ -344,9 +344,17 @@ double GaussianProcess::compute_cov_meanGPMC ( std::vector<double>const& xstar, 
 {
   //std::vector<double> k_xstar_X(nb_gp_nodes);
   double cov_meanGPMC = 0.;
+  double cov_term = 0.;
+  double L_inverse_term = 0.;
+  double kernel_term = 0.;
+  //std::cout << "Cov terms (idx, kernel, KK_inv, Prod): " << std::endl;
   for(int i = 0; i < nb_gp_nodes; ++i){
     //k_xstar_X[i] = evaluate_kernel(xstar, gp_nodes[i]);
-    cov_meanGPMC += evaluate_kernel(xstar, gp_nodes[i])*L_inverse[i][xstar_idx];
+    L_inverse_term = L_inverse[i][xstar_idx];
+    kernel_term = evaluate_kernel(xstar, gp_nodes[i]);
+    cov_term = kernel_term*L_inverse_term;
+    cov_meanGPMC += cov_term;
+    //std::cout << "(" << xstar_idx << ", "<< kernel_term << ", " << L_inverse_term << ", " << cov_term << ")" << std::endl;
   }
   cov_meanGPMC *= noise*noise;
   return cov_meanGPMC;
@@ -359,7 +367,7 @@ double GaussianProcess::bootstrap_diffGPMC ( std::vector<double>const& xstar)
   double mean_xstar = 0.0;
   double mean_bootstrap = 0.0;
   double mean_bootstrap_eval = 0.0;
-  int bootstrap_samples = 10000;
+  int bootstrap_samples = 1000;
   double bootstrap_estimate = 0.0;
   int random_idx = -1;
   std::vector<double> f_train_bootstrap(nb_gp_nodes);
