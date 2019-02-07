@@ -124,6 +124,7 @@ class NOWPAC : protected NoiseDetection<TSurrogateModel> {
     int output_steps = 1;
     bool use_hard_box_constraints = false;
     bool use_asynchronous_evaluations = false;
+    bool use_analytic_smoothing = false;
 public:
     //! Constructor
     /*!
@@ -428,7 +429,10 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_option (
     use_asynchronous_evaluations = option_value;
     return;
   }
-  
+  if ( option_name.compare( "use_analytic_smoothing") == 0 ){
+    use_analytic_smoothing = option_value;
+    return;
+  }
 
   std::cout << "Warning : Unknown parameter bool(" << option_name << ")"<< std::endl;
   return;
@@ -1580,7 +1584,7 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
 
     if ( stochastic_optimization )
       gaussian_processes.initialize ( dim, nb_constraints + 1, delta,
-                                      update_at_evaluations, update_interval_length, gaussian_process_type, NOEXIT );
+                                      update_at_evaluations, update_interval_length, gaussian_process_type, NOEXIT, use_analytic_smoothing );
 
     if ( verbose >= 2 ) { std::cout << "Initial evaluation of black box functions" << std::endl; }
     // initial evaluations 
@@ -2026,13 +2030,18 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
           std::cout << "                           " << std::setprecision(8) << evaluations.nodes[ evaluations.best_index ].at(dim-1) << "]"<< std::endl;
         } else
             std::cout << "  Current point         : [" << std::setprecision(8) << evaluations.nodes[ evaluations.best_index ].at(0) << "]"<< std::endl;
-          if ( nb_constraints > 1) {
-            std::cout << "  Current constraints    : [" << std::setprecision(8) << evaluations.values[1].at( evaluations.best_index ) << std::endl;
+          if ( nb_constraints > 0) {
+            std::cout << "  Current constraints   : [" << std::setprecision(8) << evaluations.values[1].at( evaluations.best_index ) << std::endl;
             for (int i = 1; i < nb_constraints - 1; ++i )
                   std::cout << "                           " << std::setprecision(8) << evaluations.values[i+1].at( evaluations.best_index ) << std::endl;
             std::cout << "                           " << std::setprecision(8) << evaluations.values[nb_constraints].at( evaluations.best_index ) << "]"<< std::endl;
-        } else
-            std::cout << "  Current constraint     : [" << std::setprecision(8) << evaluations.values[nb_constraints].at( evaluations.best_index ) << "]"<< std::endl;
+        }if(stochastic_optimization) {
+          std::cout << "  Current Noise        : [" << std::setprecision(8) << evaluations.noise[0].at(evaluations.best_index) << std::endl;
+          for(int i = 1; i < evaluations.noise.size() - 1; ++i){
+            std::cout << "                           " << std::setprecision(8) << evaluations.noise[i].at(evaluations.best_index) << std::endl;
+          }
+          std::cout << "                           " << std::setprecision(8) << evaluations.noise[evaluations.noise.size() - 1].at(evaluations.best_index) << "]" << std::endl;
+        }
         std::cout << "*****************************************" << std::endl << std::endl << std::flush;
       }
 
@@ -2059,6 +2068,21 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
       std::cout << "  Best point            : [" << std::setprecision(12) << evaluations.nodes[ evaluations.best_index ].at(0) << "]"<< std::endl;
     std::cout << "---------------------------------------------" << std::endl;
     std::cout << "  Best value            :  " << std::setprecision(12) << evaluations.values[0].at( evaluations.best_index ) << std::endl;
+    std::cout << "---------------------------------------------" << std::endl;
+    if ( nb_constraints > 0) {
+      std::cout << "  Constraint            : [" << std::setprecision(12) << evaluations.values[1].at( evaluations.best_index ) << std::endl;
+      for (int i = 1; i < nb_constraints - 1; i++)
+        std::cout << "                           " << std::setprecision(12) << evaluations.values[i+1].at( evaluations.best_index ) << std::endl;
+      std::cout << "                           " << std::setprecision(12) << evaluations.values[nb_constraints].at( evaluations.best_index )<< "]"<< std::endl;
+    }
+    if(stochastic_optimization) {
+      std::cout << "---------------------------------------------" << std::endl;
+      std::cout << "  Noise                 : [" << std::setprecision(12) << evaluations.noise[0].at(evaluations.best_index) << std::endl;
+      for(int i = 1; i < evaluations.noise.size() - 1; ++i){
+        std::cout << "                           " << std::setprecision(12) << evaluations.noise[i].at(evaluations.best_index) << std::endl;
+      }
+      std::cout << "                           " << std::setprecision(12) << evaluations.noise[evaluations.noise.size() - 1].at(evaluations.best_index) << "]" << std::endl;
+    }
     std::cout << "---------------------------------------------" << std::endl;
     std::cout << "  Trust-region radius   :  " << delta << std::endl;
     if ( EXIT_FLAG != -5 ) {

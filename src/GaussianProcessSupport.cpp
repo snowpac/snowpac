@@ -11,7 +11,7 @@
 //--------------------------------------------------------------------------------
 void GaussianProcessSupport::initialize ( const int dim, const int number_processes_input,
   double &delta_input, std::vector<double> const &update_at_evaluations_input,
-  int update_interval_length_input, const std::string gaussian_process_type, const int exitconst) 
+  int update_interval_length_input, const std::string gaussian_process_type, const int exitconst, const bool use_analytic_smoothing)
 {
   nb_values = 0;
   delta = &delta_input;
@@ -45,6 +45,7 @@ void GaussianProcessSupport::initialize ( const int dim, const int number_proces
     }
   }
   rescaled_node.resize( dim );
+  this->use_analytic_smoothing = use_analytic_smoothing;
   NOEXIT = exitconst;
   return;
 }
@@ -373,9 +374,8 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
   */
   
   bool negative_variance_found;
-  bool new_r_tilde_implementation = true;
 
-  if (new_r_tilde_implementation){
+  if (use_analytic_smoothing){
     std::cout << "WE ARE IN PROTOTYPICAL NEW ERROR ESTIMATION MODE. HARDCODED!!!" << std::endl;
     double var_Rf = 0;
     double cov_RfGP = 0;
@@ -531,7 +531,7 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
         }
       }
 
-      evaluations.active_index.erase( evaluations.active_index.end()-1 );
+      //evaluations.active_index.erase( evaluations.active_index.end()-1 );
       if(!negative_variance_found){
         for ( int j = 0; j < number_processes; ++j ) {
           gaussian_processes[j]->decrease_nugget();
@@ -570,7 +570,6 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
 */
 
   do_parameter_estimation = false;
-
 
   return NOEXIT;
 }
