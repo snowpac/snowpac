@@ -457,9 +457,10 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
               (1.0 - optimal_gamma) * (1.0 - optimal_gamma) * var_Rf + 
               2.0 * optimal_gamma * (1.0 - optimal_gamma) * cov_RfGP;
 
-        Rtilde = optimal_gamma * mean + (1.0 - optimal_gamma) * 
-                 ( evaluations.values[ j ].at( cur_xstar_idx ) );
-
+        if(std::isnan(MSE)){
+          optimal_gamma = 0.0;
+          MSE = var_Rf;
+        }
         if(!(MSE > 0 && MSE < var_Rf)){
           if(print_debug_information){
             std::cout << "\nMSE: " << MSE;
@@ -468,7 +469,11 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
           optimal_gamma = 0.0;
           MSE = var_Rf;
         }
+        
         RMSE = sqrt(MSE);
+        Rtilde = optimal_gamma * mean + (1.0 - optimal_gamma) * 
+                 ( evaluations.values[ j ].at( cur_xstar_idx ) );
+
 
         heuristic_gamma = exp( - 2e0*sqrt(variance) );
         heuristic_Rtilde = 
