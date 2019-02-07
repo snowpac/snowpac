@@ -1941,9 +1941,9 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
       if ( acceptance_ratio >= eta_0 ) {
         replace_node_index = surrogate_nodes->replace_node( -1, 
                                                            evaluations, x_trial );
-        add_trial_node( );
         if ( EXIT_FLAG != NOEXIT ) break;
         evaluations.best_index = evaluations.nodes.size()-1;
+        add_trial_node( );
         /*if(use_approx_gaussian_process){
           gaussian_processes.set_constraint_ball_center(evaluations.nodes[evaluations.best_index]);
         }*/
