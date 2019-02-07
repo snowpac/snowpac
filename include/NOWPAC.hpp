@@ -1113,11 +1113,12 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::update_trustregion (
 template<class TSurrogateModel, class TBasisForSurrogateModel>
 void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::add_trial_node ( ) 
 {
-  if ( evaluations.active_index.size( ) < evaluations.max_nb_nodes &&
-       evaluations.active_index[ replace_node_index] != evaluations.best_index ) {
+  if ( evaluations.active_index.size( ) < evaluations.max_nb_nodes  ) {
     evaluations.active_index.push_back ( evaluations.nodes.size()-1 );
-  } else {
+  } else if(evaluations.active_index[ replace_node_index] != evaluations.best_index) {
     evaluations.active_index[ replace_node_index ] = evaluations.nodes.size()-1;
+  } else{
+    assert(false);
   }
 
   if ( stochastic_optimization ){
