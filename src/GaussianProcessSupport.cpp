@@ -399,6 +399,8 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
     std::vector<double> cur_noise_MC; 
     int cur_xstar_idx = -1;
     bool print_debug_information = false;
+
+    evaluations.active_index.push_back( evaluations.nodes.size()-1 );
     for ( int j = 0; j < number_processes; ++j ) {
       gaussian_processes[j]->build_inverse();
       for ( unsigned int i = 0; i < evaluations.active_index.size( ); ++i ) {
@@ -469,7 +471,7 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
           optimal_gamma = 0.0;
           MSE = var_Rf;
         }
-        
+
         RMSE = sqrt(MSE);
         Rtilde = optimal_gamma * mean + (1.0 - optimal_gamma) * 
                  ( evaluations.values[ j ].at( cur_xstar_idx ) );
@@ -502,9 +504,12 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
         assert(!std::isnan(evaluations.noise[ j ].at( cur_xstar_idx )));
       }
     }
+    evaluations.active_index.erase( evaluations.active_index.end()-1 );
   }else{
     do{
       negative_variance_found = false;
+
+      evaluations.active_index.push_back( evaluations.nodes.size()-1 );
       for ( unsigned int i = 0; i < evaluations.active_index.size( ); ++i ) {
     //    rescale ( 1e0/(delta_tmp), evaluations.nodes[evaluations.active_index[i]], 
     //              evaluations.nodes[best_index], rescaled_node );
@@ -536,7 +541,7 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
         }
       }
 
-      //evaluations.active_index.erase( evaluations.active_index.end()-1 );
+      evaluations.active_index.erase( evaluations.active_index.end()-1 );
       if(!negative_variance_found){
         for ( int j = 0; j < number_processes; ++j ) {
           gaussian_processes[j]->decrease_nugget();
