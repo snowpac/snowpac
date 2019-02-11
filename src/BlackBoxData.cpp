@@ -7,6 +7,7 @@ void BlackBoxData::initialize ( int n, int dim ) {
   for ( int i = 0; i < dim; ++i )
     scaled_node[i] = 0e0;
   values.resize( n );
+  values_MC.resize( n );
   noise.resize( n ); 
   noise_MC.resize( n ); 
   return;

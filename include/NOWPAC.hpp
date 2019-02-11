@@ -772,12 +772,13 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::blackbox_evaluator (
 
   // add evaluations to blackbox data
   evaluations.nodes.push_back( x );
-  for (int i = 0; i < nb_constraints+1; ++i) {  
+  for (int i = 0; i < nb_constraints+1; ++i) {
+    evaluations.values[i].push_back( blackbox_values.at(i) );
     if ( stochastic_optimization ) {
+      evaluations.values_MC[i].push_back( blackbox_values.at(i) );
       evaluations.noise[i].push_back( blackbox_noise.at(i) );
       evaluations.noise_MC[i].push_back( blackbox_noise.at(i) );
     }
-    evaluations.values[i].push_back( blackbox_values.at(i) );
   }  
 
   if ( set_node_active )
@@ -843,11 +844,12 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::blackbox_evaluator ( )
 
       // add evaluations to blackbox data
       for (int j = 0; j < nb_constraints+1; ++j) {
+        evaluations.values[j].push_back( blackbox_values.at(j) );
         if ( stochastic_optimization ) {
+          evaluations.values_MC[j].push_back( blackbox_values.at(j) );
           evaluations.noise[j].push_back( blackbox_noise.at(j) );
           evaluations.noise_MC[j].push_back( blackbox_noise.at(j) );
         }
-        evaluations.values[j].push_back( blackbox_values.at(j) );
       }  
     }
   }else{
@@ -893,11 +895,12 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::blackbox_evaluator ( )
     // add evaluations to blackbox data
     for ( int i = 0; i < tmp_nb_evals; ++i ) {
       for (int j = 0; j < nb_constraints+1; ++j) {
+        evaluations.values[j].push_back( blackbox_values_tmp.at(i).at(j) );
         if ( stochastic_optimization ) {
+          evaluations.values_MC[j].push_back( blackbox_values_tmp.at(i).at(j) );
           evaluations.noise[j].push_back( blackbox_noise_tmp.at(i).at(j) );
           evaluations.noise_MC[j].push_back( blackbox_noise_tmp.at(i).at(j) );
         }
-        evaluations.values[j].push_back( blackbox_values_tmp.at(i).at(j) );
       }
     }
   }
