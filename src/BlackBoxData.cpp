@@ -10,7 +10,8 @@ void BlackBoxData::initialize ( int n, int dim ) {
   values.resize( n );
   values_MC.resize( n );
   noise.resize( n ); 
-  noise_MC.resize( n ); 
+  noise_MC.resize( n );
+  samples.resize( n );
   return;
 }
 //--------------------------------------------------------------------------------

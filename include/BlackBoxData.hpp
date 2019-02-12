@@ -27,6 +27,7 @@ class BlackBoxData : public VectorOperations{
     std::vector< std::vector<double> > values_MC; //stores R_MC before smoothing
     std::vector< std::vector<double> > noise; //stores the smoothed noise
     std::vector< std::vector<double> > noise_MC; //stores R_MC noise before smoothing
+    std::vector<std::vector< std::vector<double> > > samples; //stores all samples needed for bootstrap
     std::vector<int> active_index;
 
     void initialize( int, int );

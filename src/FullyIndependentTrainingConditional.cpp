@@ -18,13 +18,13 @@
 //--------------------------------------------------------------------------------
 FullyIndependentTrainingConditional::FullyIndependentTrainingConditional(int n,
 		double &delta_input) :
-		GaussianProcess(n, delta_input) {
+		GaussianProcess(n, delta_input, nullptr) {
 
 }
 //--------------------------------------------------------------------------------
 FullyIndependentTrainingConditional::FullyIndependentTrainingConditional(int n,
 		double &delta_input, std::vector<double> gp_parameters_input) :
-		GaussianProcess(n, delta_input, gp_parameters_input) {
+		GaussianProcess(n, delta_input, nullptr, gp_parameters_input) {
 
 }
 //--------------------------------------------------------------------------------

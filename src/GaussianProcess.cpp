@@ -5,7 +5,7 @@
 #include <cassert>
 
 //--------------------------------------------------------------------------------
-GaussianProcess::GaussianProcess ( int n, double &delta_input ) : 
+GaussianProcess::GaussianProcess ( int n, double &delta_input, BlackBoxBaseClass* blackbox_input) :
   TriangularMatrixOperations ( n ),
   dim( n )
 {
@@ -20,11 +20,12 @@ GaussianProcess::GaussianProcess ( int n, double &delta_input ) :
   nb_gp_nodes = 0;
   gp_pointer = NULL;
   delta = &delta_input;
+  blackbox = blackbox_input;
 } 
 //--------------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------------
-GaussianProcess::GaussianProcess ( int n, double &delta_input, std::vector<double> gp_parameters_input ) : 
+GaussianProcess::GaussianProcess ( int n, double &delta_input, BlackBoxBaseClass* blackbox_input, std::vector<double> gp_parameters_input ) :
   TriangularMatrixOperations ( n ),
   dim( n )
 {
@@ -44,6 +45,7 @@ GaussianProcess::GaussianProcess ( int n, double &delta_input, std::vector<doubl
   nb_gp_nodes = 0;
   gp_pointer = NULL;
   delta = &delta_input;
+  blackbox = blackbox_input;
 } 
 //--------------------------------------------------------------------------------
 
@@ -362,19 +364,18 @@ double GaussianProcess::compute_cov_meanGPMC ( std::vector<double>const& xstar, 
 //--------------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------------
-double GaussianProcess::bootstrap_diffGPMC ( std::vector<double>const& xstar)
+double GaussianProcess::bootstrap_diffGPMC ( std::vector<double>const& xstar, std::vector<std::vector<double>>const& samples, const unsigned int index)
 {
   double mean_xstar = 0.0;
   double mean_bootstrap = 0.0;
   double mean_bootstrap_eval = 0.0;
-  int bootstrap_samples = 1000;
+  int max_bootstrap_samples = 1000;
   double bootstrap_estimate = 0.0;
   int random_idx = -1;
   std::vector<double> f_train_bootstrap(nb_gp_nodes);
   std::vector<double> k_xstar_X_Kinv(nb_gp_nodes);
   std::random_device rd; // obtain a random number from hardware
   std::mt19937 eng(rd()); // seed the generator
-  std::uniform_int_distribution<> distr(0, nb_gp_nodes-1);
   std::vector<double> k_xstar_X(nb_gp_nodes);
 
   for(int i = 0; i < nb_gp_nodes; ++i){
@@ -382,14 +383,23 @@ double GaussianProcess::bootstrap_diffGPMC ( std::vector<double>const& xstar)
   }
 
   vec_mat_product(L_inverse, k_xstar_X, k_xstar_X_Kinv); //k_xstar_X (K_XX - sigma^2 I)^{-1}
-  for(int i = 0; i < bootstrap_samples; ++i){
+  assert(samples.size() == nb_gp_nodes);
+
+  std::vector<double> bootstrap_samples;
+  unsigned int nb_samples;
+  for(int i = 0; i < max_bootstrap_samples; ++i){
     for(int j = 0; j < nb_gp_nodes; ++j){ //sample randomly from training data
-      random_idx = distr(eng);
-      f_train_bootstrap[j] = scaled_function_values[random_idx];
+      nb_samples = samples[j].size();
+      bootstrap_samples.resize(nb_samples);
+      std::uniform_int_distribution<> distr(0, nb_samples - 1);
+      for(int k = 0; k < nb_samples; ++k){
+        bootstrap_samples[k] = samples[j][distr(eng)];
+      }
+      f_train_bootstrap[j] = blackbox->evaluate_samples(bootstrap_samples, index, nullptr);
     }
     mean_bootstrap += dot_product(k_xstar_X_Kinv, f_train_bootstrap); // k_xstar_X (K_XX - sigma^2 I)^{-1} f_train_bootstrap
   }
-  mean_bootstrap /= bootstrap_samples;
+  mean_bootstrap /= max_bootstrap_samples;
 
   evaluate(xstar, mean_xstar);
   bootstrap_estimate = mean_bootstrap - mean_xstar;

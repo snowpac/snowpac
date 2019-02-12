@@ -7,6 +7,7 @@
 #include "VectorOperations.hpp"
 #include "nlopt.hpp"
 #include "BlackBoxData.hpp"
+#include "BlackBoxBaseClass.hpp"
 #include <memory>
 #include <random>
 
@@ -47,6 +48,7 @@ class GaussianProcess : public GaussianProcessBaseClass,
     int dim, nb_gp_nodes;
     double *delta;
     double noise_regularization = 1e-6;
+    BlackBoxBaseClass* blackbox;
 
     static double parameter_estimation_objective(std::vector<double> const&, 
                                                  std::vector<double>&, void*);
@@ -71,9 +73,9 @@ class GaussianProcess : public GaussianProcessBaseClass,
      Class constructor.
      \param n dimension of the Gaussian process.
     */
-    GaussianProcess( int, double& );
+    GaussianProcess( int, double& , BlackBoxBaseClass*);
 
-    GaussianProcess( int, double& , std::vector<double> );
+    GaussianProcess( int, double& , BlackBoxBaseClass*, std::vector<double> );
     //! Destructor
     ~GaussianProcess() { }
     //! Estimation of hyper parameters
@@ -148,7 +150,7 @@ class GaussianProcess : public GaussianProcessBaseClass,
 
     virtual double compute_cov_meanGPMC  ( std::vector<double>const& xstar, int const& xstar_idx, double const& noise) ;
 
-    virtual double bootstrap_diffGPMC ( std::vector<double>const& xstar);
+    virtual double bootstrap_diffGPMC ( std::vector<double>const& xstar, std::vector<std::vector<double>>const& samples, const unsigned int index);
 
     virtual const std::vector<std::vector<double>> &getGp_nodes() const;
 

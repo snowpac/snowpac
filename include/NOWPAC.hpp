@@ -65,6 +65,7 @@ class NOWPAC : protected NoiseDetection<TSurrogateModel> {
     std::vector<TSurrogateModel> surrogate_models;
     std::vector<double> blackbox_values;
     std::vector<double> blackbox_noise;
+    std::vector<std::vector<double>> blackbox_samples;
     bool stochastic_optimization;
     void blackbox_evaluator ( std::vector<double> const&, bool );
     void blackbox_evaluator ( );
@@ -440,6 +441,8 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_option (
     return;
   }
   if ( option_name.compare( "use_analytic_smoothing") == 0 ){
+    assert(stochastic_optimization);
+    blackbox_samples.resize( nb_constraints + 1);
     use_analytic_smoothing = option_value;
     return;
   }
@@ -754,7 +757,11 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::blackbox_evaluator (
   }
   // evaluate blackbox and check results for consistency
   if ( stochastic_optimization ) {
-    blackbox->evaluate( x, blackbox_values, blackbox_noise, user_data_pointer );
+    if(use_analytic_smoothing){
+      blackbox->evaluate(x, blackbox_values, blackbox_noise, blackbox_samples, user_data_pointer);
+    }else {
+      blackbox->evaluate(x, blackbox_values, blackbox_noise, user_data_pointer);
+    }
     if ( blackbox_noise.size() != (unsigned) (nb_constraints+1) ) EXIT_FLAG = -5;
     for ( int i = 0; i < nb_constraints+1; ++i ) {
       if ( blackbox_noise[i] < 0.0 || blackbox_noise[i] != blackbox_noise[i] ) {
@@ -782,8 +789,11 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::blackbox_evaluator (
       evaluations.values_MC[i].push_back( blackbox_values.at(i) );
       evaluations.noise[i].push_back( blackbox_noise.at(i) );
       evaluations.noise_MC[i].push_back( blackbox_noise.at(i) );
+      if(use_analytic_smoothing){
+        evaluations.samples[i].push_back(blackbox_samples[i]);
+      }
     }
-  }  
+  }
 
   if ( set_node_active )
     evaluations.active_index.push_back( evaluations.nodes.size()-1 );    
@@ -795,7 +805,6 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::blackbox_evaluator (
     }
     EXIT_FLAG = gaussian_processes.smooth_data ( evaluations );
   }
-
 
   write_to_file();
 
@@ -825,8 +834,11 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::blackbox_evaluator ( )
     for ( int i = nb_vals_tmp; i < nb_nodes_tmp; ++i ) {
       // evaluate blackbox and check results for consistency
       if ( stochastic_optimization ) { //TODO: PARALLEL EVAL HERE
-        blackbox->evaluate( evaluations.nodes[ i ], blackbox_values, 
-                            blackbox_noise, user_data_pointer );
+        if(use_analytic_smoothing){
+          blackbox->evaluate(evaluations.nodes[ i ], blackbox_values, blackbox_noise, blackbox_samples, user_data_pointer);
+        }else {
+          blackbox->evaluate(evaluations.nodes[ i ], blackbox_values, blackbox_noise, user_data_pointer);
+        }
         if ( blackbox_noise.size() != (unsigned) (nb_constraints+1) ) EXIT_FLAG = -5;
         for ( int i = 0; i < nb_constraints+1; ++i ) {
           if ( blackbox_noise[i] < 0.0 || blackbox_noise[i] != blackbox_noise[i] ) {
@@ -854,6 +866,9 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::blackbox_evaluator ( )
           evaluations.values_MC[j].push_back( blackbox_values.at(j) );
           evaluations.noise[j].push_back( blackbox_noise.at(j) );
           evaluations.noise_MC[j].push_back( blackbox_noise.at(j) );
+          if(use_analytic_smoothing){
+            evaluations.samples[j].push_back(blackbox_samples[j]);
+          }
         }
       }  
     }
@@ -905,6 +920,9 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::blackbox_evaluator ( )
           evaluations.values_MC[j].push_back( blackbox_values_tmp.at(i).at(j) );
           evaluations.noise[j].push_back( blackbox_noise_tmp.at(i).at(j) );
           evaluations.noise_MC[j].push_back( blackbox_noise_tmp.at(i).at(j) );
+          if(use_analytic_smoothing){
+              evaluations.samples[j].push_back(blackbox_samples[j]);
+          }
         }
       }
     }
@@ -1600,7 +1618,7 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
       surrogate_optimization->set_lower_bounds ( lower_bound_constraints );
 
     if ( stochastic_optimization )
-      gaussian_processes.initialize ( dim, nb_constraints + 1, delta,
+      gaussian_processes.initialize ( dim, nb_constraints + 1, delta, blackbox,
                                       update_at_evaluations, update_interval_length, gaussian_process_type, NOEXIT, use_analytic_smoothing );
 
     if ( verbose >= 2 ) { std::cout << "Initial evaluation of black box functions" << std::endl; }
@@ -1859,7 +1877,7 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
       }
       if ( !last_point_is_feasible( ) ) {
         if ( verbose == 3 ) { 
-          std::cout << " #FEASVIOLATION Feasibility violated" << std::endl << std::flush; 
+          std::cout << "#FEASVIOLATION Step rejected since feasibility violated" << std::endl << std::flush;
           for (int i = 0; i < nb_constraints; ++i){
             std::cout << " Constraint " << i+1 
              << ": [Best: " << evaluations.values[i+1][evaluations.best_index]
@@ -1883,6 +1901,9 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
         }
         //output_for_plotting( number_accepted_steps ) ;
         update_trustregion( theta );
+        if ( verbose == 3 ) {
+          std::cout << " #FEASVIOLATION: Updating trust region: " << delta << std::endl << std::flush;
+        }
         update_surrogate_models( );
 
         

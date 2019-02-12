@@ -49,7 +49,7 @@ class GaussianProcessSupport : protected VectorOperations {
 
     //void do_resample_u(); //TODO check if able to remove this one
   public:
-    void initialize ( const int, const int, double&,
+    void initialize ( const int, const int, double&, BlackBoxBaseClass *blackbox,
                       std::vector<double> const&, int , const std::string, const int exitconst, const bool use_analytic_smoothing);
     int smooth_data ( BlackBoxData& );
     double evaluate_objective ( BlackBoxData const& );
