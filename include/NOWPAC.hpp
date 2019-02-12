@@ -49,6 +49,8 @@
 #include <cassert>
 #include <limits>
 #include <float.h>
+#include <sys/stat.h>
+
 //! NOWPAC
 template<class TSurrogateModel = MinimumFrobeniusNormModel, 
          class TBasisForSurrogateModel = LegendreBasisForMinimumFrobeniusNormModel>
@@ -298,8 +300,16 @@ NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::NOWPAC (
   int n, const char *fn_output ) : 
     NOWPAC ( n )
 {
-  output_filename = fn_output;
-  output_file = fopen(output_filename, "w");
+  struct stat buffer;   
+  // check if file exists
+  if ( stat (fn_output, &buffer) == 0 && false) {
+    // do not overwrite file if it exists
+    std::cout << "Error   : Output file already exists." << std::endl;
+    EXIT_FLAG = -4;
+  } else {
+    output_filename = fn_output;
+    output_file = fopen(output_filename, "w");
+  }
 }
 //--------------------------------------------------------------------------------
 
@@ -659,10 +669,6 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_blackbox (
 template<class TSurrogateModel, class TBasisForSurrogateModel>
 double NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::compute_acceptance_ratio ( )
 {
-  //if ( stochastic_optimization ) {
-    //update_surrogate_models( );
-    //trial_model_value = surrogate_models[0].evaluate( evaluations.transform(x_trial) );
-  //}
 
   //acceptance_ratio = ( evaluations.values[0].at( evaluations.best_index ) - 
   //                     evaluations.values[0].back() )  /
@@ -746,7 +752,6 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::blackbox_evaluator (
     EXIT_FLAG = 1;
     return;
   }
-
   // evaluate blackbox and check results for consistency
   if ( stochastic_optimization ) {
     blackbox->evaluate( x, blackbox_values, blackbox_noise, user_data_pointer );
@@ -760,7 +765,6 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::blackbox_evaluator (
   } else {
     blackbox->evaluate( x, blackbox_values, user_data_pointer ); 
   }
-
   if ( blackbox_values.size() != (unsigned) (nb_constraints+1) ) EXIT_FLAG = -5;
   for ( int i = 0; i < nb_constraints+1; ++i ) {
     if ( blackbox_values[i] != blackbox_values[i] ) {
@@ -791,6 +795,7 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::blackbox_evaluator (
     }
     EXIT_FLAG = gaussian_processes.smooth_data ( evaluations );
   }
+
 
   write_to_file();
 
@@ -1573,7 +1578,6 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
   int random_seed = (fixed_seed != -1) ? fixed_seed : rand_dev(); //25041981;//
   std::mt19937 rand_generator(random_seed);
   std::normal_distribution<double> norm_dis(0e0,2e-1);
-  //std::uniform_real_distribution<double> norm_dis(-2e0,2e0);
 
   if ( evaluations.nodes.size() == 0 ) {
     for (int i = 0; i < nb_constraints+1; ++i )
@@ -1611,10 +1615,10 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
       return EXIT_FLAG;
     }
     if ( !last_point_is_feasible ( ) ) {
-      if ( verbose >= 1 ) 
-        std::cout << "Initial point is not feasibile" << std::endl;
-      //EXIT_FLAG = -3;
-      //return EXIT_FLAG;
+      if ( verbose >= 1 )
+        std::cout << "Initial point is not feasibile" << std::endl << std::flush;
+//      EXIT_FLAG = -3;
+//      return EXIT_FLAG;
     }
     for (int i = 0; i < dim; ++i ) {
       x_sample = x;
@@ -1636,21 +1640,22 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
       }
       blackbox_evaluator( x_sample, true );
       if ( EXIT_FLAG != NOEXIT ){
-        std::cout << "ERROR   : Black box returned invalid value" << std::endl << std::fflush; 
+        std::cout << "ERROR   : Black box returned invalid value" << std::endl << std::flush; 
         return EXIT_FLAG;
       }
     }
 
   } else {
     if ( evaluations.values[0].size() == 0 )
-    if ( verbose >= 2 ) { std::cout << "Evaluating initial nodes .. "; }
+    if ( verbose >= 2 ) { std::cout << "Evaluating initial nodes .. " << std::flush; }
     blackbox_evaluator ( ); 
     if ( EXIT_FLAG != NOEXIT ){
-      std::cout << "ERROR   : Black box returned invalid value" << std::endl << std::fflush; 
+      std::cout << "ERROR   : Black box returned invalid value" << std::endl << std::flush; 
       return EXIT_FLAG;
     }
-    if ( verbose >= 2 ) { std::cout << "done" << std::endl;; }
+    if ( verbose >= 2 ) { std::cout << "done" << std::endl << std::flush; }
   }
+
    
 /*
   std::vector<double> x_loc(2);
@@ -1805,7 +1810,9 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
 
           criticality_value = surrogate_optimization->compute_criticality_measure( x_trial );
 
-          // TODO: check if while should be exited on infeasible points...
+        // TODO: check if while should be exited on infeasible points...
+        // -> it works fine without exiting.
+        // -> could be exited without breaking stochastic algorithm
 
           //output_for_plotting( number_accepted_steps) ;
           if (verbose == 3) {
@@ -1902,7 +1909,6 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
         }
         blackbox_evaluator( );
         if ( EXIT_FLAG != NOEXIT ) break;
-//        update_trustregion( theta );
         update_surrogate_models( );
 
         if ( noise_detection ) {
@@ -2141,27 +2147,6 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
     std::cout << "*********************************************" << std::endl << std::endl << std::flush;
   }
 
-
-
-/*
-  Eigen::VectorXd x_loc(2);
-  Eigen::VectorXd fvals(3);
-  std::ofstream outputfile ( "surrogate_data_o.dat" );
-  if ( outputfile.is_open( ) ) {
-    for (double i = -1.0; i <= 2.0; i+=0.01) {
-      x_loc(0) = i;
-      for (double j = -1.0; j < 2.0; j+=0.01) {
-        x_loc(1) = j;
-        fvals(0) = surrogate_models[0].evaluate( evaluations.transform(x_loc) );
-        fvals(1) = surrogate_models[1].evaluate( evaluations.transform(x_loc) );
-        fvals(2) = surrogate_models[2].evaluate( evaluations.transform(x_loc) );
-        outputfile << x_loc(0) << "; " << x_loc(1) << "; " << fvals(0)<< "; " << 
-                     fvals(1)<< "; " << fvals(2) << std::endl;
-      }
-    }
-    outputfile.close( );
-  } else std::cout << "Unable to open file." << std::endl;
-*/
 
   
   return 1;

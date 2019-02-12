@@ -58,7 +58,7 @@ double GaussianProcess::evaluate_kernel ( std::vector<double> const &x,
   for ( int i = 0; i < dim; ++i )
     dist += pow( (x.at(i) - y.at(i)), 2e0) /  gp_parameters.at( i+1 );
   kernel_evaluation = exp(-dist / 2e0 );
-  
+
   return kernel_evaluation * gp_parameters.at( 0 ) ;
 */
 }
@@ -72,14 +72,14 @@ double GaussianProcess::evaluate_kernel ( std::vector<double> const &x,
   for ( int i = 0; i < dim; ++i )
     dist += pow( (x.at(i) - y.at(i)), 2e0) /  p.at( i+1 );
   kernel_evaluation = exp(-dist / 2e0 );
-  
+
   return kernel_evaluation * p.at( 0 ) ;
 }
 //--------------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------------
 double GaussianProcess::d_evaluate_kernel ( std::vector<double> const &x,
-                                            std::vector<double> const &y, 
+                                            std::vector<double> const &y,
                                             std::vector<double> const &p, int j )
 {
   dist = 0e0;
@@ -105,7 +105,7 @@ bool GaussianProcess::test_for_parameter_estimation(const int& nb_values,
   if ( nb_values >= next_update && update_interval_length > 0 ) {
     do_parameter_estimation = true;
     return do_parameter_estimation;
-  } 
+  }
   if ( update_at_evaluations.size( ) > 0 ) {
     if ( nb_values >= update_at_evaluations[0] ) {
       do_parameter_estimation = true;
@@ -119,7 +119,7 @@ bool GaussianProcess::test_for_parameter_estimation(const int& nb_values,
 //--------------------------------------------------------------------------------
 void GaussianProcess::build ( std::vector< std::vector<double> > const &nodes,
                               std::vector<double> const &values,
-                              std::vector<double> const &noise ) 
+                              std::vector<double> const &noise )
 {
     //std::cout << "GP build [" << nodes.size() << "]" << std::endl;
     //std::cout << "With Parameters: " << std::endl;
@@ -164,10 +164,10 @@ void GaussianProcess::build ( std::vector< std::vector<double> > const &nodes,
       std::cout << ';' << std::endl;
     }
     */
-  
+
     CholeskyFactorization::compute( L, pos, rho, nb_gp_nodes );
     assert( pos == 0 );
-    
+
     scaled_function_values.resize(nb_gp_nodes);
     for (int i = 0; i < nb_gp_nodes; i++) {
       scaled_function_values.at(i) = values.at(i);
@@ -179,14 +179,14 @@ void GaussianProcess::build ( std::vector< std::vector<double> > const &nodes,
     alpha = scaled_function_values;
     forward_substitution( L, alpha );
     backward_substitution( L, alpha );
-  
+
     return;
 }
 //--------------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------------
-void GaussianProcess::update ( std::vector<double> const &x, 
-                               double &value, 
+void GaussianProcess::update ( std::vector<double> const &x,
+                               double &value,
                                double &noise )
 {
   //std::cout << "GP update [" << nb_gp_nodes+1 << "]" << std::endl;
@@ -195,12 +195,12 @@ void GaussianProcess::update ( std::vector<double> const &x,
   gp_nodes.push_back( x );
   //gp_noise.push_back( noise );
   scaled_function_values.push_back ( value );
-//  scaled_function_values.push_back ( ( value -  min_function_value ) / 
+//  scaled_function_values.push_back ( ( value -  min_function_value ) /
 //                                     ( 5e-1*( max_function_value-min_function_value ) ) - 1e0 );
 
-  
-   
-  for (int i = 0; i < nb_gp_nodes-1; i++) 
+
+
+  for (int i = 0; i < nb_gp_nodes-1; i++)
     K0.at(i) = evaluate_kernel( gp_nodes[i], x );
 
   forward_substitution( L, K0 );
@@ -208,23 +208,23 @@ void GaussianProcess::update ( std::vector<double> const &x,
   L.push_back ( K0 );
 
   L.at(L.size()-1).push_back(
-    sqrt( evaluate_kernel( x, x ) + pow( noise / 2e0 + noise_regularization, 2e0 ) - 
+    sqrt( evaluate_kernel( x, x ) + pow( noise / 2e0 + noise_regularization, 2e0 ) -
           VectorOperations::dot_product(K0, K0) ) );
-        
+
   alpha = scaled_function_values;
   forward_substitution( L, alpha );
   backward_substitution( L, alpha );
-    
+
   return;
 }
 //--------------------------------------------------------------------------------
- 
+
 //--------------------------------------------------------------------------------
 void GaussianProcess::evaluate ( std::vector<double> const &x,
-                                 double &mean, double &variance ) 
+                                 double &mean, double &variance )
 {
   K0.resize( nb_gp_nodes );
-    
+
   for (int i = 0; i < nb_gp_nodes; i++)
     K0.at(i) = evaluate_kernel( gp_nodes[i], x );
 
@@ -234,7 +234,7 @@ void GaussianProcess::evaluate ( std::vector<double> const &x,
 //  mean += min_function_value;
 
   forward_substitution( L, K0 );
-  
+
   variance = evaluate_kernel( x, x ) - VectorOperations::dot_product(K0, K0);
 
   //std::cout << "GP evalute [" << gp_nodes.size() <<"] mean,variance " << mean << ", " << variance << std::endl;
@@ -244,10 +244,10 @@ void GaussianProcess::evaluate ( std::vector<double> const &x,
 
 //--------------------------------------------------------------------------------
 void GaussianProcess::evaluate ( std::vector<double> const &x,
-                                 double &mean) 
+                                 double &mean)
 {
   K0.resize( nb_gp_nodes );
-    
+
   for (int i = 0; i < nb_gp_nodes; i++)
     K0.at(i) = evaluate_kernel( gp_nodes[i], x );
 
@@ -264,12 +264,12 @@ void GaussianProcess::evaluate ( std::vector<double> const &x,
 //--------------------------------------------------------------------------------
 void GaussianProcess::evaluate ( std::vector<double> const &x,
                                  std::vector<double> const &f_train,
-                                 double &mean) 
+                                 double &mean)
 {
   assert(f_train.size() == nb_gp_nodes);
 
   K0.resize( nb_gp_nodes );
-    
+
   for (int i = 0; i < nb_gp_nodes; i++)
     K0.at(i) = evaluate_kernel( gp_nodes[i], x );
 
@@ -290,7 +290,7 @@ void GaussianProcess::evaluate ( std::vector<double> const &x,
 
 
 //--------------------------------------------------------------------------------
-void GaussianProcess::build_inverse () 
+void GaussianProcess::build_inverse ()
 {
   L_inverse.resize(nb_gp_nodes);
   for (int i = 0; i < nb_gp_nodes; i++){
@@ -313,7 +313,7 @@ void GaussianProcess::build_inverse ()
 //--------------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------------
-double GaussianProcess::compute_var_meanGP ( std::vector<double>const& xstar, std::vector<double> const& noise) 
+double GaussianProcess::compute_var_meanGP ( std::vector<double>const& xstar, std::vector<double> const& noise)
 {
   std::vector<double> k_xstar_X(nb_gp_nodes);
   std::vector<double> k_xstar_X_Kinv(nb_gp_nodes);
@@ -333,14 +333,14 @@ double GaussianProcess::compute_var_meanGP ( std::vector<double>const& xstar, st
   }
 
   var_meanGP = VectorOperations::dot_product(k_xstar_X_Kinv_squared, gp_noise_squared);
-  
+
   return var_meanGP;
 }
 //--------------------------------------------------------------------------------
 
 
 //--------------------------------------------------------------------------------
-double GaussianProcess::compute_cov_meanGPMC ( std::vector<double>const& xstar, int const& xstar_idx, double const& noise) 
+double GaussianProcess::compute_cov_meanGPMC ( std::vector<double>const& xstar, int const& xstar_idx, double const& noise)
 {
   //std::vector<double> k_xstar_X(nb_gp_nodes);
   double cov_meanGPMC = 0.;
@@ -400,7 +400,7 @@ double GaussianProcess::bootstrap_diffGPMC ( std::vector<double>const& xstar)
 //--------------------------------------------------------------------------------
 void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<double> > const &nodes,
                                                   std::vector<double> const &values,
-                                                  std::vector<double> const &noise ) 
+                                                  std::vector<double> const &noise )
 {
   //std::cout << "GP Estimator" << std::endl;
   nb_gp_nodes = nodes.size();
@@ -416,7 +416,7 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
 //  auto minmax = std::minmax_element(values.begin(), values.end());
 //  min_function_value = values.at((minmax.first - values.begin()));
 //  max_function_value = values.at((minmax.second - values.begin()));
-  /* 
+  /*
   auto minmax = std::minmax_element(values.begin(), values.end());
   min_function_value = values.at((minmax.first - values.begin()));
   max_function_value = fabs(values.at((minmax.second - values.begin())));
@@ -426,8 +426,8 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
   L.clear();
   L.resize( nb_gp_nodes );
   for ( int i = 0; i < nb_gp_nodes; ++i)
-    L.at(i).resize( i+1 ); 
- 
+    L.at(i).resize( i+1 );
+
   scaled_function_values.resize(nb_gp_nodes);
   for ( int i = 0; i < nb_gp_nodes; ++i) {
     scaled_function_values.at(i) = values.at(i);
@@ -436,7 +436,7 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
 //    scaled_function_values.at(i) -= 1e0;
   }
 
-  double optval;    
+  double optval;
   //adjust those settings to optimize GP approximation
   //--------------------------------------------------
 //  double max_noise = 0e0;
@@ -444,13 +444,13 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
 //    if (gp_noise.at( i ) > max_noise)
 //      max_noise = gp_noise.at( i );
 //  }
-  
+
   //My Version
-  /*lb[0] = 1e-3; 
+  /*lb[0] = 1e-3;
       ub[0] = 1e3;
       lb[0] = max_function_value - 1e2;
       if ( lb[0] < 1e-3 ) lb[0] = 1e-3;
-      ub[0] = max_function_value + 1e2; 
+      ub[0] = max_function_value + 1e2;
       if ( ub[0] > 1e3 ) ub[0] = 1e3;
       if ( ub[0] <= lb[0]) lb[0] = 1e-3;
   double delta_threshold = *delta;
@@ -459,10 +459,10 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
       lb[i+1] = 1e-2 * delta_threshold; // 1e1
       ub[i+1] = 2.0 * delta_threshold; // 1e2
   }*/
-  
+
 
   //Florians old version1:
-  /*lb[0] = 1e-1; 
+  /*lb[0] = 1e-1;
   ub[0] = 1e1;
   lb[0] = max_function_value - 1e2;
   if ( lb[0] < 1e-2 ) lb[0] = 1e-2;
@@ -507,7 +507,7 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
   //opt = nlopt_create(NLOPT_LN_COBYLA, dim+1);
   opt.set_lower_bounds( lb );
   opt.set_upper_bounds( ub );
-    
+
   opt.set_max_objective( GaussianProcess::parameter_estimation_objective, gp_pointer);
 
  // opt.set_xtol_abs(1e-2);
@@ -532,7 +532,7 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
   //for ( int i = 0; i < gp_parameters.size(); ++i )
   //  std::cout << "gp_param = " << gp_parameters[i] << std::endl;
   //std::cout << std::endl;
- 
+
       
   return;
 }

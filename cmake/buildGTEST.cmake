@@ -7,7 +7,10 @@ ExternalProject_Add( GTEST
    
    PREFIX ${NOWPAC_INSTALL_PREFIX}/nowpac/external/gtest
    URL ${NOWPAC_GTEST_URL}
+<<<<<<< HEAD
    URL_HASH SHA1=f65155a00d467eaee2a7d7ceb7e6e66289b742f3
+=======
+>>>>>>> master
    INSTALL_DIR ${NOWPAC_INSTALL_PREFIX}/nowpac/external/gtest
    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${NOWPAC_INSTALL_PREFIX}/nowpac/external/gtest -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER} -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
    BUILD_COMMAND "make"

@@ -49,7 +49,6 @@ void QuadraticMinimization::minimize ( std::vector<double> &y,
     if ( H.at(i).at(i) < lam_S ) lam_S = H.at(i).at(i);
   }
   lam_S = -lam_S;
-//  lam_S = (-H.diagonal()).maxCoeff();
   lam_L = norm_g_d_delta - l1_norm_B;
   lam_U = norm_g_d_delta + l1_norm_B;
   lam   = lam_U;
@@ -100,7 +99,6 @@ void QuadraticMinimization::minimize ( std::vector<double> &y,
             tmp_dbl += M.at(j).at(i)*z_hat.at(j);
           tmp_save += tmp_dbl * tmp_dbl;
         } 
-        //tmp_save = pow((((M.transpose()))*z_hat).norm(), 2e0); //XXX
         tmp_dbl = lam - tmp_save;
         if (lam_S < tmp_dbl) lam_S = tmp_dbl;
       } else {
@@ -111,19 +109,10 @@ void QuadraticMinimization::minimize ( std::vector<double> &y,
       A.clear();
       for ( int i = 0; i < p; ++i )
         A.push_back( M.at(i) );
-//      A = (M.topLeftCorner(p, p)).transpose();
-      uu.resize(p);// = Eigen::VectorXd::Zero(p);
+      uu.resize(p);
       VectorOperations::set_zero( uu ); 
       uu.at(p-1) = 1e0;
       TriangularMatrixOperations::backward_substitution( A, uu );
-//      uu = (Eigen::TriangularView<Eigen::MatrixXd, Eigen::Upper>(A)).solve(uu);
-/*
-      if (p < dim) {
-        u.resize( dim );
-        u = Eigen::VectorXd::Zero(dim);
-        u.head(p) = uu;
-      } else u = uu;
-*/
       tmp_dbl = lam + offset/ VectorOperations::dot_product(uu, uu);
       if (lam_S < tmp_dbl) lam_S = tmp_dbl;
     }
@@ -141,7 +130,6 @@ void QuadraticMinimization::minimize ( std::vector<double> &y,
             tmp_norm += M.at(j).at(i) * y.at(j);
           tmp_dbl += tmp_norm*tmp_norm;
         }
-//        tmp_dbl = pow((((M.transpose()))*y).norm(), 2e0) + lam*pow( delta_loc, 2e0 ); //XXX
         if (tmp_dbl < sigma2) tmp_dbl = sigma2;
         tmp_dbl = sigma1*(2e0-sigma2)*tmp_dbl;				
         if (tau*tau*tmp_save <= tmp_dbl) {
@@ -155,7 +143,6 @@ void QuadraticMinimization::minimize ( std::vector<double> &y,
     if (p == 0 && norm_g > 0) {
       u = y;
       TriangularMatrixOperations::forward_substitution( M, u );
-//      u = (Eigen::TriangularView<Eigen::MatrixXd, Eigen::Lower>(M)).solve(y);  //XXX
       lam += pow(norm_y/VectorOperations::norm(u), 2e0)*((norm_y-delta_loc)/delta_loc); 
     } else lam = lam_S;
 

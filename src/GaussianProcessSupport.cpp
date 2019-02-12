@@ -63,7 +63,7 @@ void GaussianProcessSupport::update_gaussian_processes_for_gp( BlackBoxData &eva
 
   if ( nb_values >= next_update && update_interval_length > 0 ) {
     next_update += update_interval_length;
-  } 
+  }
   if ( update_at_evaluations.size( ) > 0 ) {
     if ( nb_values >= update_at_evaluations[0] ) {
       update_at_evaluations.erase( update_at_evaluations.begin() );
@@ -177,7 +177,7 @@ void GaussianProcessSupport::update_gaussian_processes_for_agp( BlackBoxData &ev
       //std::cout << "###Activating Approximate Gaussian Processes with " << nb_u_points << " points###" << std::endl;
       for(int i = 0; i < number_processes; ++i){
         gaussian_processes[i]->sample_u(cur_nb_u_points);
-        
+
         gaussian_process_values.resize(gaussian_process_active_index.size());
         gaussian_process_noise.resize(gaussian_process_active_index.size());
         for ( unsigned int j = 0; j < gaussian_process_active_index.size(); ++j ) {
@@ -211,7 +211,7 @@ void GaussianProcessSupport::update_gaussian_processes_for_agp( BlackBoxData &ev
       cur_nb_u_points = nb_u_points;
       for(int i = 0; i < number_processes; ++i){
         gaussian_processes[i]->sample_u(cur_nb_u_points);
-        
+
         gaussian_process_values.resize(gaussian_process_active_index.size());
         gaussian_process_noise.resize(gaussian_process_active_index.size());
         for ( unsigned int j = 0; j < gaussian_process_active_index.size(); ++j ) {
@@ -233,7 +233,7 @@ void GaussianProcessSupport::update_gaussian_processes_for_agp( BlackBoxData &ev
 
     if ( nb_values >= next_update && update_interval_length > 0 ) {
       next_update += update_interval_length;
-    } 
+    }
     if ( update_at_evaluations.size( ) > 0 ) {
       if ( nb_values >= update_at_evaluations[0] ) {
         update_at_evaluations.erase( update_at_evaluations.begin() );
@@ -245,7 +245,7 @@ void GaussianProcessSupport::update_gaussian_processes_for_agp( BlackBoxData &ev
     if ( do_parameter_estimation ) {
 
 
-      if(approx_gaussian_process_active){  
+      if(approx_gaussian_process_active){
         gaussian_process_active_index.clear( );
         gaussian_process_nodes.clear( );
         delta_tmp = (*delta);// * 10e0;
@@ -257,11 +257,11 @@ void GaussianProcessSupport::update_gaussian_processes_for_agp( BlackBoxData &ev
           gaussian_process_active_index.push_back ( i );
           gaussian_process_nodes.push_back( evaluations.nodes[ i ] );
         }
-        
+
         gaussian_process_values.resize(gaussian_process_active_index.size());
         gaussian_process_noise.resize(gaussian_process_active_index.size());
-          
-          
+
+
         for ( int j = 0; j < number_processes; ++j ) {
           for ( unsigned int i = 0; i < gaussian_process_active_index.size(); ++i ) {
             gaussian_process_values.at(i) = evaluations.values_MC[ j ].at( gaussian_process_active_index[i] );
@@ -295,8 +295,8 @@ void GaussianProcessSupport::update_gaussian_processes_for_agp( BlackBoxData &ev
 
         gaussian_process_values.resize(gaussian_process_active_index.size());
         gaussian_process_noise.resize(gaussian_process_active_index.size());
-          
-          
+
+
         for ( int j = 0; j < number_processes; ++j ) {
           for ( unsigned int i = 0; i < gaussian_process_active_index.size(); ++i ) {
             gaussian_process_values.at(i) = evaluations.values_MC[ j ].at( gaussian_process_active_index[i] );
@@ -312,7 +312,7 @@ void GaussianProcessSupport::update_gaussian_processes_for_agp( BlackBoxData &ev
         }
       }
 
-      
+
   } else {
       for (unsigned int i = last_included; i < nb_values; ++i) {
           gaussian_process_active_index.push_back(i);
@@ -358,7 +358,7 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
   assert(nb_values == evaluations.noise[0].size());
 
   update_gaussian_processes( evaluations );
-  
+
   /*
   bool active_index_already_in_set = false;
   for(int cur_active_index : evaluations.active_index ){
@@ -371,7 +371,7 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
     evaluations.active_index.push_back( evaluations.nodes.size()-1 );
   }
   */
-  
+
   bool negative_variance_found;
 
   if (use_analytic_smoothing){
@@ -393,9 +393,9 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
     double heuristic_RMSE = 0;
     double heuristic_Rtilde = 0;
     double heuristic_gamma = 0;
-    std::vector<double> cur_xstar; 
-    std::vector<double> cur_noise; 
-    std::vector<double> cur_noise_MC; 
+    std::vector<double> cur_xstar;
+    std::vector<double> cur_noise;
+    std::vector<double> cur_noise_MC;
     int cur_xstar_idx = -1;
     bool print_debug_information = false;
 
@@ -422,16 +422,16 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
         gaussian_processes[j]->evaluate( cur_xstar, mean, variance );
 
         if(print_debug_information){
-        std::cout << "############################" 
-                  << "\ncur_xstar_idx: " << cur_xstar_idx 
+        std::cout << "############################"
+                  << "\ncur_xstar_idx: " << cur_xstar_idx
                   << "\ncur_value: (" << evaluations.values[ j ][ cur_xstar_idx ]
                                    << ", " << evaluations.values[ j ][ evaluations.active_index [ i ] ] << ")"
-                  << "\ncur_noise: ["; 
+                  << "\ncur_noise: [";
                   for(double n : cur_noise) {
                     std::cout << std::setprecision(8) << n << ' ';
                   }
-        std::cout << "]\ncur_noise_xstar: " << cur_noise_xstar 
-                  << "\ncur_xstar: ["; 
+        std::cout << "]\ncur_noise_xstar: " << cur_noise_xstar
+                  << "\ncur_xstar: [";
                   for(double n : cur_xstar) {
                     std::cout << n << ' ';
                   }
@@ -470,17 +470,17 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
         }
 
         if(print_debug_information){
-        std::cout << "\nvar_Rf: " << var_Rf 
-                  << "\ncov_RfGP: " << cov_RfGP 
-                  << "\nvar_GP: " << var_GP 
-                  << "\nbootstrap_diffGPRf " << bootstrap_diffGPRf 
+        std::cout << "\nvar_Rf: " << var_Rf
+                  << "\ncov_RfGP: " << cov_RfGP
+                  << "\nvar_GP: " << var_GP
+                  << "\nbootstrap_diffGPRf " << bootstrap_diffGPRf
                   << "\noptimal_gamma " << optimal_gamma;
         }
 
         optimal_gamma_squared = optimal_gamma*optimal_gamma;
-        MSE = optimal_gamma_squared * bootstrap_squared + 
-              optimal_gamma_squared * var_GP + 
-              (1.0 - optimal_gamma) * (1.0 - optimal_gamma) * var_Rf + 
+        MSE = optimal_gamma_squared * bootstrap_squared +
+              optimal_gamma_squared * var_GP +
+              (1.0 - optimal_gamma) * (1.0 - optimal_gamma) * var_Rf +
               2.0 * optimal_gamma * (1.0 - optimal_gamma) * cov_RfGP;
         if(evaluations.active_index[i] == evaluations.best_index){
           best_index_analytic_information[j][9] = MSE;
@@ -509,7 +509,7 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
         }
 
         RMSE = sqrt(MSE);
-        Rtilde = optimal_gamma * mean + (1.0 - optimal_gamma) * 
+        Rtilde = optimal_gamma * mean + (1.0 - optimal_gamma) *
                  ( evaluations.values_MC[ j ][ cur_xstar_idx ] );
 
         if(evaluations.active_index[i] == evaluations.best_index){
@@ -529,11 +529,11 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
         if(evaluations.active_index[i] == evaluations.best_index){
           best_index_analytic_information[j][17] = heuristic_gamma;
         }
-        heuristic_Rtilde = 
-            heuristic_gamma * mean  + 
+        heuristic_Rtilde =
+            heuristic_gamma * mean  +
             (1e0-heuristic_gamma) * ( evaluations.values_MC[ j ][evaluations.active_index [ i ] ] );
-        heuristic_RMSE = 
-            heuristic_gamma * 2e0 * sqrt (variance)  + 
+        heuristic_RMSE =
+            heuristic_gamma * 2e0 * sqrt (variance)  +
             (1e0-heuristic_gamma) * ( evaluations.noise_MC[ j ][ evaluations.active_index [ i ] ] );
 
         if(evaluations.active_index[i] == evaluations.best_index){
@@ -545,7 +545,7 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
         }
 
         if(print_debug_information){
-          std::cout << "\nRMSE: " << RMSE 
+          std::cout << "\nRMSE: " << RMSE
                     << "\nHeuristic RMSE: " << heuristic_RMSE << std::endl;
         }
         evaluations.values[ j ][ cur_xstar_idx ] = Rtilde; // RMSE < heuristic_RMSE ? Rtilde : heuristic_Rtilde;
@@ -553,8 +553,8 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
         evaluations.noise[ j ][ cur_xstar_idx ] = 2 * RMSE;// RMSE < heuristic_RMSE ? RMSE : heuristic_RMSE;
 
         if(print_debug_information){
-          std::cout << "\nMSE: " << MSE 
-                    << "\nHeuristic taken: " << (heuristic_RMSE < RMSE) 
+          std::cout << "\nMSE: " << MSE
+                    << "\nHeuristic taken: " << (heuristic_RMSE < RMSE)
                     << "\nRtilde: " << evaluations.values[ j ][ cur_xstar_idx ]
                     << "\nRtildeNoise: " << evaluations.noise[ j ][ cur_xstar_idx ]
                     << "\n############################" << std::endl;
@@ -570,7 +570,7 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
 
       evaluations.active_index.push_back( evaluations.nodes.size()-1 );
       for ( unsigned int i = 0; i < evaluations.active_index.size( ); ++i ) {
-    //    rescale ( 1e0/(delta_tmp), evaluations.nodes[evaluations.active_index[i]], 
+    //    rescale ( 1e0/(delta_tmp), evaluations.nodes[evaluations.active_index[i]],
     //              evaluations.nodes[best_index], rescaled_node );
         for ( int j = 0; j < number_processes; ++j ) {
     //      gaussian_processes[j].evaluate( rescaled_node, mean, variance );
@@ -586,10 +586,10 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
           weight = exp( - 2e0*sqrt(variance) );
 
           evaluations.values[ j ][ evaluations.active_index [ i ] ] =
-            weight * mean  + 
+            weight * mean  +
             (1e0-weight) * ( evaluations.values_MC[ j ][ evaluations.active_index [ i ] ]);
           evaluations.noise[ j ][ evaluations.active_index [ i ] ] =
-            weight * 2e0 * sqrt (variance)  + 
+            weight * 2e0 * sqrt (variance)  +
             (1e0-weight) * ( evaluations.noise_MC[ j ][ evaluations.active_index [ i ] ] );
           //std::cout << "Smooth evaluate var: [" << noise[ j ].at( evaluations.active_index [ i ]) << ", " << 2e0 *sqrt(variance) << "]\n" << std::endl;
          //std::cout << "Smooth evaluate [" << evaluations.active_index[i] << ", " << j <<"]: mean,variance " << evaluations.values[ j ].at( evaluations.active_index [ i ] ) << ", " << evaluations.noise[ j ].at( evaluations.active_index [ i ] )  << "\n" << std::endl;
@@ -618,7 +618,7 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
   }
 /*
   for ( unsigned int i = 0; i < evaluations.nodes.size( ); ++i ) {
-//    rescale ( 1e0/(delta_tmp), evaluations.nodes[ i ], 
+//    rescale ( 1e0/(delta_tmp), evaluations.nodes[ i ],
 //              evaluations.nodes[best_index], rescaled_node );
     for ( unsigned int j = 0; j < number_processes; ++j ) {
       gaussian_processes[j].evaluate( evaluations.nodes[ i ], mean, variance );
@@ -627,11 +627,11 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
 
       weight = exp( - 2e0*sqrt(variance) );
 
-      evaluations.values[ j ].at( i ) = 
-        weight * mean  + 
+      evaluations.values[ j ].at( i ) =
+        weight * mean  +
         (1e0-weight) * ( values[ j ].at( i ) );
-      evaluations.noise[ j ].at( i ) = 
-        weight * 2e0 * sqrt (variance)  + 
+      evaluations.noise[ j ].at( i ) =
+        weight * 2e0 * sqrt (variance)  +
         (1e0-weight) * ( noise[ j ].at( i ) );
 
     }
@@ -648,7 +648,7 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
 //--------------------------------------------------------------------------------
 double GaussianProcessSupport::evaluate_objective ( BlackBoxData const &evaluations)
 {
- // rescale ( 1e0/(delta_tmp), evaluations.nodes[evaluations.best_index], 
+ // rescale ( 1e0/(delta_tmp), evaluations.nodes[evaluations.best_index],
  //           evaluations.nodes[best_index], rescaled_node );
 //  gaussian_processes[0].evaluate( rescaled_node, mean, variance );
   gaussian_processes[0]->evaluate( evaluations.nodes[evaluations.best_index], mean, variance );
