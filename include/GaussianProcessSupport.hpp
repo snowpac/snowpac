@@ -31,6 +31,8 @@ class GaussianProcessSupport : protected VectorOperations {
     std::vector<std::shared_ptr<GaussianProcess>> gaussian_processes;
     std::vector<double> rescaled_node;
 
+    std::vector<std::vector<double>> best_index_analytic_information;
+
     bool use_approx_gaussian_process = false;
     bool approx_gaussian_process_active = false;
     bool use_analytic_smoothing = false;
@@ -61,6 +63,8 @@ class GaussianProcessSupport : protected VectorOperations {
     void set_constraint_ball_center(const std::vector<double>& center);
 
     void set_constraint_ball_radius(const double& radius);
+
+    const std::vector<std::vector<double>> &getBest_index_analytic_information() const;
 };
 
 #endif

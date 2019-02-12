@@ -45,6 +45,10 @@ void GaussianProcessSupport::initialize ( const int dim, const int number_proces
   rescaled_node.resize( dim );
   this->use_analytic_smoothing = use_analytic_smoothing;
   NOEXIT = exitconst;
+  best_index_analytic_information.resize(number_processes);
+  for ( int i = 0; i < number_processes; i++) {
+    best_index_analytic_information[i].resize(20);
+  }
   return;
 }
 //--------------------------------------------------------------------------------
@@ -396,6 +400,13 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
     bool print_debug_information = false;
 
     evaluations.active_index.push_back( evaluations.nodes.size()-1 );
+
+    best_index_analytic_information.clear();
+    best_index_analytic_information.resize(number_processes);
+    for ( int i = 0; i < number_processes; i++) {
+      best_index_analytic_information[i].resize(20);
+    }
+
     for ( int j = 0; j < number_processes; ++j ) {
       gaussian_processes[j]->build_inverse();
       for ( unsigned int i = 0; i < evaluations.active_index.size( ); ++i ) {
@@ -436,9 +447,27 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
         numerator = var_Rf - cov_RfGP;
         denominator = bootstrap_squared + var_GP + var_Rf - 2.0 * cov_RfGP;
 
+        if(evaluations.active_index[i] == evaluations.best_index){
+          best_index_analytic_information[j][0] = var_Rf;
+          best_index_analytic_information[j][1] = cov_RfGP;
+          best_index_analytic_information[j][2] = var_GP;
+          best_index_analytic_information[j][3] = bootstrap_diffGPRf;
+          best_index_analytic_information[j][4] = numerator;
+          best_index_analytic_information[j][5] = denominator;
+        }
+
         optimal_gamma = (std::fabs(denominator) <= DBL_MIN) ? 0.0 : numerator/denominator;
+        if(evaluations.active_index[i] == evaluations.best_index){
+          best_index_analytic_information[j][6] = optimal_gamma;
+        }
         optimal_gamma = (optimal_gamma > 1.0) ? 1.0 : optimal_gamma;
+        if(evaluations.active_index[i] == evaluations.best_index){
+          best_index_analytic_information[j][7] = optimal_gamma;
+        }
         optimal_gamma = (optimal_gamma < 0.0 || std::isnan(optimal_gamma)) ? 0.0 : optimal_gamma;
+        if(evaluations.active_index[i] == evaluations.best_index){
+          best_index_analytic_information[j][8] = optimal_gamma;
+        }
 
         if(print_debug_information){
         std::cout << "\nvar_Rf: " << var_Rf 
@@ -453,12 +482,21 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
               optimal_gamma_squared * var_GP + 
               (1.0 - optimal_gamma) * (1.0 - optimal_gamma) * var_Rf + 
               2.0 * optimal_gamma * (1.0 - optimal_gamma) * cov_RfGP;
+        if(evaluations.active_index[i] == evaluations.best_index){
+          best_index_analytic_information[j][9] = MSE;
+        }
 
         if(std::isnan(MSE)){
+          if(evaluations.active_index[i] == evaluations.best_index){
+            best_index_analytic_information[j][10] = 1;
+          }
           optimal_gamma = 0.0;
           MSE = var_Rf;
         }
         if(!(MSE > 0 && MSE < var_Rf)){
+          if(evaluations.active_index[i] == evaluations.best_index){
+            best_index_analytic_information[j][11] = 1;
+          }
           if(print_debug_information){
             std::cout << "\nMSE: " << MSE;
             std::cout << "\nMSE Reset" << std::endl;
@@ -466,19 +504,45 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
           optimal_gamma = 0.0;
           MSE = var_Rf;
         }
+        if(evaluations.active_index[i] == evaluations.best_index){
+          best_index_analytic_information[j][12] = MSE;
+        }
 
         RMSE = sqrt(MSE);
         Rtilde = optimal_gamma * mean + (1.0 - optimal_gamma) * 
                  ( evaluations.values_MC[ j ][ cur_xstar_idx ] );
 
+        if(evaluations.active_index[i] == evaluations.best_index){
+          best_index_analytic_information[j][13] = mean;
+        }
+        if(evaluations.active_index[i] == evaluations.best_index){
+          best_index_analytic_information[j][14] = evaluations.values_MC[ j ][ cur_xstar_idx ];
+        }
+        if(evaluations.active_index[i] == evaluations.best_index){
+          best_index_analytic_information[j][15] = Rtilde;
+        }
+        if(evaluations.active_index[i] == evaluations.best_index){
+          best_index_analytic_information[j][16] = RMSE;
+        }
 
         heuristic_gamma = exp( - 2e0*sqrt(variance) );
+        if(evaluations.active_index[i] == evaluations.best_index){
+          best_index_analytic_information[j][17] = heuristic_gamma;
+        }
         heuristic_Rtilde = 
             heuristic_gamma * mean  + 
             (1e0-heuristic_gamma) * ( evaluations.values_MC[ j ][evaluations.active_index [ i ] ] );
         heuristic_RMSE = 
             heuristic_gamma * 2e0 * sqrt (variance)  + 
             (1e0-heuristic_gamma) * ( evaluations.noise_MC[ j ][ evaluations.active_index [ i ] ] );
+
+        if(evaluations.active_index[i] == evaluations.best_index){
+          best_index_analytic_information[j][18] = heuristic_Rtilde;
+        }
+
+        if(evaluations.active_index[i] == evaluations.best_index){
+          best_index_analytic_information[j][19] = heuristic_RMSE;
+        }
 
         if(print_debug_information){
           std::cout << "\nRMSE: " << RMSE 
@@ -617,6 +681,10 @@ void GaussianProcessSupport::set_constraint_ball_radius(const double& radius){
       gaussian_processes[j]->set_constraint_ball_radius(radius);
 
     }
+}
+
+const std::vector<std::vector<double>> &GaussianProcessSupport::getBest_index_analytic_information() const {
+  return best_index_analytic_information;
 }
 
 /*

@@ -1192,6 +1192,15 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::write_to_file ( )
       for(int i = 0; i < nb_constraints; ++i) {
           fprintf(output_file, double_format, evaluations.noise.at(i+1).back() );
       }
+      if(use_analytic_smoothing) {
+        std::vector<std::vector<double>> analytic_smoothing_quantities;
+        analytic_smoothing_quantities = gaussian_processes.getBest_index_analytic_information();
+        for(int i = 0; i < 1 + nb_constraints; ++i){
+          for(int j = 0; j < analytic_smoothing_quantities[i].size(); ++j){
+            fprintf(output_file, double_format, analytic_smoothing_quantities[i][j] );
+          }
+        }
+      }
     }
 
     fprintf(output_file, "\n");
