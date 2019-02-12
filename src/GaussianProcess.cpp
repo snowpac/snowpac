@@ -3,6 +3,7 @@
 #include <iostream>
 #include <iomanip>  
 #include <cassert>
+#include <omp.h>
 
 //--------------------------------------------------------------------------------
 GaussianProcess::GaussianProcess ( int n, double &delta_input, BlackBoxBaseClass* blackbox_input) :
