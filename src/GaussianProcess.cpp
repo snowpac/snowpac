@@ -385,9 +385,10 @@ double GaussianProcess::bootstrap_diffGPMC ( std::vector<double>const& xstar, st
   vec_mat_product(L_inverse, k_xstar_X, k_xstar_X_Kinv); //k_xstar_X (K_XX - sigma^2 I)^{-1}
   assert(samples.size() == nb_gp_nodes);
 
-  std::vector<double> bootstrap_samples;
-  unsigned int nb_samples;
+  #pragma omp parallel for reduction(+ : mean_bootstrap)
   for(int i = 0; i < max_bootstrap_samples; ++i){
+    unsigned int nb_samples;
+    std::vector<double> bootstrap_samples;
     for(int j = 0; j < nb_gp_nodes; ++j){ //sample randomly from training data
       nb_samples = samples[j].size();
       bootstrap_samples.resize(nb_samples);
