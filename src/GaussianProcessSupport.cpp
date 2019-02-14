@@ -97,7 +97,6 @@ void GaussianProcessSupport::update_gaussian_processes_for_gp( BlackBoxData &eva
     gaussian_process_values.resize(gaussian_process_active_index.size());
     gaussian_process_noise.resize(gaussian_process_active_index.size());
 
-
     //for (int j = 0; j < number_processes; ++j) {
     //  values[j].clear();
     //  noise[j].clear();
@@ -124,8 +123,6 @@ void GaussianProcessSupport::update_gaussian_processes_for_gp( BlackBoxData &eva
                                    gaussian_process_values,
                                    gaussian_process_noise );
     }
-
-
   } else {
       for (unsigned int i = last_included; i < nb_values; ++i) {
           gaussian_process_active_index.push_back(i);
@@ -375,8 +372,8 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
 
   if (use_analytic_smoothing){
     std::cout << "WE ARE IN PROTOTYPICAL NEW ERROR ESTIMATION MODE. HARDCODED!!!" << std::endl;
-    double var_Rf = 0;
-    double cov_RfGP = 0;
+    double var_R = 0;
+    double cov_RGP = 0;
     double var_GP = 0;
     double bootstrap_diffGPRf = 0;
     double bootstrap_squared = 0;
@@ -412,7 +409,7 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
     best_index_analytic_information.clear();
     best_index_analytic_information.resize(number_processes);
     for ( int i = 0; i < number_processes; i++) {
-      best_index_analytic_information[i].resize(20);
+      best_index_analytic_information[i].resize(22);
     }
 
     for ( int j = 0; j < number_processes; ++j ) {
@@ -432,10 +429,16 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
         cur_xstar_idx = evaluations.active_index[i];
         cur_xstar = evaluations.nodes[cur_xstar_idx];
 
-        cur_noise = evaluations.noise[j];
-        cur_noise_xstar = cur_noise[cur_xstar_idx];
+        //cur_noise = evaluations.noise[j];
+        //cur_noise_xstar = cur_noise[cur_xstar_idx] / 2.;
 
         cur_noise_MC = evaluations.noise_MC[j];
+        //Var[R] is squared standard error: (SE[R])^2
+        //evaluations.noise however is 2 * SE
+        //Thus, divide by two
+        for (double &noise_ctr : cur_noise_MC) {
+          noise_ctr /= 2.;
+        }
         cur_noise_xstar_MC = cur_noise_MC[cur_xstar_idx];
 
         gaussian_processes[j]->evaluate( cur_xstar, mean, variance );
@@ -457,18 +460,18 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
                   std::cout << "]"<< std::endl;
         }
         assert(!std::isnan(cur_noise_xstar));
-        var_Rf = cur_noise_xstar_MC * cur_noise_xstar_MC;
-        cov_RfGP = gaussian_processes[j]->compute_cov_meanGPMC(cur_xstar, cur_xstar_idx, cur_noise_xstar_MC);
+        var_R = cur_noise_xstar_MC * cur_noise_xstar_MC;
+        cov_RGP = gaussian_processes[j]->compute_cov_meanGPMC(cur_xstar, cur_xstar_idx, cur_noise_xstar_MC);
         var_GP = gaussian_processes[j]->compute_var_meanGP(cur_xstar, cur_noise_MC);
         bootstrap_diffGPRf = gaussian_processes[j]->bootstrap_diffGPMC(cur_xstar, active_index_samples, j);
         bootstrap_squared = bootstrap_diffGPRf*bootstrap_diffGPRf;
 
-        numerator = var_Rf - cov_RfGP;
-        denominator = bootstrap_squared + var_GP + var_Rf - 2.0 * cov_RfGP;
+        numerator = var_R - cov_RGP;
+        denominator = bootstrap_squared + var_GP + var_R - 2.0 * cov_RGP;
 
         if(evaluations.active_index[i] == evaluations.best_index){
-          best_index_analytic_information[j][0] = var_Rf;
-          best_index_analytic_information[j][1] = cov_RfGP;
+          best_index_analytic_information[j][0] = var_R;
+          best_index_analytic_information[j][1] = cov_RGP;
           best_index_analytic_information[j][2] = var_GP;
           best_index_analytic_information[j][3] = bootstrap_diffGPRf;
           best_index_analytic_information[j][4] = numerator;
@@ -489,8 +492,8 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
         }
 
         if(print_debug_information){
-        std::cout << "\nvar_Rf: " << var_Rf
-                  << "\ncov_RfGP: " << cov_RfGP
+        std::cout << "\nvar_R: " << var_R
+                  << "\ncov_RGP: " << cov_RGP
                   << "\nvar_GP: " << var_GP
                   << "\nbootstrap_diffGPRf " << bootstrap_diffGPRf
                   << "\noptimal_gamma " << optimal_gamma;
@@ -499,8 +502,8 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
         optimal_gamma_squared = optimal_gamma*optimal_gamma;
         MSE = optimal_gamma_squared * bootstrap_squared +
               optimal_gamma_squared * var_GP +
-              (1.0 - optimal_gamma) * (1.0 - optimal_gamma) * var_Rf +
-              2.0 * optimal_gamma * (1.0 - optimal_gamma) * cov_RfGP;
+              (1.0 - optimal_gamma) * (1.0 - optimal_gamma) * var_R +
+              2.0 * optimal_gamma * (1.0 - optimal_gamma) * cov_RGP;
         if(evaluations.active_index[i] == evaluations.best_index){
           best_index_analytic_information[j][9] = MSE;
         }
@@ -510,9 +513,9 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
             best_index_analytic_information[j][10] = 1;
           }
           optimal_gamma = 0.0;
-          MSE = var_Rf;
+          MSE = var_R;
         }
-        if(!(MSE > 0 && MSE < var_Rf)){
+        if(!(MSE > 0 && MSE < var_R)){
           if(evaluations.active_index[i] == evaluations.best_index){
             best_index_analytic_information[j][11] = 1;
           }
@@ -521,7 +524,7 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
             std::cout << "\nMSE Reset" << std::endl;
           }
           optimal_gamma = 0.0;
-          MSE = var_Rf;
+          MSE = var_R;
         }
         if(evaluations.active_index[i] == evaluations.best_index){
           best_index_analytic_information[j][12] = MSE;
@@ -561,6 +564,14 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
 
         if(evaluations.active_index[i] == evaluations.best_index){
           best_index_analytic_information[j][19] = heuristic_RMSE;
+        }
+
+        if(evaluations.active_index[i] == evaluations.best_index){
+          best_index_analytic_information[j][20] = variance;
+        }
+
+        if(evaluations.active_index[i] == evaluations.best_index){
+          best_index_analytic_information[j][21] = evaluations.noise_MC[ j ][ evaluations.active_index [ i ] ];
         }
 
         if(print_debug_information){
