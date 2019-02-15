@@ -362,7 +362,7 @@ double GaussianProcess::compute_cov_meanGPMC ( std::vector<double>const& xstar, 
 //--------------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------------
-double GaussianProcess::bootstrap_diffGPMC ( std::vector<double>const& xstar, std::vector<std::vector<double>>const& samples, const unsigned int index, int max_bootstrap_samples)
+double GaussianProcess::bootstrap_diffGPMC ( std::vector<double>const& xstar, std::vector<std::vector<double>>const& samples, const unsigned int index, int max_bootstrap_samples, int inp_seed)
 {
   double mean_xstar = 0.0;
   double mean_bootstrap = 0.0;
@@ -374,8 +374,12 @@ double GaussianProcess::bootstrap_diffGPMC ( std::vector<double>const& xstar, st
   std::random_device rd; // obtain a random number from hardware
   std::vector<double> k_xstar_X(nb_gp_nodes);
   unsigned int nb_samples = samples[0].size();
-  std::mt19937 eng(rd()); // seed the generator
   std::vector<double> bootstrap_samples;
+  std::uniform_int_distribution<> distr(0, nb_samples - 1);
+  if(inp_seed == -1) {
+    inp_seed = rd();
+  }
+  std::mt19937 eng(inp_seed);
 
   for(int i = 0; i < nb_gp_nodes; ++i){
     k_xstar_X[i] = evaluate_kernel(xstar, gp_nodes[i]);
@@ -384,11 +388,10 @@ double GaussianProcess::bootstrap_diffGPMC ( std::vector<double>const& xstar, st
   vec_mat_product(L_inverse, k_xstar_X, k_xstar_X_Kinv); //k_xstar_X (K_XX - sigma^2 I)^{-1}
   assert(samples.size() == nb_gp_nodes);
 
-  #pragma omp parallel for private(bootstrap_samples) reduction(+ : mean_bootstrap)
+  //#pragma omp parallel for private(bootstrap_samples, eng) reduction(+ : mean_bootstrap)
   for(int i = 0; i < max_bootstrap_samples; ++i){
     for(int j = 0; j < nb_gp_nodes; ++j){ //sample randomly from training data
       bootstrap_samples.resize(nb_samples);
-      std::uniform_int_distribution<> distr(0, nb_samples - 1);
       for(int k = 0; k < nb_samples; ++k){
         bootstrap_samples[k] = samples[j][distr(eng)];
       }
@@ -399,7 +402,7 @@ double GaussianProcess::bootstrap_diffGPMC ( std::vector<double>const& xstar, st
   mean_bootstrap /= max_bootstrap_samples;
   evaluate(xstar, mean_xstar);
   bootstrap_estimate = mean_bootstrap - mean_xstar;
-  //std::cout << index << "| " << bootstrap_estimate << std::endl;
+
   return bootstrap_estimate;
 }
 //--------------------------------------------------------------------------------

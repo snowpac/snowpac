@@ -155,7 +155,7 @@ protected:
 
     virtual double compute_cov_meanGPMC  ( std::vector<double>const& xstar, int const& xstar_idx, double const& noise) ;
 
-    virtual double bootstrap_diffGPMC ( std::vector<double>const& xstar, std::vector<std::vector<double>>const& samples, const unsigned int index, int max_bootstrap_samples = 100);
+    virtual double bootstrap_diffGPMC ( std::vector<double>const& xstar, std::vector<std::vector<double>>const& samples, const unsigned int index, int max_bootstrap_samples = 100, int inp_seed = -1);
 
     virtual const std::vector<std::vector<double>> &getGp_nodes() const;
 

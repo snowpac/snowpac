@@ -24,7 +24,6 @@ class Wrapper_GaussianProcessSupport : public GaussianProcessSupport
     Wrapper_GaussianProcessSupport ( ) :
        GaussianProcessSupport ( ) {
 
-      std::cout << "bla" << std::endl;
       double delta_input = 1.0;
       int dim = 1;
 

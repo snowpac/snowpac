@@ -109,7 +109,6 @@ void GaussianProcessSupport::update_gaussian_processes_for_gp( BlackBoxData &eva
     //  assert(values[j].size() == nb_values);
     //}
 
-    std::cout << gaussian_process_active_index.size() << std::endl;
     //Since we rebuild the GP we update its values
     for ( int j = 0; j < number_processes; ++j ) {
       for ( unsigned int i = 0; i < gaussian_process_active_index.size(); ++i ) {
@@ -400,7 +399,9 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
     bool print_debug_information = false;
 
     /////////////////
+
     //double fill_width = compute_fill_width(evaluations);
+    /*
     std::vector<double> upper_bound_constant_estimate(gaussian_processes.size());
     for ( int j = 0; j < number_processes; ++j ) {
       gaussian_processes[j]->build_inverse();
@@ -433,6 +434,7 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
     //  std::cout << upper_bound_constant_estimate[j] << " ";
     //}
     //std::cout << std::endl;
+    */
     //////////////////
 
     bool is_latest_index_active_index = false;
@@ -463,7 +465,7 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
     }
 
     for ( int j = 0; j < number_processes; ++j ) {
-      //gaussian_processes[j]->build_inverse();
+      gaussian_processes[j]->build_inverse();
 
       //Pick the samples for the active indices
       active_index_samples.resize(gaussian_process_active_index.size( ));
@@ -496,11 +498,7 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
         std::cout << "############################"
                   << "\ncur_xstar_idx: " << cur_xstar_idx
                   << "\ncur_value: (" << evaluations.values[ j ][ cur_xstar_idx ]
-                                   << ", " << evaluations.values[ j ][ evaluations.active_index [ i ] ] << ")"
-                  << "\ncur_noise: [";
-                  for(double n : cur_noise) {
-                    std::cout << std::setprecision(8) << n << ' ';
-                  }
+                                   << ", " << evaluations.values[ j ][ evaluations.active_index [ i ] ] << ")";
         std::cout << "]\ncur_noise_xstar: " << cur_noise_xstar
                   << "\ncur_xstar: [";
                   for(double n : cur_xstar) {
@@ -512,8 +510,10 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
         var_R = cur_noise_xstar_MC * cur_noise_xstar_MC;
         cov_RGP = gaussian_processes[j]->compute_cov_meanGPMC(cur_xstar, cur_xstar_idx, cur_noise_xstar_MC);
         var_GP = gaussian_processes[j]->compute_var_meanGP(cur_xstar, cur_noise_MC);
-        //bootstrap_diffGPRf = gaussian_processes[j]->bootstrap_diffGPMC(cur_xstar, active_index_samples, j);
-        bootstrap_squared = upper_bound_constant_estimate[j]*upper_bound_constant_estimate[j]; //bootstrap_diffGPRf*bootstrap_diffGPRf;
+        bootstrap_diffGPRf = gaussian_processes[j]->bootstrap_diffGPMC(cur_xstar, active_index_samples, j, 200);
+        //bootstrap_squared = upper_bound_constant_estimate[j]*upper_bound_constant_estimate[j];
+        bootstrap_squared = bootstrap_diffGPRf*bootstrap_diffGPRf;
+        //bootstrap_squared = (mean - evaluations.values[ j ][cur_xstar_idx])*(mean - evaluations.values[ j ][cur_xstar_idx]);
 
         numerator = var_R - cov_RGP;
         denominator = bootstrap_squared + var_GP + var_R - 2.0 * cov_RGP;
@@ -545,7 +545,9 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
         std::cout << "\nvar_R: " << var_R
                   << "\ncov_RGP: " << cov_RGP
                   << "\nvar_GP: " << var_GP
-                  << "\nbootstrap_diffGPRf " << bootstrap_diffGPRf
+                  << "\nbootstrap_diffGPRf " << sqrt(bootstrap_squared)
+                  << "\nR " << evaluations.values[ j ][ cur_xstar_idx ]
+                  << "\nmean_GP " << mean
                   << "\noptimal_gamma " << optimal_gamma;
         }
 
@@ -641,7 +643,6 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
 
         if(print_debug_information){
           std::cout << "\nMSE: " << MSE
-                    << "\nHeuristic taken: " << (heuristic_RMSE < RMSE)
                     << "\nRtilde: " << evaluations.values[ j ][ cur_xstar_idx ]
                     << "\nRtildeNoise: " << evaluations.noise[ j ][ cur_xstar_idx ]
                     << "\n############################" << std::endl;
