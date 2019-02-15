@@ -362,7 +362,7 @@ double GaussianProcess::compute_cov_meanGPMC ( std::vector<double>const& xstar, 
 //--------------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------------
-double GaussianProcess::bootstrap_diffGPMC ( std::vector<double>const& xstar, std::vector<std::vector<double>>const& samples, const unsigned int index)
+double GaussianProcess::bootstrap_diffGPMC ( std::vector<double>const& xstar, std::vector<std::vector<double>>const& samples, const unsigned int index, int max_bootstrap_samples)
 {
   double mean_xstar = 0.0;
   double mean_bootstrap = 0.0;
@@ -374,7 +374,6 @@ double GaussianProcess::bootstrap_diffGPMC ( std::vector<double>const& xstar, st
   std::random_device rd; // obtain a random number from hardware
   std::vector<double> k_xstar_X(nb_gp_nodes);
   unsigned int nb_samples = samples[0].size();
-  int max_bootstrap_samples = 100;
   std::mt19937 eng(rd()); // seed the generator
   std::vector<double> bootstrap_samples;
 

@@ -148,6 +148,7 @@ SET ( NOWPAC_GTEST_HEADER_FILES
     ${NOWPAC_SOURCE_DIR}/test/include/gtest_triangularmatrixoperations.hpp
     ${NOWPAC_SOURCE_DIR}/test/include/gtest_vectoroperations.hpp
     ${NOWPAC_SOURCE_DIR}/test/include/gtest_gaussianprocess.hpp
+    ${NOWPAC_SOURCE_DIR}/test/include/gtest_gaussianprocesssupport.hpp
 )
 SET ( NOWPAC_GTEST_SOURCE_FILES
     ${NOWPAC_SOURCE_DIR}/test/src/gtest_main.cpp)

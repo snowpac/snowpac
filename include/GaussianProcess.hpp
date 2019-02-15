@@ -67,6 +67,7 @@ class GaussianProcess : public GaussianProcessBaseClass,
     static double parameter_estimation_objective_w_gradients(std::vector<double> const &x,
                                                            std::vector<double> &grad,
                                                            void *data){};
+
   public:
     //! Constructor
     /*!
@@ -150,7 +151,7 @@ class GaussianProcess : public GaussianProcessBaseClass,
 
     virtual double compute_cov_meanGPMC  ( std::vector<double>const& xstar, int const& xstar_idx, double const& noise) ;
 
-    virtual double bootstrap_diffGPMC ( std::vector<double>const& xstar, std::vector<std::vector<double>>const& samples, const unsigned int index);
+    virtual double bootstrap_diffGPMC ( std::vector<double>const& xstar, std::vector<std::vector<double>>const& samples, const unsigned int index, int max_bootstrap_samples = 100);
 
     virtual const std::vector<std::vector<double>> &getGp_nodes() const;
 

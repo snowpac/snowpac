@@ -8,6 +8,7 @@
 #include "gtest_quadraticmonomial.hpp"
 #include "gtest_blackboxdata.hpp"
 #include "gtest_gaussianprocess.hpp"
+#include "gtest_gaussianprocesssupport.hpp"
 #include "gtest/gtest.h"
 #include <iostream>
 

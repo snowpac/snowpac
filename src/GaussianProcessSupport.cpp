@@ -85,7 +85,7 @@ void GaussianProcessSupport::update_gaussian_processes_for_gp( BlackBoxData &eva
         }
       }
       if ( idx_is_active || diff_norm ( evaluations.nodes[ i ],
-                       evaluations.nodes[ best_index ] ) <= 3e0 * (delta_tmp) ) {
+                       evaluations.nodes[ best_index ] ) <= gaussian_process_delta_factor * (delta_tmp) ) {
         gaussian_process_active_index.push_back ( i );
 //        rescale ( 1e0/(delta_tmp), evaluations.nodes[i], evaluations.nodes[best_index],
 //                  rescaled_node);
@@ -109,15 +109,18 @@ void GaussianProcessSupport::update_gaussian_processes_for_gp( BlackBoxData &eva
     //  assert(values[j].size() == nb_values);
     //}
 
+    std::cout << gaussian_process_active_index.size() << std::endl;
     //Since we rebuild the GP we update its values
     for ( int j = 0; j < number_processes; ++j ) {
       for ( unsigned int i = 0; i < gaussian_process_active_index.size(); ++i ) {
         gaussian_process_values[i] = evaluations.values_MC[ j ][gaussian_process_active_index[i]];
         gaussian_process_noise[i] = evaluations.noise_MC[ j ][gaussian_process_active_index[i]];
       }
+
       gaussian_processes[j]->estimate_hyper_parameters( gaussian_process_nodes,
                                                        gaussian_process_values,
                                                        gaussian_process_noise );
+
         //std::cout << "Update Gaussian Process: " << j << std::endl;
       gaussian_processes[j]->build( gaussian_process_nodes,
                                    gaussian_process_values,
@@ -281,7 +284,7 @@ void GaussianProcessSupport::update_gaussian_processes_for_agp( BlackBoxData &ev
         best_index = evaluations.best_index;
         for ( int i = 0; i < nb_values; ++i ) {
           if ( diff_norm ( evaluations.nodes[ i ],
-                           evaluations.nodes[ best_index ] ) <= 3e0 * (delta_tmp) ) {
+                           evaluations.nodes[ best_index ] ) <= gaussian_process_delta_factor * (delta_tmp) ) {
             gaussian_process_active_index.push_back ( i );
     //        rescale ( 1e0/(delta_tmp), evaluations.nodes[i], evaluations.nodes[best_index],
     //                  rescaled_node);
@@ -292,7 +295,6 @@ void GaussianProcessSupport::update_gaussian_processes_for_agp( BlackBoxData &ev
 
         gaussian_process_values.resize(gaussian_process_active_index.size());
         gaussian_process_noise.resize(gaussian_process_active_index.size());
-
 
         for ( int j = 0; j < number_processes; ++j ) {
           for ( unsigned int i = 0; i < gaussian_process_active_index.size(); ++i ) {
@@ -333,6 +335,10 @@ void GaussianProcessSupport::update_gaussian_processes_for_agp( BlackBoxData &ev
 void GaussianProcessSupport::update_gaussian_processes ( BlackBoxData &evaluations )
 {
 
+  nb_values = evaluations.values[0].size();
+  assert(nb_values == evaluations.nodes.size());
+  assert(nb_values == evaluations.noise[0].size());
+
   if(use_approx_gaussian_process){
     update_gaussian_processes_for_agp(evaluations);
   }else{
@@ -350,9 +356,6 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
 {
   //update_data( evaluations );
 
-  nb_values = evaluations.values[0].size();
-  assert(nb_values == evaluations.nodes.size());
-  assert(nb_values == evaluations.noise[0].size());
   update_gaussian_processes( evaluations );
 
   /*
@@ -389,11 +392,48 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
     double heuristic_RMSE = 0;
     double heuristic_Rtilde = 0;
     double heuristic_gamma = 0;
+    std::vector<std::vector<double>> active_index_samples;
     std::vector<double> cur_xstar;
     std::vector<double> cur_noise;
     std::vector<double> cur_noise_MC;
     int cur_xstar_idx = -1;
     bool print_debug_information = false;
+
+    /////////////////
+    //double fill_width = compute_fill_width(evaluations);
+    std::vector<double> upper_bound_constant_estimate(gaussian_processes.size());
+    for ( int j = 0; j < number_processes; ++j ) {
+      gaussian_processes[j]->build_inverse();
+      cur_xstar_idx = evaluations.best_index;
+      cur_xstar = evaluations.nodes[cur_xstar_idx];
+      //cur_noise_MC = evaluations.noise_MC[j];
+      //Var[R] is squared standard error: (SE[R])^2
+      //evaluations.noise however is 2 * SE
+      //Thus, divide by two
+      //for (double &noise_ctr : cur_noise_MC) {
+      //  noise_ctr /= 2.;
+      //}
+      //cur_noise_xstar_MC = cur_noise_MC[cur_xstar_idx];
+      //var_GP = gaussian_processes[j]->compute_var_meanGP(cur_xstar, cur_noise_MC);
+
+      active_index_samples.resize(gaussian_process_active_index.size( ));
+      for(int i = 0; i < gaussian_process_active_index.size( ); ++i){
+        active_index_samples[i].resize(evaluations.samples[j][gaussian_process_active_index[i]].size());
+        for(int k = 0; k < active_index_samples[i].size(); ++k){
+          active_index_samples[i][k] = evaluations.samples[j][gaussian_process_active_index[i]][k];
+        }
+      }
+
+      upper_bound_constant_estimate[j] = gaussian_processes[j]->bootstrap_diffGPMC(cur_xstar, active_index_samples, j, 200);
+      //bootstrap_squared = bootstrap_diffGPRf*bootstrap_diffGPRf;
+      //upper_bound_constant_estimate[j] = (bootstrap_squared + var_GP)/fill_width;
+    }
+    //std::cout << "###FILLWIDTH " << fill_width << " #UpperBound: ";
+    //for ( int j = 0; j < number_processes; ++j ) {
+    //  std::cout << upper_bound_constant_estimate[j] << " ";
+    //}
+    //std::cout << std::endl;
+    //////////////////
 
     bool is_latest_index_active_index = false;
     for(int i = 0; i < evaluations.active_index.size(); ++i){
@@ -405,6 +445,16 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
     if(!is_latest_index_active_index){
       evaluations.active_index.push_back( evaluations.nodes.size()-1 );
     }
+    bool is_best_index_active_index = false;
+    for(int i = 0; i < evaluations.active_index.size(); ++i){
+      if(evaluations.active_index[i] == evaluations.best_index){
+        is_best_index_active_index = true;
+        break;
+      }
+    }
+    if(!is_best_index_active_index){
+      evaluations.active_index.push_back( evaluations.best_index );
+    }
 
     best_index_analytic_information.clear();
     best_index_analytic_information.resize(number_processes);
@@ -413,10 +463,9 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
     }
 
     for ( int j = 0; j < number_processes; ++j ) {
-      gaussian_processes[j]->build_inverse();
+      //gaussian_processes[j]->build_inverse();
 
       //Pick the samples for the active indices
-      std::vector<std::vector<double>> active_index_samples;
       active_index_samples.resize(gaussian_process_active_index.size( ));
       for(int i = 0; i < gaussian_process_active_index.size( ); ++i){
         active_index_samples[i].resize(evaluations.samples[j][gaussian_process_active_index[i]].size());
@@ -463,11 +512,12 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
         var_R = cur_noise_xstar_MC * cur_noise_xstar_MC;
         cov_RGP = gaussian_processes[j]->compute_cov_meanGPMC(cur_xstar, cur_xstar_idx, cur_noise_xstar_MC);
         var_GP = gaussian_processes[j]->compute_var_meanGP(cur_xstar, cur_noise_MC);
-        bootstrap_diffGPRf = gaussian_processes[j]->bootstrap_diffGPMC(cur_xstar, active_index_samples, j);
-        bootstrap_squared = bootstrap_diffGPRf*bootstrap_diffGPRf;
+        //bootstrap_diffGPRf = gaussian_processes[j]->bootstrap_diffGPMC(cur_xstar, active_index_samples, j);
+        bootstrap_squared = upper_bound_constant_estimate[j]*upper_bound_constant_estimate[j]; //bootstrap_diffGPRf*bootstrap_diffGPRf;
 
         numerator = var_R - cov_RGP;
         denominator = bootstrap_squared + var_GP + var_R - 2.0 * cov_RGP;
+        //denominator = upper_bound_constant_estimate[j] + var_R - 2.0 * cov_RGP;
 
         if(evaluations.active_index[i] == evaluations.best_index){
           best_index_analytic_information[j][0] = var_R;
@@ -594,6 +644,9 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
       }
     }
     if(!is_latest_index_active_index){
+      evaluations.active_index.erase( evaluations.active_index.end()-1 );
+    }
+    if(!is_best_index_active_index){
       evaluations.active_index.erase( evaluations.active_index.end()-1 );
     }
   }else{
@@ -730,6 +783,96 @@ const std::vector<std::vector<double>> &GaussianProcessSupport::getBest_index_an
   return best_index_analytic_information;
 }
 
+typedef struct {
+    const std::vector<double> cons_best_node;
+    const double cons_gaussian_process_delta;
+} constraint_data;
+
+typedef struct {
+    const std::vector<std::vector<double>> obj_gaussian_process_nodes;
+} objective_data;
+
+double GaussianProcessSupport::compute_fill_width(BlackBoxData& evaluations){
+
+  assert(gaussian_process_nodes.size() > 0);
+  int dim = gaussian_process_nodes[0].size();
+  //initialize optimizer from NLopt library
+  std::vector<double> best_node = evaluations.nodes[evaluations.best_index];
+
+  constraint_data cons_data = { best_node, gaussian_process_delta_factor };
+  objective_data obj_data = { gaussian_process_nodes };
+
+  std::vector<double> lb(dim);
+  std::vector<double> ub(dim);
+  for(int i = 0; i < dim; ++i){
+    lb[i] = best_node[i] - 1.0001*gaussian_process_delta_factor*delta_tmp;
+    ub[i] = best_node[i] + 1.0001*gaussian_process_delta_factor*delta_tmp;
+  }
+
+//  nlopt::opt opt(nlopt::LD_CCSAQ, dimp1);
+//  nlopt::opt opt(nlopt::LN_BOBYQA, dimp1);
+//
+  nlopt::opt opt(nlopt::GN_DIRECT, dim);
+
+  //opt = nlopt_create(NLOPT_LN_COBYLA, dim+1);
+  opt.set_lower_bounds( lb );
+  opt.set_upper_bounds( ub );
+
+  //std::vector<double> tol = {1};
+  //opt.add_inequality_mconstraint(GaussianProcessSupport::ball_constraint, &cons_data, tol);
+  opt.set_max_objective( GaussianProcessSupport::fill_width_objective, &obj_data);
+
+  // opt.set_xtol_abs(1e-2);
+//  opt.set_xtol_rel(1e-2);
+//set timeout to NLOPT_TIMEOUT seconds
+  opt.set_maxtime(1.0);
+  opt.set_maxeval(1000);
+  //perform optimization to get correction factors
+
+  int exitflag=-20;
+  double optval;
+  try {
+    exitflag = opt.optimize(best_node, optval);
+  } catch (...) {
+    std::cout << "Something went wrong in fill width optimization: " << exitflag << std::endl;
+  }
+  return optval;
+}
+
+double GaussianProcessSupport::fill_width_objective(std::vector<double> const &x,
+                                   std::vector<double> &grad,
+                                   void *data){
+  auto obj_data = reinterpret_cast< objective_data* >(data);
+
+  std::vector<std::vector<double>> gp_nodes = obj_data->obj_gaussian_process_nodes;
+  double min_fill_width = DBL_MAX;
+  double cur_fill_width = 0.0;
+  for(int i = 0; i < gp_nodes.size(); ++i){
+    cur_fill_width = 0.0;
+    for(int j = 0; j < gp_nodes[i].size(); ++j){
+      cur_fill_width += (x[j] - gp_nodes[i][j]) * (x[j] - gp_nodes[i][j]);
+    }
+    if(cur_fill_width < min_fill_width){
+      min_fill_width = cur_fill_width;
+    }
+  }
+  return sqrt(min_fill_width);
+}
+
+void GaussianProcessSupport::ball_constraint(unsigned int m, double* c, unsigned n, const double *x, double *grad, void *data){
+  auto cons_data = reinterpret_cast<constraint_data*>(data);
+
+  double distance = 0.0;
+  for(int i = 0; i < n ; ++i){
+    distance += (x[i] - cons_data->cons_best_node[i])*(x[i] - cons_data->cons_best_node[i]);
+  }
+  distance = std::sqrt(distance);
+  c[0] = distance - cons_data->cons_gaussian_process_delta;
+}
+
+void GaussianProcessSupport::set_gaussian_process_delta(double gaussian_process_delta) {
+  GaussianProcessSupport::gaussian_process_delta_factor = gaussian_process_delta;
+}
 /*
 void GaussianProcessSupport::do_resample_u(){
   for ( int j = 0; j < number_processes; ++j ) {

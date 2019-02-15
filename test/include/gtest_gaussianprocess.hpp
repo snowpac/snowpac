@@ -1,13 +1,25 @@
 #include "GaussianProcess.hpp"
+#include "BlackBoxBaseClass.hpp"
 #include "gtest/gtest.h"
 #include <Eigen/Core>
 
 //--------------------------------------------------------------------------------
+class BlackboxMock : public BlackBoxBaseClass{
+    double evaluate_samples ( std::vector<double> const &samples, const unsigned int index, void *param ){
+      double mean = 0.;
+      for(const double& sample : samples ){
+        mean += sample;
+      }
+      return mean/samples.size();
+    }
+};
+
+
 class Wrapper_GaussianProcess : public GaussianProcess 
 {
   public:
-    Wrapper_GaussianProcess ( int n, double &delta_input ) :
-       GaussianProcess ( n, delta_input ) { };
+    Wrapper_GaussianProcess ( int n, double &delta_input, BlackBoxBaseClass* blackbox ) :
+       GaussianProcess ( n, delta_input, blackbox) { };
 
     int test_buildInverse () 
     { 
@@ -30,15 +42,14 @@ class Wrapper_GaussianProcess : public GaussianProcess
         }
       }
 
-
       return 1; 
     }
 
     int test_compute_var_meanGP () 
-    { 
+    {
       std::vector<double> xstar = {0.};
       double result_matlab = 9.844240598591604e-04;
-    std::vector<double> noise = {0.04, 0.04, 0.04, 0.04, 0.04};
+      std::vector<double> noise = {0.04, 0.04, 0.04, 0.04, 0.04};
 
       double var_meanGP = compute_var_meanGP(xstar, noise);
       return (fabs(result_matlab - var_meanGP) < 1e-8); 
@@ -53,16 +64,17 @@ class Wrapper_GaussianProcess : public GaussianProcess
       return (fabs(result_matlab - cov_meanGPMC) < 1e-8); 
     }
 
+    /*
     int test_bootstrap_diffGPMC () 
     { 
       std::vector<double> xstar = {0.};
       double result_matlab = 0.001070406968878;
-
-      double cov_meanGPMC = bootstrap_diffGPMC(xstar);
+      std::vector<double> samples = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+      double cov_meanGPMC = bootstrap_diffGPMC(xstar, samples, -1);
       std::cout << result_matlab << " vs. " << cov_meanGPMC << std::endl;
       return 1; 
     }
-
+    */
 };
 //--------------------------------------------------------------------------------
 
@@ -87,9 +99,11 @@ TEST ( GaussianProcessTest, test_buildInverse )
   nodes[3][0] = 0;
   nodes[4][0] = 0.4406;
 
-  Wrapper_GaussianProcess W(dim, delta_input);
+  BlackBoxBaseClass* blackbox_mock = new BlackboxMock();
+  Wrapper_GaussianProcess W(dim, delta_input, blackbox_mock);
   W.build(nodes, values, noise);
   EXPECT_EQ( 1, W.test_buildInverse() );
+  delete blackbox_mock;
 }
 //--------------------------------------------------------------------------------
 
@@ -113,10 +127,12 @@ TEST ( GaussianProcessTest, test_compute_var_meanGP )
   nodes[3][0] = 0;
   nodes[4][0] = 0.4406;
 
-  Wrapper_GaussianProcess W(dim, delta_input);
+  BlackBoxBaseClass* blackbox_mock = new BlackboxMock();
+  Wrapper_GaussianProcess W(dim, delta_input, blackbox_mock);
   W.build(nodes, values, noise);
   W.build_inverse();
   EXPECT_EQ( 1, W.test_compute_var_meanGP() );
+  delete blackbox_mock;
 }
 //--------------------------------------------------------------------------------
 
@@ -140,14 +156,17 @@ TEST ( GaussianProcessTest, test_compute_cov_meanGPMC )
   nodes[3][0] = 0;
   nodes[4][0] = 0.4406;
 
-  Wrapper_GaussianProcess W(dim, delta_input);
+  BlackBoxBaseClass* blackbox_mock = new BlackboxMock();
+  Wrapper_GaussianProcess W(dim, delta_input, blackbox_mock);
   W.build(nodes, values, noise);
   W.build_inverse();
   EXPECT_EQ( 1, W.test_compute_cov_meanGPMC() );
+  delete blackbox_mock;
 }
 //--------------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------------
+/*
 TEST ( GaussianProcessTest, test_bootstrap_diffGPMC ) 
 {
   double delta_input = 1.0;
@@ -167,9 +186,12 @@ TEST ( GaussianProcessTest, test_bootstrap_diffGPMC )
   nodes[3][0] = 0;
   nodes[4][0] = 0.4406;
 
-  Wrapper_GaussianProcess W(dim, delta_input);
+  BlackBoxBaseClass* blackbox_mock = new BlackboxMock();
+  Wrapper_GaussianProcess W(dim, delta_input, blackbox_mock);
   W.build(nodes, values, noise);
   W.build_inverse();
   EXPECT_EQ( 1, W.test_bootstrap_diffGPMC() );
+  delete blackbox_mock;
 }
+ */
 //--------------------------------------------------------------------------------

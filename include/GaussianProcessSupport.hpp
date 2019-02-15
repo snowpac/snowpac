@@ -39,19 +39,32 @@ class GaussianProcessSupport : protected VectorOperations {
     const double u_ratio = 0.15;
     const int min_nb_u = 2;
     int cur_nb_u_points = 0;
+    double gaussian_process_delta_factor = 3.;
+
+private:
 
     int NOEXIT;
 
-    void update_gaussian_processes ( BlackBoxData& );
-
     void update_gaussian_processes_for_agp( BlackBoxData&);
-    void update_gaussian_processes_for_gp (BlackBoxData&);
+
+    static double fill_width_objective(std::vector<double> const &x,
+                                       std::vector<double> &grad,
+                                       void *data);
+    static void ball_constraint(unsigned int m, double* c, unsigned n, const double *x, double *grad, void *data);
 
     //void do_resample_u(); //TODO check if able to remove this one
+
+ protected:
+    virtual double compute_fill_width(BlackBoxData& evaluations);
+    void update_gaussian_processes ( BlackBoxData& );
+    void update_gaussian_processes_for_gp (BlackBoxData&);
+
   public:
     void initialize ( const int, const int, double&, BlackBoxBaseClass *blackbox,
                       std::vector<double> const&, int , const std::string, const int exitconst, const bool use_analytic_smoothing);
+
     int smooth_data ( BlackBoxData& );
+
     double evaluate_objective ( BlackBoxData const& );
 
     void evaluate_gaussian_process_at(const int&, std::vector<double> const&, double&, double&);
@@ -65,6 +78,8 @@ class GaussianProcessSupport : protected VectorOperations {
     void set_constraint_ball_radius(const double& radius);
 
     const std::vector<std::vector<double>> &getBest_index_analytic_information() const;
+
+    void set_gaussian_process_delta(double gaussian_process_delta);
 };
 
 #endif
