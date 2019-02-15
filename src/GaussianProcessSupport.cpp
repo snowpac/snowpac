@@ -424,7 +424,7 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
         }
       }
 
-      upper_bound_constant_estimate[j] = gaussian_processes[j]->bootstrap_diffGPMC(cur_xstar, active_index_samples, j, 200);
+      upper_bound_constant_estimate[j] = gaussian_processes[j]->bootstrap_diffGPMC(cur_xstar, active_index_samples, j, 10000);
       //bootstrap_squared = bootstrap_diffGPRf*bootstrap_diffGPRf;
       //upper_bound_constant_estimate[j] = (bootstrap_squared + var_GP)/fill_width;
     }
@@ -459,7 +459,7 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
     best_index_analytic_information.clear();
     best_index_analytic_information.resize(number_processes);
     for ( int i = 0; i < number_processes; i++) {
-      best_index_analytic_information[i].resize(22);
+      best_index_analytic_information[i].resize(23);
     }
 
     for ( int j = 0; j < number_processes; ++j ) {
@@ -523,7 +523,7 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
           best_index_analytic_information[j][0] = var_R;
           best_index_analytic_information[j][1] = cov_RGP;
           best_index_analytic_information[j][2] = var_GP;
-          best_index_analytic_information[j][3] = bootstrap_diffGPRf;
+          best_index_analytic_information[j][3] = bootstrap_squared;
           best_index_analytic_information[j][4] = numerator;
           best_index_analytic_information[j][5] = denominator;
         }
@@ -622,6 +622,13 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
 
         if(evaluations.active_index[i] == evaluations.best_index){
           best_index_analytic_information[j][21] = evaluations.noise_MC[ j ][ evaluations.active_index [ i ] ];
+        }
+        if(evaluations.active_index[i] == evaluations.best_index){
+          best_index_analytic_information[j][22] = gaussian_processes[j]->get_gp_parameters()[1];
+        }
+
+        if(evaluations.active_index[i] == evaluations.best_index){
+          best_index_analytic_information[j][22] = gaussian_processes[j]->get_gp_parameters()[2];
         }
 
         if(print_debug_information){

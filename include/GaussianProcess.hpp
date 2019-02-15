@@ -34,6 +34,10 @@ class GaussianProcess : public GaussianProcessBaseClass,
     std::vector<double> K0;
     double kernel_evaluation, dist;
     std::vector<double> gp_parameters;
+public:
+    const std::vector<double> &get_gp_parameters() const;
+
+protected:
     std::vector<double> lb, ub;
     //general/shared auxiliary variables
     std::vector< std::vector<double> > L;

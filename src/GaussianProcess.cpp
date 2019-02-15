@@ -630,4 +630,8 @@ void GaussianProcess::decrease_nugget(){
 bool GaussianProcess::increase_nugget(){
   return true;
 }
+
+const std::vector<double> &GaussianProcess::get_gp_parameters() const {
+  return gp_parameters;
+}
 //--------------------------------------------------------------------------------
