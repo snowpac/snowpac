@@ -22,9 +22,6 @@ GaussianProcess::GaussianProcess ( int n, double &delta_input, BlackBoxBaseClass
   gp_pointer = NULL;
   delta = &delta_input;
   blackbox = blackbox_input;
-
-  std::random_device rd; // obtain a random number from hardware
-  bootstrap_eng.seed(rd());
 } 
 //--------------------------------------------------------------------------------
 
@@ -378,9 +375,12 @@ double GaussianProcess::bootstrap_diffGPMC ( std::vector<double>const& xstar, st
   unsigned int nb_samples = samples[0].size();
   std::vector<double> bootstrap_samples;
   std::uniform_int_distribution<> distr(0, nb_samples - 1);
-  if(inp_seed != -1) {
-    bootstrap_eng.seed(inp_seed);
+
+  std::random_device rd; // obtain a random number from hardware
+  if(inp_seed == -1) {
+    inp_seed = rd();
   }
+  std::mt19937_64 bootstrap_eng(inp_seed);
 
   for(int i = 0; i < nb_gp_nodes; ++i){
     k_xstar_X[i] = evaluate_kernel(xstar, gp_nodes[i]);
