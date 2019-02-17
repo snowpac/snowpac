@@ -461,7 +461,7 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
     best_index_analytic_information.clear();
     best_index_analytic_information.resize(number_processes);
     for ( int i = 0; i < number_processes; i++) {
-      best_index_analytic_information[i].resize(23);
+      best_index_analytic_information[i].resize(25);
     }
 
     for ( int j = 0; j < number_processes; ++j ) {
@@ -510,10 +510,17 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
         var_R = cur_noise_xstar_MC * cur_noise_xstar_MC;
         cov_RGP = gaussian_processes[j]->compute_cov_meanGPMC(cur_xstar, cur_xstar_idx, cur_noise_xstar_MC);
         var_GP = gaussian_processes[j]->compute_var_meanGP(cur_xstar, cur_noise_MC);
-        bootstrap_diffGPRf = gaussian_processes[j]->bootstrap_diffGPMC(cur_xstar, active_index_samples, j, 200);
+        bootstrap_diffGPRf = gaussian_processes[j]->bootstrap_diffGPMC(cur_xstar, active_index_samples, j, 100);
         //bootstrap_squared = upper_bound_constant_estimate[j]*upper_bound_constant_estimate[j];
         bootstrap_squared = bootstrap_diffGPRf*bootstrap_diffGPRf;
         //bootstrap_squared = (mean - evaluations.values[ j ][cur_xstar_idx])*(mean - evaluations.values[ j ][cur_xstar_idx]);
+
+        double upper_bound_cov = sqrt(var_R * var_GP);
+        int set_upper_bound_cov_flag = 0;
+        if(abs(cov_RGP) > upper_bound_cov){
+          cov_RGP = cov_RGP >= 0 ? upper_bound_cov : -upper_bound_cov;
+          set_upper_bound_cov_flag = 1;
+        }
 
         numerator = var_R - cov_RGP;
         denominator = bootstrap_squared + var_GP + var_R - 2.0 * cov_RGP;
@@ -526,6 +533,7 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
           best_index_analytic_information[j][3] = bootstrap_squared;
           best_index_analytic_information[j][4] = numerator;
           best_index_analytic_information[j][5] = denominator;
+          best_index_analytic_information[j][24] = set_upper_bound_cov_flag;
         }
 
         optimal_gamma = (std::fabs(denominator) <= DBL_MIN) ? 0.0 : numerator/denominator;
@@ -630,7 +638,7 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
         }
 
         if(evaluations.active_index[i] == evaluations.best_index){
-          best_index_analytic_information[j][22] = gaussian_processes[j]->get_gp_parameters()[2];
+          best_index_analytic_information[j][23] = gaussian_processes[j]->get_gp_parameters()[2];
         }
 
         if(print_debug_information){
