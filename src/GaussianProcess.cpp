@@ -22,6 +22,9 @@ GaussianProcess::GaussianProcess ( int n, double &delta_input, BlackBoxBaseClass
   gp_pointer = NULL;
   delta = &delta_input;
   blackbox = blackbox_input;
+
+  std::random_device rd; // obtain a random number from hardware
+  bootstrap_eng.seed(rd());
 } 
 //--------------------------------------------------------------------------------
 
@@ -371,15 +374,13 @@ double GaussianProcess::bootstrap_diffGPMC ( std::vector<double>const& xstar, st
   int random_idx = -1;
   std::vector<double> f_train_bootstrap(nb_gp_nodes);
   std::vector<double> k_xstar_X_Kinv(nb_gp_nodes);
-  std::random_device rd; // obtain a random number from hardware
   std::vector<double> k_xstar_X(nb_gp_nodes);
   unsigned int nb_samples = samples[0].size();
   std::vector<double> bootstrap_samples;
   std::uniform_int_distribution<> distr(0, nb_samples - 1);
-  if(inp_seed == -1) {
-    inp_seed = rd();
+  if(inp_seed != -1) {
+    bootstrap_eng.seed(inp_seed);
   }
-  std::mt19937 eng(inp_seed);
 
   for(int i = 0; i < nb_gp_nodes; ++i){
     k_xstar_X[i] = evaluate_kernel(xstar, gp_nodes[i]);
@@ -393,7 +394,7 @@ double GaussianProcess::bootstrap_diffGPMC ( std::vector<double>const& xstar, st
     for(int j = 0; j < nb_gp_nodes; ++j){ //sample randomly from training data
       bootstrap_samples.resize(nb_samples);
       for(int k = 0; k < nb_samples; ++k){
-        bootstrap_samples[k] = samples[j][distr(eng)];
+        bootstrap_samples[k] = samples[j][distr(bootstrap_eng)];
       }
       f_train_bootstrap[j] = blackbox->evaluate_samples(bootstrap_samples, index, nullptr);
     }
