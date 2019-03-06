@@ -202,6 +202,16 @@ IF ( NOWPAC_ENABLE_TESTS STREQUAL "ON" )
    ADD_DEPENDENCIES(nowpac_test nowpac)
 ENDIF ()
 
+set(Boost_USE_STATIC_LIBS OFF) 
+set(Boost_USE_MULTITHREADED ON)  
+set(Boost_USE_STATIC_RUNTIME OFF) 
+find_package(Boost REQUIRED COMPONENTS) 
+
+if(Boost_FOUND)
+    include_directories(${Boost_INCLUDE_DIRS}) 
+    target_link_libraries(nowpacshared ${Boost_LIBRARIES})
+endif()
+
 
 SET ( NOWPAC_INCLUDE_PATH "${NOWPAC_INSTALL_PREFIX}/nowpac/include" CACHE PATH "NOWPAC include directory" FORCE)
 SET ( NOWPAC_LIBRARY_PATH "${NOWPAC_INSTALL_PREFIX}/nowpac/lib" CACHE PATH "NOWPAC library directory" FORCE)

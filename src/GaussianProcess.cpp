@@ -4,6 +4,7 @@
 #include <iomanip>  
 #include <cassert>
 #include <omp.h>
+#include <boost/random.hpp>
 
 //--------------------------------------------------------------------------------
 GaussianProcess::GaussianProcess ( int n, double &delta_input, BlackBoxBaseClass* blackbox_input) :
@@ -374,13 +375,14 @@ double GaussianProcess::bootstrap_diffGPMC ( std::vector<double>const& xstar, st
   std::vector<double> k_xstar_X(nb_gp_nodes);
   unsigned int nb_samples = samples[0].size();
   std::vector<double> bootstrap_samples;
-  std::uniform_int_distribution<> distr(0, nb_samples - 1);
+  boost::random::uniform_int_distribution<> distr(0, nb_samples - 1);
 
   std::random_device rd; // obtain a random number from hardware
   if(inp_seed == -1) {
     inp_seed = rd();
   }
-  std::mt19937_64 bootstrap_eng(inp_seed);
+  //std::mt19937_64 bootstrap_eng(inp_seed);
+  boost::random::mt19937 bootstrap_eng(inp_seed);
 
   for(int i = 0; i < nb_gp_nodes; ++i){
     k_xstar_X[i] = evaluate_kernel(xstar, gp_nodes[i]);
@@ -389,10 +391,10 @@ double GaussianProcess::bootstrap_diffGPMC ( std::vector<double>const& xstar, st
   vec_mat_product(L_inverse, k_xstar_X, k_xstar_X_Kinv); //k_xstar_X (K_XX - sigma^2 I)^{-1}
   assert(samples.size() == nb_gp_nodes);
 
+  bootstrap_samples.resize(nb_samples);
   //#pragma omp parallel for private(bootstrap_samples, eng) reduction(+ : mean_bootstrap)
   for(int i = 0; i < max_bootstrap_samples; ++i){
     for(int j = 0; j < nb_gp_nodes; ++j){ //sample randomly from training data
-      bootstrap_samples.resize(nb_samples);
       for(int k = 0; k < nb_samples; ++k){
         bootstrap_samples[k] = samples[j][distr(bootstrap_eng)];
       }
