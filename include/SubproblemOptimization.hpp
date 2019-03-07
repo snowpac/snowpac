@@ -312,7 +312,10 @@ double SubproblemOptimization<TSurrogateModel>::compute_trial_point (
 
     opt_restore_feasibility.set_lower_bounds ( lb );
     opt_restore_feasibility.set_upper_bounds ( ub );
-    opt_restore_feasibility.optimize ( x, optimization_result );
+
+    try{
+      errmess = opt_restore_feasibility.optimize ( x, optimization_result );
+    } catch ( ... ) { };
 
     set_feasibility_thresholds ( x );    
     std::cout << "#M4: Point is feasible: " << point_is_feasible << std::endl;
@@ -338,7 +341,11 @@ double SubproblemOptimization<TSurrogateModel>::compute_trial_point (
           //std::cout << std::setprecision(16) << "Setting x[i] to lower bound: " << lb[i] << std::endl;
           x[i] = lb[i];
         }
-      opt_trial_point.optimize ( x, optimization_result );
+
+      std::cout << "#M3 Inner: Classic optimization!" << std::endl;
+      try{
+        errmess = opt_trial_point.optimize ( x, optimization_result );
+      } catch ( ... ) { };
     }
    // assert( false );
   } else {
@@ -377,7 +384,10 @@ double SubproblemOptimization<TSurrogateModel>::restore_feasibility (
 
   set_feasibility_thresholds ( x );
 
-  opt_restore_feasibility.optimize ( x, optimization_result );
+  int errmess;
+  try{
+    errmess = opt_restore_feasibility.optimize ( x, optimization_result );
+  } catch ( ... ) { };
 
   add( *delta, x, best_point );
   x = best_point;

@@ -51,7 +51,7 @@ void GaussianProcessSupport::initialize ( const int dim, const int number_proces
     best_index_analytic_information[i].resize(25);
   }
   bootstrap_estimate.resize( 0 );
-  first_run = true;
+  smoothing_ctr = 0;
   return;
 }
 //--------------------------------------------------------------------------------
@@ -431,10 +431,9 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
     /////////////////
     //double fill_width = compute_fill_width(evaluations);
     bool do_bootstrap_estimation = false;
-    if (bootstrap_estimate.empty() || evaluations.nodes.size()%10 == 0 || first_run){
+    if ( (smoothing_ctr++) % 10 == 0){
       bootstrap_estimate.resize(number_processes);
       do_bootstrap_estimation = true;
-      first_run = false;
     }
     assert(bootstrap_estimate.size() == number_processes);
     for ( int j = 0; j < number_processes && do_bootstrap_estimation; ++j ) {
