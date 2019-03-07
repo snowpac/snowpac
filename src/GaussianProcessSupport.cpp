@@ -10,15 +10,16 @@
 
 //--------------------------------------------------------------------------------
 void GaussianProcessSupport::initialize ( const int dim, const int number_processes_input, double &delta_input,
-        BlackBoxBaseClass *blackbox, std::vector<double> const &update_at_evaluations_input,
+        BlackBoxBaseClass *blackbox, std::vector<int> const &update_at_evaluations_input,
   int update_interval_length_input, const std::string gaussian_process_type, const int exitconst, const bool use_analytic_smoothing)
 {
   nb_values = 0;
   delta = &delta_input;
   number_processes = number_processes_input;
   update_interval_length = update_interval_length_input;
-  for (size_t i = 0; i < update_at_evaluations_input.size(); i++ )
-    update_at_evaluations.push_back( update_at_evaluations_input.at( i ) );
+  for (size_t i = 0; i < update_at_evaluations_input.size(); i++ ) {
+      update_at_evaluations.push_back(update_at_evaluations_input.at(i));
+  }
   std::sort(update_at_evaluations.begin(), update_at_evaluations.end());
   //GaussianProcess gp ( dim, *delta );
   gaussian_process_nodes.resize( 0 );
@@ -49,6 +50,7 @@ void GaussianProcessSupport::initialize ( const int dim, const int number_proces
   for ( int i = 0; i < number_processes; i++) {
     best_index_analytic_information[i].resize(20);
   }
+  bootstrap_estimate.resize( 0 );
   return;
 }
 //--------------------------------------------------------------------------------
@@ -399,11 +401,17 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
     bool print_debug_information = false;
 
     /////////////////
-
     //double fill_width = compute_fill_width(evaluations);
-    /*
-    std::vector<double> upper_bound_constant_estimate(gaussian_processes.size());
-    for ( int j = 0; j < number_processes; ++j ) {
+    bool do_bootstrap_estimation = false;
+    if (bootstrap_estimate.empty()){
+      bootstrap_estimate.resize(number_processes);
+      do_bootstrap_estimation = true;
+    }
+    if(evaluations.nodes.size()%10 == 0){
+      do_bootstrap_estimation = true;
+    }
+    assert(bootstrap_estimate.size() == number_processes);
+    for ( int j = 0; j < number_processes && do_bootstrap_estimation; ++j ) {
       gaussian_processes[j]->build_inverse();
       cur_xstar_idx = evaluations.best_index;
       cur_xstar = evaluations.nodes[cur_xstar_idx];
@@ -425,7 +433,7 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
         }
       }
 
-      upper_bound_constant_estimate[j] = gaussian_processes[j]->bootstrap_diffGPMC(cur_xstar, active_index_samples, j, 10000);
+      bootstrap_estimate[j] = gaussian_processes[j]->bootstrap_diffGPMC(cur_xstar, active_index_samples, j, 100);
       //bootstrap_squared = bootstrap_diffGPRf*bootstrap_diffGPRf;
       //upper_bound_constant_estimate[j] = (bootstrap_squared + var_GP)/fill_width;
     }
@@ -434,7 +442,6 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
     //  std::cout << upper_bound_constant_estimate[j] << " ";
     //}
     //std::cout << std::endl;
-    */
     //////////////////
 
     bool is_latest_index_active_index = false;
@@ -465,7 +472,9 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
     }
 
     for ( int j = 0; j < number_processes; ++j ) {
-      gaussian_processes[j]->build_inverse();
+      if(!do_bootstrap_estimation) { //Otherwise we have built it already for the bootstrap estimation, see above
+        gaussian_processes[j]->build_inverse();
+      }
 
       //Pick the samples for the active indices
       active_index_samples.resize(gaussian_process_active_index.size( ));
@@ -480,13 +489,11 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
         cur_xstar_idx = evaluations.active_index[i];
         cur_xstar = evaluations.nodes[cur_xstar_idx];
 
-        //cur_noise = evaluations.noise[j];
-        //cur_noise_xstar = cur_noise[cur_xstar_idx] / 2.;
 
         cur_noise_MC = evaluations.noise_MC[j];
         //Var[R] is squared standard error: (SE[R])^2
-        //evaluations.noise however is 2 * SE
-        //Thus, divide by two
+        //evaluations.noise however stores the value (2 * SE[R])
+        //Thus, divide by two before squaring below
         for (double &noise_ctr : cur_noise_MC) {
           noise_ctr /= 2.;
         }
@@ -510,9 +517,10 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
         var_R = cur_noise_xstar_MC * cur_noise_xstar_MC;
         cov_RGP = gaussian_processes[j]->compute_cov_meanGPMC(cur_xstar, cur_xstar_idx, cur_noise_xstar_MC);
         var_GP = gaussian_processes[j]->compute_var_meanGP(cur_xstar, cur_noise_MC);
-        bootstrap_diffGPRf = gaussian_processes[j]->bootstrap_diffGPMC(cur_xstar, active_index_samples, j, 100);
-        //bootstrap_squared = upper_bound_constant_estimate[j]*upper_bound_constant_estimate[j];
-        bootstrap_squared = bootstrap_diffGPRf*bootstrap_diffGPRf;
+        //bootstrap_diffGPRf = gaussian_processes[j]->bootstrap_diffGPMC(cur_xstar, active_index_samples, j, 100);
+        //bootstrap_squared = bootstrap_diffGPRf*bootstrap_diffGPRf;
+
+        bootstrap_squared = bootstrap_estimate[j]*bootstrap_estimate[j];
         //bootstrap_squared = (mean - evaluations.values[ j ][cur_xstar_idx])*(mean - evaluations.values[ j ][cur_xstar_idx]);
 
         double upper_bound_cov = sqrt(var_R * var_GP);

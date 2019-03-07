@@ -57,7 +57,7 @@ class Wrapper_GaussianProcessSupport : public GaussianProcessSupport
       int number_processes_input = 1;
       delta_input = 1;
       blackbox = new BlackboxMock_GPSupport();
-      std::vector<double> update_at_evaluations_input = {6, 10, 20};
+      std::vector<int> update_at_evaluations_input = {6, 10, 20};
       int update_interval_length_input = 10;
       std::string gaussian_process_type = "GP";
       int exitconst = 0;

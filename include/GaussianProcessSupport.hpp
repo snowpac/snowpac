@@ -40,6 +40,7 @@ class GaussianProcessSupport : protected VectorOperations {
     const int min_nb_u = 2;
     int cur_nb_u_points = 0;
     double gaussian_process_delta_factor = 3.;
+    std::vector<double> bootstrap_estimate;
 
 private:
 
@@ -61,7 +62,7 @@ private:
 
   public:
     void initialize ( const int, const int, double&, BlackBoxBaseClass *blackbox,
-                      std::vector<double> const&, int , const std::string, const int exitconst, const bool use_analytic_smoothing);
+                      std::vector<int> const&, int , const std::string, const int exitconst, const bool use_analytic_smoothing);
 
     int smooth_data ( BlackBoxData& );
 

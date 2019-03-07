@@ -114,7 +114,7 @@ class NOWPAC : protected NoiseDetection<TSurrogateModel> {
     int max_number_accepted_steps;
     bool max_number_accepted_steps_is_set;
     int number_accepted_steps;
-    std::vector<double> update_at_evaluations;
+    std::vector<int> update_at_evaluations;
     int update_interval_length;
     int EXIT_FLAG;
     int NOEXIT;
