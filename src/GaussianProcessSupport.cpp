@@ -399,6 +399,7 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
     std::vector<double> cur_noise;
     std::vector<double> cur_noise_MC;
     int cur_xstar_idx = -1;
+    int cur_xstar_idx_in_gp_active_set = -1;
     bool print_debug_information = false;
 
     bool is_latest_index_active_index = false;
@@ -485,6 +486,16 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
 
       for ( unsigned int i = 0; i < evaluations.active_index.size( ); ++i ) {
         cur_xstar_idx = evaluations.active_index[i];
+
+        cur_xstar_idx_in_gp_active_set = -1;
+        for ( unsigned int k = 0; k < gaussian_process_active_index.size( ); ++k ) {
+          if (cur_xstar_idx == gaussian_process_active_index[k]){
+            cur_xstar_idx_in_gp_active_set = k;
+            break;
+          }
+        }
+        assert(cur_xstar_idx_in_gp_active_set != -1);
+
         cur_xstar = evaluations.nodes[cur_xstar_idx];
 
 
@@ -513,7 +524,7 @@ int GaussianProcessSupport::smooth_data ( BlackBoxData &evaluations )
         }
         assert(!std::isnan(cur_noise_xstar));
         var_R = cur_noise_xstar_MC * cur_noise_xstar_MC;
-        cov_RGP = gaussian_processes[j]->compute_cov_meanGPMC(cur_xstar, cur_xstar_idx, cur_noise_xstar_MC);
+        cov_RGP = gaussian_processes[j]->compute_cov_meanGPMC(cur_xstar, cur_xstar_idx_in_gp_active_set, cur_noise_xstar_MC);
         var_GP = gaussian_processes[j]->compute_var_meanGP(cur_xstar, cur_noise_MC);
         //bootstrap_diffGPRf = gaussian_processes[j]->bootstrap_diffGPMC(cur_xstar, active_index_samples, j, 100);
         //bootstrap_squared = bootstrap_diffGPRf*bootstrap_diffGPRf;

@@ -349,6 +349,7 @@ double GaussianProcess::compute_cov_meanGPMC ( std::vector<double>const& xstar, 
   double L_inverse_term = 0.;
   double kernel_term = 0.;
   //std::cout << "Cov terms (idx, kernel, KK_inv, Prod): " << std::endl;
+  assert(xstar_idx < nb_gp_nodes);
   for(int i = 0; i < nb_gp_nodes; ++i){
     //k_xstar_X[i] = evaluate_kernel(xstar, gp_nodes[i]);
     L_inverse_term = L_inverse[i][xstar_idx];
