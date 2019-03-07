@@ -41,6 +41,7 @@ class GaussianProcessSupport : protected VectorOperations {
     int cur_nb_u_points = 0;
     double gaussian_process_delta_factor = 3.;
     std::vector<double> bootstrap_estimate;
+    bool first_run;
 
 private:
 
