@@ -3,7 +3,6 @@
 #include <iostream>
 #include <iomanip>  
 #include <cassert>
-#include <omp.h>
 #include <boost/random.hpp>
 
 //--------------------------------------------------------------------------------

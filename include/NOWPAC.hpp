@@ -441,7 +441,8 @@ void NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::set_option (
     return;
   }
   if ( option_name.compare( "use_analytic_smoothing") == 0 ){
-    assert(stochastic_optimization);
+    if (option_value)
+      assert(stochastic_optimization);
     blackbox_samples.resize( nb_constraints + 1);
     use_analytic_smoothing = option_value;
     return;
@@ -2002,7 +2003,7 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
         if ( tmp_dbl > 0e0 ) { // XXX --- XXX
           replace_node_index = surrogate_nodes->replace_node( evaluations.best_index, 
                                                              evaluations, x_trial );
-          assert ( evaluations.active_index[replace_node_index] != evaluations.best_index);
+          //assert ( evaluations.active_index[replace_node_index] != evaluations.best_index);
           add_trial_node( );
           if ( EXIT_FLAG != NOEXIT ) break;
           update_surrogate_models( );
@@ -2071,10 +2072,21 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
         } else
             std::cout << "  Current point         : [" << std::setprecision(8) << evaluations.nodes[ evaluations.best_index ].at(0) << "]"<< std::endl;
           if ( nb_constraints > 0) {
-            std::cout << "  Current constraints   : [" << std::setprecision(8) << evaluations.values[1].at( evaluations.best_index ) << std::endl;
-            for (int i = 1; i < nb_constraints - 1; ++i )
-                  std::cout << "                           " << std::setprecision(8) << evaluations.values[i+1].at( evaluations.best_index ) << std::endl;
-            std::cout << "                           " << std::setprecision(8) << evaluations.values[nb_constraints].at( evaluations.best_index ) << "]"<< std::endl;
+            switch(nb_constraints){
+                case 1:
+                  std::cout << "  Current constraints   : ["<< std::setprecision(8) << evaluations.values[1].at( evaluations.best_index ) << "]" << std::endl;
+                  break;
+                case 2:
+                  std::cout << "  Current constraints   : ["<< std::setprecision(8) << evaluations.values[1].at( evaluations.best_index ) << std::endl;
+                  std::cout << "                           "<< std::setprecision(8) << evaluations.values[2].at( evaluations.best_index ) << "]"<< std::endl;
+                  break;
+                default:
+                  std::cout << "  Current constraints   : ["<< std::setprecision(8) << evaluations.values[1].at( evaluations.best_index ) << std::endl;
+                  for (int i = 2; i < nb_constraints - 1; ++i )
+                    std::cout << "                           " << std::setprecision(8) << evaluations.values[i].at( evaluations.best_index ) << std::endl;
+                  std::cout << "                           " << std::setprecision(8) << evaluations.values[nb_constraints].at( evaluations.best_index ) << "]"<< std::endl;
+
+            }
         }if(stochastic_optimization) {
           std::cout << "  Current Noise        : [" << std::setprecision(8) << evaluations.noise[0].at(evaluations.best_index) << std::endl;
           for(int i = 1; i < evaluations.noise.size() - 1; ++i){
@@ -2110,10 +2122,20 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
     std::cout << "  Best value            :  " << std::setprecision(12) << evaluations.values[0].at( evaluations.best_index ) << std::endl;
     std::cout << "---------------------------------------------" << std::endl;
     if ( nb_constraints > 0) {
-      std::cout << "  Constraint            : [" << std::setprecision(12) << evaluations.values[1].at( evaluations.best_index ) << std::endl;
-      for (int i = 1; i < nb_constraints - 1; i++)
-        std::cout << "                           " << std::setprecision(12) << evaluations.values[i+1].at( evaluations.best_index ) << std::endl;
-      std::cout << "                           " << std::setprecision(12) << evaluations.values[nb_constraints].at( evaluations.best_index )<< "]"<< std::endl;
+      switch(nb_constraints){
+        case 1:
+          std::cout << "  Current constraints   : ["<< std::setprecision(8) << evaluations.values[1].at( evaluations.best_index ) << "]" << std::endl;
+          break;
+        case 2:
+          std::cout << "  Current constraints   : ["<< std::setprecision(8) << evaluations.values[1].at( evaluations.best_index ) << std::endl;
+          std::cout << "                           "<< std::setprecision(8) << evaluations.values[2].at( evaluations.best_index ) << "]"<< std::endl;
+          break;
+        default:
+          std::cout << "  Current constraints   : ["<< std::setprecision(8) << evaluations.values[1].at( evaluations.best_index ) << std::endl;
+          for (int i = 2; i < nb_constraints - 1; ++i )
+            std::cout << "                           " << std::setprecision(8) << evaluations.values[i].at( evaluations.best_index ) << std::endl;
+          std::cout << "                           " << std::setprecision(8) << evaluations.values[nb_constraints].at( evaluations.best_index ) << "]"<< std::endl;
+      }
     }
     if(stochastic_optimization) {
       std::cout << "---------------------------------------------" << std::endl;

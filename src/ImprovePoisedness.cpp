@@ -104,9 +104,8 @@ int ImprovePoisedness::replace_node ( int reference_node,
   for ( int i = nb_nodes-1; i >= 0; --i ) {
     if ( evaluations.active_index[ i ] != reference_node ) {
       if ( diff_norm( evaluations.nodes[ evaluations.active_index[i]], 
-                      new_node) / (*delta) < 1e-4 ) {
+                      new_node) / (*delta) < 1e-4) { //&& evaluations.active_index[i] != evaluations.best_index
         change_index = i;
-//        assert ( evaluations.active_index[change_index] != evaluations.best_index);
         return change_index;
       }
     }
@@ -130,13 +129,15 @@ int ImprovePoisedness::replace_node ( int reference_node,
       if ( norm_dbl <= 1e0 ) norm_dbl = 1e0;
       else norm_dbl = pow( norm_dbl, 3e0 );
       LK *= norm_dbl;
-      if ( LK > maxvalue ) {
+      if ( LK > maxvalue) { //&& evaluations.active_index[i] != evaluations.best_index
         change_index = i;
         maxvalue = LK;
       }
     }
   }
 
+  std::cout << "##Change index: " << change_index << ", " <<   evaluations.active_index[change_index] << ", " << evaluations.best_index << std::endl;
+  //assert ( evaluations.active_index[change_index] != evaluations.best_index);
   return change_index;
 }
 //--------------------------------------------------------------------------------
