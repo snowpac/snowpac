@@ -83,7 +83,7 @@ class BlackBoxBaseClass {
 
     //! TODO
     //!
-    virtual double evaluate_samples ( std::vector<double> const &samples, const unsigned int index, void *param ) = 0;
+    virtual double evaluate_samples ( std::vector<double> const &samples, const unsigned int index, std::vector<double>const& x ) = 0;
 
     //! Prototype for synchronize method provided by the user, which synchronizes after a number of asynchronous evaluate_nowait() calls
     /*!

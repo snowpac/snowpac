@@ -398,7 +398,7 @@ double GaussianProcess::bootstrap_diffGPMC ( std::vector<double>const& xstar, st
       for(int k = 0; k < nb_samples; ++k){
         bootstrap_samples[k] = samples[j][distr(bootstrap_eng)];
       }
-      f_train_bootstrap[j] = blackbox->evaluate_samples(bootstrap_samples, index, nullptr);
+      f_train_bootstrap[j] = blackbox->evaluate_samples(bootstrap_samples, index, xstar);
     }
     mean_bootstrap += dot_product(k_xstar_X_Kinv, f_train_bootstrap); // k_xstar_X (K_XX - sigma^2 I)^{-1} f_train_bootstrap
   }
