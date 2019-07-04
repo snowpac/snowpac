@@ -50,6 +50,7 @@
 #include <limits>
 #include <float.h>
 #include <sys/stat.h>
+#include <algorithm>    // std::sort
 
 //! NOWPAC
 template<class TSurrogateModel = MinimumFrobeniusNormModel, 
@@ -2053,6 +2054,55 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
           break;
         }
       }
+
+      /**Check if all active indices are actually in the trust region**/
+      int initial_best_index = evaluations.best_index;
+      int cur_active_index;
+      std::vector<double> cur_node;
+      bool feasibility_check = false;
+      int diff_nodes = evaluations.active_index.size() - (dim + 1); //How many more nodes than (dim + 1). This many nodes we can remove
+      std::vector<double> active_node_distance(evaluations.active_index.size());
+      std::cout << "Active Indices: " << std::endl;
+      for(auto val: evaluations.active_index){
+        std::cout << val << ", ";
+      }
+      std::cout << std::endl;
+      for(int i=0; i < evaluations.active_index.size(); ++i){
+        cur_active_index = evaluations.active_index[i];
+        cur_node = evaluations.nodes[cur_active_index];
+        active_node_distance[i] = VectorOperations::diff_norm(cur_node, evaluations.nodes[evaluations.best_index]);
+
+        if(active_node_distance[i] > delta){
+          std::cout << "Index  " << cur_active_index << " will be deleted with distance " << active_node_distance[i] << " > " << delta << std::endl;
+        }
+      }
+      std::vector<int> idx(active_node_distance.size());
+      std::iota(idx.begin(), idx.end(), 0);
+      std::sort(idx.begin(), idx.end(),
+           [&active_node_distance](int i1, int i2) {return active_node_distance[i1] > active_node_distance[i2];});
+      for(auto i: idx){
+        if(active_node_distance[i] <= delta){
+          break; //All leftover points are in the trust region, we are fine
+        }
+        if(diff_nodes > 0){//We can still remove some points
+          evaluations.active_index[i] = -1; //Mark for deletion
+          diff_nodes--;
+        }
+      }
+      std::cout << "Marked Indices: " << std::endl;
+      for(auto val: evaluations.active_index){
+        std::cout << val << ", ";
+      }
+      std::cout << std::endl;
+      evaluations.active_index.erase(std::remove(evaluations.active_index.begin(), evaluations.active_index.end(), -1), evaluations.active_index.end()); //Delete all elements equal -1
+      std::cout << "Updated Indices: " << std::endl;
+      for(auto val: evaluations.active_index){
+        std::cout << val << ", ";
+      }
+      std::cout << std::endl;
+      update_surrogate_models( );
+      //surrogate_nodes->improve_poisedness( evaluations.best_index, evaluations );
+      /***/
 
       x_trial = evaluations.nodes[ evaluations.best_index ];
 
