@@ -50,10 +50,12 @@ ImprovePoisedness::ImprovePoisedness ( BasisForSurrogateModelBaseClass &B,
 //--------------------------------------------------------------------------------
 int ImprovePoisedness::replace_node ( int reference_node, 
                                       BlackBoxData &evaluations,
-                                      std::vector<double> const &new_node ) 
+                                      std::vector<double> const &new_node )
 {
+  change_index = -1;
+
   nb_nodes = evaluations.active_index.size( );
-  maxvalue = -1e0;  
+  maxvalue = -1e0;
 
   // test for collinearity
   std::vector<double> v1 ( dim );
@@ -71,25 +73,25 @@ int ImprovePoisedness::replace_node ( int reference_node,
   std::vector<int> eval_act_ind =  evaluations.active_index;
   tmp_int = nb_nodes;
 
-  while ( nb_nodes - 1 - checked_nodes_counter >= 0 ) { 
-    check_node = eval_act_ind[ nb_nodes - checked_nodes_counter - 1 ];  
+  while ( nb_nodes - 1 - checked_nodes_counter >= 0 ) {
+    check_node = eval_act_ind[ nb_nodes - checked_nodes_counter - 1 ];
     v1 = evaluations.nodes[ check_node ];
     add ( -1e0, new_node, v1 );
     scale( 1e0/norm(v1), v1, v1);
     for ( int i = tmp_int-1; i >= 0; --i ) {
-      if ( evaluations.active_index[ i ] != reference_node && 
+      if ( evaluations.active_index[ i ] != reference_node &&
            evaluations.active_index[ i ] != check_node ) {
         v2 = new_node;
 //        v2 = evaluations.nodes[ reference_node ];
-        add ( -1e0, evaluations.nodes[ evaluations.active_index[ i ] ], v2 );    
+        add ( -1e0, evaluations.nodes[ evaluations.active_index[ i ] ], v2 );
         scale( 1e0/norm(v2), v2, v2);
         if ( diff_norm( v1, v2) < 1e-4 ) {
-          evaluations.active_index.erase( evaluations.active_index.begin() + i ); 
+          evaluations.active_index.erase( evaluations.active_index.begin() + i );
           tmp_int--;
         } else {
           scale( -1e0, v2, v2);
           if ( diff_norm( v1, v2) < 1e-4 ) {
-            evaluations.active_index.erase( evaluations.active_index.begin() + i ); 
+            evaluations.active_index.erase( evaluations.active_index.begin() + i );
             tmp_int--;
           }
         }
@@ -103,7 +105,7 @@ int ImprovePoisedness::replace_node ( int reference_node,
   if ( !ref_is_best ) reference_node = -1;
   for ( int i = nb_nodes-1; i >= 0; --i ) {
     if ( evaluations.active_index[ i ] != reference_node ) {
-      if ( diff_norm( evaluations.nodes[ evaluations.active_index[i]], 
+      if ( diff_norm( evaluations.nodes[ evaluations.active_index[i]],
                       new_node) / (*delta) < 1e-4) { //&& evaluations.active_index[i] != evaluations.best_index
         change_index = i;
         return change_index;
@@ -135,8 +137,11 @@ int ImprovePoisedness::replace_node ( int reference_node,
       }
     }
   }
-
-  std::cout << "##Change index: " << change_index << ", " <<   evaluations.active_index[change_index] << ", " << evaluations.best_index << std::endl;
+  if (print_output){
+  std::cout << "##Change index: " << change_index;
+  if (change_index != -1) {std::cout << ", " <<   evaluations.active_index[change_index] << ", " << evaluations.best_index;}
+  std::cout << std::endl;
+  }
   //assert ( evaluations.active_index[change_index] != evaluations.best_index);
   return change_index;
 }

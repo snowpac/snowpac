@@ -5,7 +5,7 @@
 
 //--------------------------------------------------------------------------------
 class BlackboxMock_GPSupport : public BlackBoxBaseClass{
-    double evaluate_samples ( std::vector<double> const &samples, const unsigned int index, void *param ){
+    double evaluate_samples ( std::vector<double> const &samples, const unsigned int index, std::vector<double>const& x ){
       double mean = 0.;
       for(const double& sample : samples ){
         mean += sample;

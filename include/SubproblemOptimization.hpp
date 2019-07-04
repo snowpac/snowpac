@@ -179,6 +179,7 @@ void SubproblemOptimization<TSurrogateModel>::set_feasibility_thresholds (
     if ( feasibility_thresholds.at( i ) < 0e0 ) feasibility_thresholds.at( i ) = 0e0; 
     else point_is_feasible = false;
   }
+  /*
   std::cout << "#M2# Subproblem Testing feasiblity: " << std::endl;
   std::cout << "#M2#      at point: [";
   for(int i = 0; i < x.size(); ++i)
@@ -190,7 +191,7 @@ void SubproblemOptimization<TSurrogateModel>::set_feasibility_thresholds (
   }
   std::cout << std::endl;
   std::cout << "#M2#      feasible: " << point_is_feasible << std::endl;
-
+  */
   return;
 }
 //--------------------------------------------------------------------------------
@@ -305,9 +306,9 @@ double SubproblemOptimization<TSurrogateModel>::compute_trial_point (
 
   set_feasibility_thresholds ( x );
 
-  std::cout << "#M3: Point is feasible: " << point_is_feasible << std::endl;
+  //std::cout << "#M3: Point is feasible: " << point_is_feasible << std::endl;
   if ( !point_is_feasible ) {
-    std::cout << "#M3: FEASIBILITY RESTORARION: " << std::endl;
+    //std::cout << "#M3: FEASIBILITY RESTORARION: " << std::endl;
     //opt_restore_feasibility.optimize ( x, optimization_result );for ( int i = 0; i < dim; ++i ) 
 
     opt_restore_feasibility.set_lower_bounds ( lb );
@@ -318,7 +319,7 @@ double SubproblemOptimization<TSurrogateModel>::compute_trial_point (
     } catch ( ... ) { };
 
     set_feasibility_thresholds ( x );    
-    std::cout << "#M4: Point is feasible: " << point_is_feasible << std::endl;
+    //std::cout << "#M4: Point is feasible: " << point_is_feasible << std::endl;
     if ( point_is_feasible ) {
       /*std::cout << "      LowerBound: " << std::endl;
       for (int i = 0; i < dim; ++i)
@@ -342,14 +343,14 @@ double SubproblemOptimization<TSurrogateModel>::compute_trial_point (
           x[i] = lb[i];
         }
 
-      std::cout << "#M3 Inner: Classic optimization!" << std::endl;
+      //std::cout << "#M3 Inner: Classic optimization!" << std::endl;
       try{
         errmess = opt_trial_point.optimize ( x, optimization_result );
       } catch ( ... ) { };
     }
    // assert( false );
   } else {
-    std::cout << "#M3: Classic optimization!" << std::endl;
+    //std::cout << "#M3: Classic optimization!" << std::endl;
     try{
       errmess = opt_trial_point.optimize ( x, optimization_result );
     } catch ( ... ) { };
