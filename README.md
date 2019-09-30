@@ -1,7 +1,8 @@
 #(S)NOWPAC#
 (Stochastic) Nonlinear Optimization With Path-Augmented Constraints
 
-Author  : Florian Augustin, MIT (2014)                                 
+Author  : Florian Augustin, MIT (2014)
+          Friedrich Menhorn, TUM (2018)
 Contact : nowpac (at) mit (dot) edu 
 
 ## Derivative free optimizer for nonlinear constrained problems  ##
@@ -16,6 +17,7 @@ External dependencies:
 - Eigen (linear algebra library, eigen.tuxfamily.org)
 - NLopt (optimization library, ab-initio.mit.edu/wiki/index.php/NLopt)
 - Gtest (google test library, optional)
+- Boost (https://www.boost.org, use e.g. apt-get install libboost-all-dev on Unix)
 - Compiler with C++11 standard support
 
 Installation:
