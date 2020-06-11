@@ -254,3 +254,4 @@ Return values:
 * Exiting due to parameter inconsistency (-4)
 * Unexpected error in user function occurred (-5)
 * Other termination reason (-6)
+
