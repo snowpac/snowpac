@@ -2056,6 +2056,7 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
       }
 
       /**Check if all active indices are actually in the trust region**/
+      /*
       int initial_best_index = evaluations.best_index;
       int cur_active_index;
       std::vector<double> cur_node;
@@ -2102,6 +2103,7 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
       std::cout << std::endl;
       update_surrogate_models( );
       //surrogate_nodes->improve_poisedness( evaluations.best_index, evaluations );
+      */
       /***/
 
       x_trial = evaluations.nodes[ evaluations.best_index ];
