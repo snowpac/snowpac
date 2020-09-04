@@ -515,7 +515,8 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
 //  nlopt::opt opt(nlopt::LD_CCSAQ, dimp1);
 //  nlopt::opt opt(nlopt::LN_BOBYQA, dimp1);
 //
-  nlopt::opt opt(nlopt::GN_DIRECT, dimp1);
+  //nlopt::opt opt(nlopt::GN_DIRECT, dimp1); //Somehow GN_DIRECT is not deterministic, also nlopt::srand(seed) has no effect to fix that.
+  nlopt::opt opt(nlopt::LN_COBYLA, dimp1);
 
   //opt = nlopt_create(NLOPT_LN_COBYLA, dim+1);
   opt.set_lower_bounds( lb );
@@ -530,8 +531,9 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
   //opt.set_maxeval(10000);
   //perform optimization to get correction factors
 
-    int exitflag=-20;
+  int exitflag=-20;
   try {
+    //nlopt::srand(1);
     exitflag = opt.optimize(gp_parameters, optval);
   } catch (...) {
     gp_parameters[0] = lb[0]*5e-1 + 5e-1*ub[0];
@@ -578,16 +580,17 @@ double GaussianProcess::parameter_estimation_objective(std::vector<double> const
 
 
   d->CholeskyFactorization::compute( d->L, d->pos, d->rho, d->nb_gp_nodes );
-  assert(d->pos == 0);
-  d->alpha = d->scaled_function_values;
-  d->forward_substitution( d->L, d->alpha );
-  d->backward_substitution( d->L, d->alpha );
-  double result = -0.5*d->VectorOperations::dot_product(d->scaled_function_values, d->alpha) + 
-                  -0.5*((double)d->nb_gp_nodes)*log(6.28);
-  for (int i = 0; i < d->nb_gp_nodes; ++i)
-    result -= 0.5*log(d->L.at(i).at(i));
-    
-  // std::cout << result << std::endl;
+  //assert(d->pos == 0);
+  double result = 0;
+  if(d->pos == 0){ //result stays 0 if L is not spd
+    d->alpha = d->scaled_function_values;
+    d->forward_substitution( d->L, d->alpha );
+    d->backward_substitution( d->L, d->alpha );
+    result = -0.5*d->VectorOperations::dot_product(d->scaled_function_values, d->alpha) + 
+                    -0.5*((double)d->nb_gp_nodes)*log( 2. * M_PI );
+    for (int i = 0; i < d->nb_gp_nodes; ++i)
+      result -= 0.5*log(d->L.at(i).at(i));
+  }
 
 
 /*

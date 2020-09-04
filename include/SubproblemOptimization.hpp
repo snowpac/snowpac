@@ -131,7 +131,6 @@ SubproblemOptimization<TSurrogateModel>::SubproblemOptimization (
     opt_trial_point.add_inequality_constraint( 
       subproblems.constraints_for_subproblems, &SpD[i], constraint_tolerance );
 
-
   //opt_restore_feasibility.set_ftol_abs( abs_ftol );
   //opt_restore_feasibility.set_ftol_rel( rel_tol );
   opt_restore_feasibility.set_xtol_abs( abs_tol );
@@ -143,7 +142,6 @@ SubproblemOptimization<TSurrogateModel>::SubproblemOptimization (
   for (int i = 0; i < number_constraints; ++i)
     opt_restore_feasibility.add_inequality_constraint( 
       subproblems.constraints_for_subproblems, &SpD[i], constraint_tolerance );
-
   return;
 }
 //--------------------------------------------------------------------------------
@@ -266,7 +264,7 @@ double SubproblemOptimization<TSurrogateModel>::compute_criticality_measure (
 
   add( *delta, x, best_point );
   x = best_point;
-  
+ 
   return fabs( optimization_result ) / *delta ;
 }
 //--------------------------------------------------------------------------------

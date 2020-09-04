@@ -1568,7 +1568,6 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
   std::vector<double> &x, std::vector<double> &val, BlackBoxData &bb_data ) 
 {
 
-
   if ( evaluations.nodes.size() > 0 ) { 
     evaluations = bb_data;
     EXIT_FLAG = NOEXIT;
@@ -1779,7 +1778,7 @@ int NOWPAC<TSurrogateModel, TBasisForSurrogateModel>::optimize (
 	
 
   x_trial = evaluations.nodes[ evaluations.best_index ];
-  if ( verbose == 3 ) { std::cout << "Value of criticality measure : "; }
+  if ( verbose == 3 ) { std::cout << "Value of initial criticality measure : "; }
   criticality_value = surrogate_optimization->compute_criticality_measure( x_trial );
 
   if ( verbose == 3 ) { std::cout << criticality_value << std::endl;; }
