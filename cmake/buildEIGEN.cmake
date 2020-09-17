@@ -1,6 +1,7 @@
 INCLUDE(ExternalProject)
 
-SET( NOWPAC_EIGEN_URL "http://bitbucket.org/eigen/eigen/get/3.2.2.tar.bz2")
+#SET( NOWPAC_EIGEN_URL "http://bitbucket.org/eigen/eigen/get/3.2.2.tar.bz2")
+SET( NOWPAC_EIGEN_URL "https://gitlab.com/libeigen/eigen/-/archive/3.3.7/eigen-3.3.7.tar.bz2")
 
 ExternalProject_Add( EIGEN
 
