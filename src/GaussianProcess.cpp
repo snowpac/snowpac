@@ -533,7 +533,7 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
 
   int exitflag=-20;
   try {
-    //nlopt::srand(1);
+    nlopt::srand(1);
     exitflag = opt.optimize(gp_parameters, optval);
   } catch (...) {
     gp_parameters[0] = lb[0]*5e-1 + 5e-1*ub[0];
