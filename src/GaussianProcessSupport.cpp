@@ -246,7 +246,6 @@ void GaussianProcessSupport::update_gaussian_processes_for_agp( BlackBoxData &ev
 
     if ( do_parameter_estimation ) {
 
-
       if(approx_gaussian_process_active){
         gaussian_process_active_index.clear( );
         gaussian_process_nodes.clear( );
@@ -312,24 +311,22 @@ void GaussianProcessSupport::update_gaussian_processes_for_agp( BlackBoxData &ev
                                        gaussian_process_noise );
         }
       }
+    } else {
+        for (unsigned int i = last_included; i < nb_values; ++i) {
+            gaussian_process_active_index.push_back(i);
+  //      rescale ( 1e0/(delta_tmp), evaluations.nodes[i], evaluations.nodes[best_index],
+  //                rescaled_node);
+            for (int j = 0; j < number_processes; ++j) {
+                gaussian_processes[j]->update(evaluations.nodes[i],
+                                              evaluations.values_MC[j].at(i),
+                                              evaluations.noise_MC[j].at(i));
+  //        gaussian_processes[j].update( rescaled_node,
+  //                                      values[ j ].at( i ),
+  //                                      noise[ j ].at( i ) );
+            }
+        }
 
-
-  } else {
-      for (unsigned int i = last_included; i < nb_values; ++i) {
-          gaussian_process_active_index.push_back(i);
-//      rescale ( 1e0/(delta_tmp), evaluations.nodes[i], evaluations.nodes[best_index],
-//                rescaled_node);
-          for (int j = 0; j < number_processes; ++j) {
-              gaussian_processes[j]->update(evaluations.nodes[i],
-                                            evaluations.values_MC[j].at(i),
-                                            evaluations.noise_MC[j].at(i));
-//        gaussian_processes[j].update( rescaled_node,
-//                                      values[ j ].at( i ),
-//                                      noise[ j ].at( i ) );
-          }
-      }
-
-  }
+    }
 
 }
 
