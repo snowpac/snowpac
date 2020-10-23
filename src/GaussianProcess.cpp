@@ -513,10 +513,10 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
   //initialize optimizer from NLopt library
   int dimp1 = dim+1;
 //  nlopt::opt opt(nlopt::LD_CCSAQ, dimp1);
-//  nlopt::opt opt(nlopt::LN_BOBYQA, dimp1);
+  //nlopt::opt opt(nlopt::LN_BOBYQA, dimp1);
 //
-  //nlopt::opt opt(nlopt::GN_DIRECT, dimp1); //Somehow GN_DIRECT is not deterministic, also nlopt::srand(seed) has no effect to fix that.
-  nlopt::opt opt(nlopt::LN_COBYLA, dimp1);
+  nlopt::opt opt(nlopt::GN_DIRECT, dimp1); //Somehow GN_DIRECT is not deterministic, also nlopt::srand(seed) has no effect to fix that.
+  //nlopt::opt opt(nlopt::LN_COBYLA, dimp1);
 
   //opt = nlopt_create(NLOPT_LN_COBYLA, dim+1);
   opt.set_lower_bounds( lb );
