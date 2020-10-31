@@ -83,6 +83,7 @@ SubproblemOptimization<TSurrogateModel>::SubproblemOptimization (
   ub.resize( dim );
 
   double opt_time = 1e-1;
+  int opt_eval = 1000;
   rel_tol = 1e-11; //1e-11
   double abs_ftol = 1e-5;
   for (int i = 0; i < dim; ++i) {
@@ -111,7 +112,8 @@ SubproblemOptimization<TSurrogateModel>::SubproblemOptimization (
   //opt_criticality_measure.set_ftol_rel( rel_tol );
   //opt_criticality_measure.set_xtol_abs( abs_tol );
   opt_criticality_measure.set_xtol_rel( rel_tol );
-  opt_criticality_measure.set_maxtime( opt_time );
+  //opt_criticality_measure.set_maxtime( opt_time );
+  opt_criticality_measure.set_maxeval( opt_eval );
   opt_criticality_measure.set_min_objective ( subproblems.opt_criticality_measure_obj, &SpD[0] );
   opt_criticality_measure.add_inequality_constraint( 
     subproblems.trustregion_constraint, &SpD[0], constraint_tolerance );
@@ -123,7 +125,8 @@ SubproblemOptimization<TSurrogateModel>::SubproblemOptimization (
   //opt_trial_point.set_ftol_rel( rel_tol );
   opt_trial_point.set_xtol_abs( abs_tol );
   opt_trial_point.set_xtol_rel( rel_tol );
-  opt_trial_point.set_maxtime( opt_time );
+  //opt_trial_point.set_maxtime( opt_time );
+  opt_trial_point.set_maxeval( opt_eval );
   opt_trial_point.set_min_objective ( subproblems.opt_trial_point_obj, &SpD[0] );
   opt_trial_point.add_inequality_constraint( 
     subproblems.trustregion_constraint, &SpD[0], constraint_tolerance );
@@ -135,7 +138,8 @@ SubproblemOptimization<TSurrogateModel>::SubproblemOptimization (
   //opt_restore_feasibility.set_ftol_rel( rel_tol );
   opt_restore_feasibility.set_xtol_abs( abs_tol );
   opt_restore_feasibility.set_xtol_rel( rel_tol );
-  opt_restore_feasibility.set_maxtime( opt_time );  
+  //opt_restore_feasibility.set_maxtime( opt_time );  
+  opt_restore_feasibility.set_maxeval( opt_eval );
   opt_restore_feasibility.set_min_objective ( subproblems.opt_restore_feasibility_obj, &SpD[0] );
   opt_restore_feasibility.add_inequality_constraint( 
     subproblems.trustregion_constraint, &SpD[0], constraint_tolerance );

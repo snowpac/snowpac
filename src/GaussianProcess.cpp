@@ -513,10 +513,10 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
   //initialize optimizer from NLopt library
   int dimp1 = dim+1;
 //  nlopt::opt opt(nlopt::LD_CCSAQ, dimp1);
-//  nlopt::opt opt(nlopt::LN_BOBYQA, dimp1);
+  //nlopt::opt opt(nlopt::LN_BOBYQA, dimp1);
 //
-  //nlopt::opt opt(nlopt::GN_DIRECT, dimp1); //Somehow GN_DIRECT is not deterministic, also nlopt::srand(seed) has no effect to fix that.
-  nlopt::opt opt(nlopt::LN_COBYLA, dimp1);
+  nlopt::opt opt(nlopt::GN_DIRECT, dimp1); //Somehow GN_DIRECT is not deterministic, also nlopt::srand(seed) has no effect to fix that.
+  //nlopt::opt opt(nlopt::LN_COBYLA, dimp1);
 
   //opt = nlopt_create(NLOPT_LN_COBYLA, dim+1);
   opt.set_lower_bounds( lb );
@@ -524,16 +524,16 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
 
   opt.set_max_objective( GaussianProcess::parameter_estimation_objective, gp_pointer);
 
- // opt.set_xtol_abs(1e-2);
-//  opt.set_xtol_rel(1e-2);
+  opt.set_xtol_abs(1e-5);
+  opt.set_xtol_rel(1e-11);
 //set timeout to NLOPT_TIMEOUT seconds
-  opt.set_maxtime(1.0);
-  //opt.set_maxeval(10000);
+  //opt.set_maxtime(1.0);
+  opt.set_maxeval(1000);
   //perform optimization to get correction factors
 
   int exitflag=-20;
   try {
-    nlopt::srand(1);
+    //nlopt::srand(1);
     exitflag = opt.optimize(gp_parameters, optval);
   } catch (...) {
     gp_parameters[0] = lb[0]*5e-1 + 5e-1*ub[0];
