@@ -524,16 +524,16 @@ void GaussianProcess::estimate_hyper_parameters ( std::vector< std::vector<doubl
 
   opt.set_max_objective( GaussianProcess::parameter_estimation_objective, gp_pointer);
 
- // opt.set_xtol_abs(1e-2);
-//  opt.set_xtol_rel(1e-2);
+  opt.set_xtol_abs(1e-5);
+  opt.set_xtol_rel(1e-11);
 //set timeout to NLOPT_TIMEOUT seconds
-  opt.set_maxtime(1.0);
-  //opt.set_maxeval(10000);
+  //opt.set_maxtime(1.0);
+  opt.set_maxeval(1000);
   //perform optimization to get correction factors
 
   int exitflag=-20;
   try {
-    nlopt::srand(1);
+    //nlopt::srand(1);
     exitflag = opt.optimize(gp_parameters, optval);
   } catch (...) {
     gp_parameters[0] = lb[0]*5e-1 + 5e-1*ub[0];
